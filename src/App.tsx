@@ -5,6 +5,7 @@ import Hero from './components/Hero';
 import TechMapReactFlow from './components/TechMapReactFlow';
 import ProjectsSection from './components/ProjectsSection';
 import ContactSection from './components/ContactSection';
+import VenturesSection from './components/VenturesSection';
 import Labs from './components/Labs';
 
 function App() {
@@ -17,11 +18,20 @@ function App() {
   }, []);
 
   const isLabs = currentPage === '#labs';
+  const isVentures = currentPage === '#ventures';
 
   if (isLabs) {
     return (
       <div className="min-h-screen font-sans">
         <Labs />
+      </div>
+    );
+  }
+
+  if (isVentures) {
+    return (
+      <div className="min-h-screen font-sans">
+        <VenturesSection />
       </div>
     );
   }
@@ -33,7 +43,6 @@ function App() {
         <Hero />
         <TechMapReactFlow />
         <ProjectsSection />
-
         <ContactSection />
       </main>
     </div>
