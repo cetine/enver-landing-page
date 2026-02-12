@@ -1,8 +1,9 @@
 
 import { ArrowRight, ChevronDown } from 'lucide-react';
 import { profile } from '../data/profile';
-import { motion, AnimatePresence } from 'framer-motion';
-import { useState, useEffect } from 'react';
+import { motion, AnimatePresence, useScroll, useTransform } from 'framer-motion';
+import { useState, useEffect, useRef } from 'react';
+import MagneticButton from './MagneticButton';
 
 const aiTopics = [
     'AI Architecture',
@@ -19,6 +20,20 @@ const aiTopics = [
 
 export default function Hero() {
     const [topicIndex, setTopicIndex] = useState(0);
+    const sectionRef = useRef<HTMLElement>(null);
+
+    const { scrollYProgress } = useScroll({
+        target: sectionRef,
+        offset: ['start start', 'end start'],
+    });
+
+    // Parallax transforms
+    const bgY = useTransform(scrollYProgress, [0, 1], [0, -150]);
+    const blob1Y = useTransform(scrollYProgress, [0, 1], [0, -100]);
+    const blob2Y = useTransform(scrollYProgress, [0, 1], [0, -180]);
+    const textOpacity = useTransform(scrollYProgress, [0.3, 0.7], [1, 0]);
+    const textY = useTransform(scrollYProgress, [0.3, 0.7], [0, -60]);
+    const chevronOpacity = useTransform(scrollYProgress, [0, 0.08], [1, 0]);
 
     useEffect(() => {
         const interval = setInterval(() => {
@@ -28,11 +43,14 @@ export default function Hero() {
     }, []);
 
     return (
-        <section id="home" className="relative min-h-screen flex flex-col justify-center pt-20 pb-10 overflow-hidden">
-            {/* Background decoration */}
-            <div className="absolute top-0 right-0 -z-10 w-1/2 h-full bg-gradient-to-bl from-blue-50 to-transparent opacity-50 blur-3xl" />
+        <section ref={sectionRef} id="home" className="relative min-h-screen flex flex-col justify-center pt-20 pb-10 overflow-hidden">
+            {/* Background decoration with parallax */}
+            <motion.div
+                className="absolute top-0 right-0 -z-10 w-1/2 h-full bg-gradient-to-bl from-blue-50 to-transparent opacity-50 blur-3xl"
+                style={{ y: bgY }}
+            />
 
-            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 w-full grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
+            <motion.div style={{ opacity: textOpacity, y: textY }} className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 w-full grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
 
                 {/* Text Content */}
                 <motion.div
@@ -54,14 +72,15 @@ export default function Hero() {
                     </div>
 
                     <div className="flex flex-wrap gap-4">
-                        <a
-                            href="#tech-map"
-                            className="inline-flex items-center px-6 py-3 bg-slate-900 text-white font-medium rounded-lg hover:bg-slate-800 transition-colors shadow-lg shadow-slate-900/20"
-                        >
-                            Explore My GenAI Journey
-                            <ArrowRight className="ml-2 w-4 h-4" />
-                        </a>
-
+                        <MagneticButton>
+                            <a
+                                href="#tech-map"
+                                className="inline-flex items-center px-6 py-3 bg-slate-900 text-white font-medium rounded-lg hover:bg-slate-800 transition-colors shadow-lg shadow-slate-900/20"
+                            >
+                                Explore My GenAI Journey
+                                <ArrowRight className="ml-2 w-4 h-4" />
+                            </a>
+                        </MagneticButton>
                     </div>
 
                     {/* Statement Quote */}
@@ -175,9 +194,15 @@ export default function Hero() {
                     transition={{ duration: 0.8, delay: 0.2 }}
                     className="relative hidden lg:flex flex-col items-center justify-center h-[500px]"
                 >
-                    {/* Abstract Geometric Shapes */}
-                    <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-96 h-96 bg-blue-100 rounded-full mix-blend-multiply filter blur-xl opacity-70 animate-blob" />
-                    <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-96 h-96 bg-purple-100 rounded-full mix-blend-multiply filter blur-xl opacity-70 animate-blob animation-delay-2000" />
+                    {/* Abstract Geometric Shapes with parallax */}
+                    <motion.div
+                        className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-96 h-96 bg-blue-100 rounded-full mix-blend-multiply filter blur-xl opacity-70 animate-blob"
+                        style={{ y: blob1Y }}
+                    />
+                    <motion.div
+                        className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-96 h-96 bg-purple-100 rounded-full mix-blend-multiply filter blur-xl opacity-70 animate-blob animation-delay-2000"
+                        style={{ y: blob2Y }}
+                    />
 
                     {/* Profile Photo */}
                     <motion.div
@@ -216,11 +241,14 @@ export default function Hero() {
                         </AnimatePresence>
                     </motion.div>
                 </motion.div>
-            </div>
+            </motion.div>
 
-            <div className="absolute bottom-8 left-1/2 -translate-x-1/2 animate-bounce text-slate-400">
+            <motion.div
+                className="absolute bottom-8 left-1/2 -translate-x-1/2 animate-bounce text-slate-400"
+                style={{ opacity: chevronOpacity }}
+            >
                 <ChevronDown size={24} />
-            </div>
+            </motion.div>
         </section>
     );
 }

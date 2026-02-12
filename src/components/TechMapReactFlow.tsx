@@ -8,6 +8,8 @@ import ReactFlow, {
     Position,
 } from 'reactflow';
 import 'reactflow/dist/style.css';
+import { motion, useScroll, useTransform } from 'framer-motion';
+import { useRef } from 'react';
 
 // --- Palette ---
 const C = {
@@ -418,18 +420,43 @@ const initialEdges: Edge[] = [
 export default function TechMapReactFlow() {
     const [nodes, , onNodesChange] = useNodesState(initialNodes);
     const [edges, , onEdgesChange] = useEdgesState(initialEdges);
+    const sectionRef = useRef<HTMLElement>(null);
+
+    const { scrollYProgress } = useScroll({
+        target: sectionRef,
+        offset: ['start end', 'end start'],
+    });
+
+    // Curtain reveal: clipPath shrinks inward when off-screen, expands to full when in view
+    const clipTop = useTransform(scrollYProgress, [0, 0.3], [8, 0]);
+    const clipSide = useTransform(scrollYProgress, [0, 0.3], [4, 0]);
+    const clipBottom = useTransform(scrollYProgress, [0, 0.3], [8, 0]);
 
     return (
-        <section id="tech-map" className="py-20 bg-slate-50">
+        <section ref={sectionRef} id="tech-map" className="py-20 bg-slate-50">
             <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-                <div className="mb-12 text-center">
+                <motion.div
+                    className="mb-12 text-center"
+                    initial={{ opacity: 0, x: -20, filter: 'blur(6px)' }}
+                    whileInView={{ opacity: 1, x: 0, filter: 'blur(0px)' }}
+                    viewport={{ once: true, margin: '-100px' }}
+                    transition={{ duration: 0.6, ease: [0.22, 1, 0.36, 1] }}
+                >
                     <h2 className="text-3xl font-bold text-slate-900">AI & Technology Landscape</h2>
                     <p className="mt-4 text-slate-600 max-w-2xl mx-auto">
                         From strategic advisory to hands-on engineering — how I help enterprises bridge the gap between AI ambition and real-world impact.
                     </p>
-                </div>
+                </motion.div>
 
-                <div className="h-[850px] w-full bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
+                <motion.div
+                    className="h-[850px] w-full bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden"
+                    style={{
+                        clipPath: useTransform(
+                            [clipTop, clipSide, clipBottom],
+                            ([t, s, b]: number[]) => `inset(${t}% ${s}% ${b}% ${s}%)`
+                        ),
+                    }}
+                >
                     <ReactFlow
                         nodes={nodes}
                         edges={edges}
@@ -444,7 +471,7 @@ export default function TechMapReactFlow() {
                         <Background color="#e2e8f0" gap={16} />
                         <Controls />
                     </ReactFlow>
-                </div>
+                </motion.div>
             </div>
         </section>
     );

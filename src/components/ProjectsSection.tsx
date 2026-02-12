@@ -1,4 +1,6 @@
-
+import { useState } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
+import { ChevronDown } from 'lucide-react';
 
 type WorkType = 'Strategy' | 'Architecture' | 'Engineering';
 
@@ -117,50 +119,6 @@ const initiatives: IndustryGroup[] = [
         ]
     },
     {
-        industry: "Strategic AI & Enterprise",
-        items: [
-            {
-                title: "VP-Level AI Academy",
-                challenge: "Despite having access to top-tier AI tools, the leadership team lacked the strategic framework to integrate Generative AI into their core product roadmap. This knowledge gap stalled innovation, as decision-makers struggled to identify high-value use cases that went beyond simple efficiency gains.",
-                workType: "Strategy",
-                results: {
-                    summary: "Designed 'GenAI in Product' executive program, coaching CXOs on roadmap development. Through a series of high-impact workshops, we bridged the gap between technical capability and business strategy for over 40+ leaders. The program successfully catalyzed the launch of 23 high-value use cases, serving as a blueprint for enterprise-wide adoption.",
-                    kpis: [
-                        { value: "40+", label: "Execs Upskilled" },
-                        { value: "23", label: "Use Cases Launched" },
-                        { value: "92%", label: "Program NPS" }
-                    ]
-                },
-                tags: ["Executive Strategy", "Change Management", "AI Adoption"],
-                tools: [
-                    { name: "Databricks", src: "/images/logos/Databricks_Logo.png" },
-                    { name: "AWS", src: "/images/logos/AWS.svg.png" },
-                    { name: "Anthropic", src: "/images/logos/Anthropic.png" },
-                ]
-            },
-            {
-                title: "Enterprise RAG Backbone",
-                challenge: "Advisors were wasting valuable client-facing time searching through a sprawling, unorganized repository of 10,000+ policy documents. The lack of a unified search engine led to inconsistent advice and compliance risks, as outdated or incorrect information was frequently retrieved during critical consultations.",
-                workType: "Architecture",
-                results: {
-                    summary: "Built a custom RAG Agent with strict citation guardrails and graph-based retrieval. This architecture unified access to 10,000+ siloed policy documents, ensuring every answer is backed by verifiable sources. The solution reduced support ticket volume by 45% while maintaining 100% compliance accuracy.",
-                    kpis: [
-                        { value: "80%", label: "Faster Retrieval" },
-                        { value: "100%", label: "Policy Accuracy" },
-                        { value: "-45%", label: "Support Tickets" }
-                    ]
-                },
-                tags: ["Secure RAG", "Knowledge Graph", ".NET Core"],
-                tools: [
-                    { name: "Azure", src: "/images/logos/microsoft-azure-logo.png" },
-                    { name: "OpenAI", src: "/images/logos/OpenAI_Logo.svg.png" },
-                    { name: "Semantic Kernel", src: "/images/logos/SemanticKernel.png" },
-                    { name: "CrewAI", src: "/images/logos/CrewAI.png" },
-                ]
-            }
-        ]
-    },
-    {
         industry: "Logistics & Supply Chain",
         items: [
             {
@@ -245,6 +203,50 @@ const initiatives: IndustryGroup[] = [
                 ]
             }
         ]
+    },
+    {
+        industry: "Strategic AI & Enterprise",
+        items: [
+            {
+                title: "VP-Level AI Academy",
+                challenge: "Despite having access to top-tier AI tools, the leadership team lacked the strategic framework to integrate Generative AI into their core product roadmap. This knowledge gap stalled innovation, as decision-makers struggled to identify high-value use cases that went beyond simple efficiency gains.",
+                workType: "Strategy",
+                results: {
+                    summary: "Designed 'GenAI in Product' executive program, coaching CXOs on roadmap development. Through a series of high-impact workshops, we bridged the gap between technical capability and business strategy for over 40+ leaders. The program successfully catalyzed the launch of 23 high-value use cases, serving as a blueprint for enterprise-wide adoption.",
+                    kpis: [
+                        { value: "40+", label: "Execs Upskilled" },
+                        { value: "23", label: "Use Cases Launched" },
+                        { value: "92%", label: "Program NPS" }
+                    ]
+                },
+                tags: ["Executive Strategy", "Change Management", "AI Adoption"],
+                tools: [
+                    { name: "Databricks", src: "/images/logos/Databricks_Logo.png" },
+                    { name: "AWS", src: "/images/logos/AWS.svg.png" },
+                    { name: "Anthropic", src: "/images/logos/Anthropic.png" },
+                ]
+            },
+            {
+                title: "Enterprise RAG Backbone",
+                challenge: "Advisors were wasting valuable client-facing time searching through a sprawling, unorganized repository of 10,000+ policy documents. The lack of a unified search engine led to inconsistent advice and compliance risks, as outdated or incorrect information was frequently retrieved during critical consultations.",
+                workType: "Architecture",
+                results: {
+                    summary: "Built a custom RAG Agent with strict citation guardrails and graph-based retrieval. This architecture unified access to 10,000+ siloed policy documents, ensuring every answer is backed by verifiable sources. The solution reduced support ticket volume by 45% while maintaining 100% compliance accuracy.",
+                    kpis: [
+                        { value: "80%", label: "Faster Retrieval" },
+                        { value: "100%", label: "Policy Accuracy" },
+                        { value: "-45%", label: "Support Tickets" }
+                    ]
+                },
+                tags: ["Secure RAG", "Knowledge Graph", ".NET Core"],
+                tools: [
+                    { name: "Azure", src: "/images/logos/microsoft-azure-logo.png" },
+                    { name: "OpenAI", src: "/images/logos/OpenAI_Logo.svg.png" },
+                    { name: "Semantic Kernel", src: "/images/logos/SemanticKernel.png" },
+                    { name: "CrewAI", src: "/images/logos/CrewAI.png" },
+                ]
+            }
+        ]
     }
 ];
 
@@ -264,110 +266,164 @@ const getWorkTypeColor = (type: WorkType) => {
 };
 
 export default function ProjectsSection() {
+    const [expandedIndustries, setExpandedIndustries] = useState<Set<number>>(new Set());
+
+    const toggleIndustry = (index: number) => {
+        setExpandedIndustries(prev => {
+            const next = new Set(prev);
+            if (next.has(index)) {
+                next.delete(index);
+            } else {
+                next.add(index);
+            }
+            return next;
+        });
+    };
+
     return (
         <section id="projects" className="py-24 bg-slate-50">
             <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-                <div className="mb-20 text-center">
+                <motion.div
+                    className="mb-20 text-center"
+                    initial={{ opacity: 0, y: 30 }}
+                    whileInView={{ opacity: 1, y: 0 }}
+                    viewport={{ once: true, margin: '-80px' }}
+                    transition={{ duration: 0.6, ease: [0.22, 1, 0.36, 1] }}
+                >
                     <h2 className="text-4xl font-bold text-slate-900 mb-4">Featured AI Initiatives</h2>
                     <p className="text-lg text-slate-600 max-w-2xl mx-auto">
                         Driving enterprise value through high-impact, scalable AI architectures.
                     </p>
-                </div>
+                </motion.div>
 
-                <div className="space-y-20">
+                <div className="space-y-8">
                     {initiatives.map((group, groupIndex) => (
-                        <div key={groupIndex}>
-                            <div className="flex items-center mb-8">
-                                <h3 className="text-2xl font-bold text-slate-800 border-l-4 border-blue-600 pl-4">
+                        <motion.div
+                            key={groupIndex}
+                            initial={{ opacity: 0, y: 40 }}
+                            whileInView={{ opacity: 1, y: 0 }}
+                            viewport={{ once: true, margin: '-100px' }}
+                            transition={{ duration: 0.5, ease: [0.22, 1, 0.36, 1], delay: groupIndex * 0.08 }}
+                        >
+                            <button
+                                type="button"
+                                onClick={() => toggleIndustry(groupIndex)}
+                                aria-expanded={expandedIndustries.has(groupIndex)}
+                                className="flex items-center w-full mb-8 cursor-pointer group/header"
+                            >
+                                <h3 className="text-2xl font-bold text-slate-800 border-l-4 border-blue-600 pl-4 group-hover/header:text-blue-700 transition-colors duration-200">
                                     {group.industry}
                                 </h3>
                                 <div className="h-px bg-slate-200 flex-grow ml-6"></div>
-                            </div>
+                                <motion.div
+                                    animate={{ rotate: expandedIndustries.has(groupIndex) ? 180 : 0 }}
+                                    transition={{ duration: 0.3, ease: [0.22, 1, 0.36, 1] }}
+                                    className="ml-4 flex-shrink-0"
+                                >
+                                    <ChevronDown className="w-6 h-6 text-slate-400 group-hover/header:text-blue-600 transition-colors duration-200" />
+                                </motion.div>
+                            </button>
 
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-8 max-w-6xl mx-auto">
-                                {group.items.map((project, index) => (
-                                    <div
-                                        key={index}
-                                        className="group bg-white rounded-2xl p-8 border border-slate-200 shadow-sm hover:shadow-2xl hover:-translate-y-1 transition-all duration-300 flex flex-col h-full relative overflow-hidden"
+                            <AnimatePresence initial={false}>
+                                {expandedIndustries.has(groupIndex) && (
+                                    <motion.div
+                                        key={`grid-${groupIndex}`}
+                                        initial={{ height: 0, opacity: 0 }}
+                                        animate={{ height: 'auto', opacity: 1 }}
+                                        exit={{ height: 0, opacity: 0 }}
+                                        transition={{
+                                            height: { duration: 0.4, ease: [0.22, 1, 0.36, 1] },
+                                            opacity: { duration: 0.3, ease: 'easeInOut' },
+                                        }}
+                                        className="overflow-hidden"
                                     >
-                                        <div className={`absolute top-0 left-0 w-1 h-full transition-colors duration-300 ${project.workType === 'Strategy' ? 'bg-blue-500' :
-                                            project.workType === 'Architecture' ? 'bg-emerald-500' :
-                                                'bg-purple-500'
-                                            }`}></div>
+                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-8 max-w-6xl mx-auto pb-4">
+                                            {group.items.map((project, index) => (
+                                                <div
+                                                    key={index}
+                                                    className="group bg-white rounded-2xl p-8 border border-slate-200 shadow-sm hover:shadow-2xl hover:-translate-y-1 transition-all duration-300 flex flex-col h-full relative overflow-hidden"
+                                                >
+                                                    <div className={`absolute top-0 left-0 w-1 h-full transition-colors duration-300 ${project.workType === 'Strategy' ? 'bg-blue-500' :
+                                                        project.workType === 'Architecture' ? 'bg-emerald-500' :
+                                                            'bg-purple-500'
+                                                        }`}></div>
 
-                                        <div className="flex justify-between items-start mb-6 pl-4">
-                                            <h4 className="text-xl font-bold text-slate-900 leading-tight">
-                                                {project.title}
-                                            </h4>
-                                            <span className={`px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wide border ${getWorkTypeColor(project.workType)}`}>
-                                                {project.workType}
-                                            </span>
-                                        </div>
+                                                    <div className="flex justify-between items-start mb-6 pl-4">
+                                                        <h4 className="text-xl font-bold text-slate-900 leading-tight">
+                                                            {project.title}
+                                                        </h4>
+                                                        <span className={`px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wide border ${getWorkTypeColor(project.workType)}`}>
+                                                            {project.workType}
+                                                        </span>
+                                                    </div>
 
-                                        <div className="space-y-6 flex-grow pl-4">
-                                            <div>
-                                                <div className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">The Challenge</div>
-                                                <p className="text-slate-600 text-sm leading-relaxed">
-                                                    {project.challenge}
-                                                </p>
-                                            </div>
-
-                                            <div>
-                                                <div className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">Impact Delivered</div>
-                                                <p className="text-slate-600 text-sm leading-relaxed text-justify">
-                                                    {project.results.summary}
-                                                </p>
-                                            </div>
-                                        </div>
-
-                                        <div className="mt-8 pt-6 border-t border-slate-100 pl-4">
-                                            <div className="grid grid-cols-3 gap-4 mb-6">
-                                                {project.results.kpis.map((kpi, k) => (
-                                                    <div key={k}>
-                                                        <div className="text-xl font-black text-slate-900 mb-1">
-                                                            {kpi.value}
+                                                    <div className="space-y-6 flex-grow pl-4">
+                                                        <div>
+                                                            <div className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">The Challenge</div>
+                                                            <p className="text-slate-600 text-sm leading-relaxed">
+                                                                {project.challenge}
+                                                            </p>
                                                         </div>
-                                                        <div className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">
-                                                            {kpi.label}
+
+                                                        <div>
+                                                            <div className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">Impact Delivered</div>
+                                                            <p className="text-slate-600 text-sm leading-relaxed text-justify">
+                                                                {project.results.summary}
+                                                            </p>
                                                         </div>
                                                     </div>
-                                                ))}
-                                            </div>
 
-                                            <div className="flex flex-wrap gap-2">
-                                                {project.tags.map((tag) => (
-                                                    <span
-                                                        key={tag}
-                                                        className="px-2.5 py-1 bg-slate-50 text-slate-500 text-[10px] font-semibold rounded-md border border-slate-200"
-                                                    >
-                                                        {tag}
-                                                    </span>
-                                                ))}
-                                            </div>
-
-                                            <div className="flex items-center gap-4 mt-4 pt-3 border-t border-dashed border-slate-100">
-                                                <span className="text-[9px] font-bold text-slate-300 uppercase tracking-widest shrink-0">Built with</span>
-                                                <div className="flex items-center gap-4">
-                                                    {project.tools.map((tool) => (
-                                                        <div
-                                                            key={tool.name}
-                                                            className={`flex items-center justify-center ${toolSizeOverrides[tool.name] || 'h-7 max-w-[5.5rem]'}`}
-                                                            title={tool.name}
-                                                        >
-                                                            <img
-                                                                src={tool.src}
-                                                                alt={tool.name}
-                                                                className="h-full w-auto object-contain"
-                                                            />
+                                                    <div className="mt-8 pt-6 border-t border-slate-100 pl-4">
+                                                        <div className="grid grid-cols-3 gap-4 mb-6">
+                                                            {project.results.kpis.map((kpi, k) => (
+                                                                <div key={k}>
+                                                                    <div className="text-xl font-black text-slate-900 mb-1">
+                                                                        {kpi.value}
+                                                                    </div>
+                                                                    <div className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">
+                                                                        {kpi.label}
+                                                                    </div>
+                                                                </div>
+                                                            ))}
                                                         </div>
-                                                    ))}
+
+                                                        <div className="flex flex-wrap gap-2">
+                                                            {project.tags.map((tag) => (
+                                                                <span
+                                                                    key={tag}
+                                                                    className="px-2.5 py-1 bg-slate-50 text-slate-500 text-[10px] font-semibold rounded-md border border-slate-200"
+                                                                >
+                                                                    {tag}
+                                                                </span>
+                                                            ))}
+                                                        </div>
+
+                                                        <div className="flex items-center gap-4 mt-4 pt-3 border-t border-dashed border-slate-100">
+                                                            <span className="text-[9px] font-bold text-slate-300 uppercase tracking-widest shrink-0">Built with</span>
+                                                            <div className="flex items-center gap-4">
+                                                                {project.tools.map((tool) => (
+                                                                    <div
+                                                                        key={tool.name}
+                                                                        className={`flex items-center justify-center ${toolSizeOverrides[tool.name] || 'h-7 max-w-[5.5rem]'}`}
+                                                                        title={tool.name}
+                                                                    >
+                                                                        <img
+                                                                            src={tool.src}
+                                                                            alt={tool.name}
+                                                                            className="h-full w-auto object-contain"
+                                                                        />
+                                                                    </div>
+                                                                ))}
+                                                            </div>
+                                                        </div>
+                                                    </div>
                                                 </div>
-                                            </div>
+                                            ))}
                                         </div>
-                                    </div>
-                                ))}
-                            </div>
-                        </div>
+                                    </motion.div>
+                                )}
+                            </AnimatePresence>
+                        </motion.div>
                     ))}
                 </div>
             </div>

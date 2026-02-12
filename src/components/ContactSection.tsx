@@ -1,6 +1,8 @@
 
 import { useState } from 'react';
+import { motion } from 'framer-motion';
 import { Mail, Linkedin, Send, CheckCircle, AlertCircle, Loader2 } from 'lucide-react';
+import MagneticButton from './MagneticButton';
 
 const CONTACT_EMAIL = 'Envercetin.work@gmail.com';
 const WEB3FORMS_KEY = import.meta.env.VITE_WEB3FORMS_KEY || '';
@@ -52,32 +54,56 @@ export default function ContactSection() {
     return (
         <section id="contact" className="py-20 bg-white border-t border-slate-100">
             <div className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
-                <h2 className="text-3xl font-bold text-slate-900 mb-6">Get in touch</h2>
-                <p className="text-lg text-slate-600 mb-10">
-                    Open to speaking about AI strategy, agentic systems and applied automation.
-                </p>
+                <motion.div
+                    initial={{ opacity: 0, y: 30 }}
+                    whileInView={{ opacity: 1, y: 0 }}
+                    viewport={{ once: true, margin: '-80px' }}
+                    transition={{ duration: 0.6, ease: [0.22, 1, 0.36, 1] }}
+                >
+                    <h2 className="text-3xl font-bold text-slate-900 mb-6">Get in touch</h2>
+                    <p className="text-lg text-slate-600 mb-10">
+                        Open to speaking about AI strategy, agentic systems and applied automation.
+                    </p>
+                </motion.div>
 
-                <div className="flex flex-col sm:flex-row justify-center gap-4 mb-12">
-                    <a
-                        href={`mailto:${CONTACT_EMAIL}`}
-                        className="inline-flex items-center justify-center px-6 py-3 bg-slate-900 text-white font-medium rounded-lg hover:bg-slate-800 transition-colors"
-                    >
-                        <Mail className="mr-2 w-4 h-4" />
-                        Email Me
-                    </a>
-                    <a
-                        href="https://linkedin.com/in/enver-cetin"
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="inline-flex items-center justify-center px-6 py-3 bg-white text-slate-700 border border-slate-200 font-medium rounded-lg hover:bg-slate-50 transition-colors"
-                    >
-                        <Linkedin className="mr-2 w-4 h-4" />
-                        LinkedIn
-                    </a>
-                </div>
+                <motion.div
+                    className="flex flex-col sm:flex-row justify-center gap-4 mb-12"
+                    initial={{ opacity: 0, y: 20 }}
+                    whileInView={{ opacity: 1, y: 0 }}
+                    viewport={{ once: true, margin: '-60px' }}
+                    transition={{ duration: 0.5, ease: [0.22, 1, 0.36, 1], delay: 0.1 }}
+                >
+                    <MagneticButton>
+                        <a
+                            href={`mailto:${CONTACT_EMAIL}`}
+                            className="inline-flex items-center justify-center px-6 py-3 bg-slate-900 text-white font-medium rounded-lg hover:bg-slate-800 transition-colors"
+                        >
+                            <Mail className="mr-2 w-4 h-4" />
+                            Email Me
+                        </a>
+                    </MagneticButton>
+                    <MagneticButton>
+                        <a
+                            href="https://linkedin.com/in/enver-cetin"
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="inline-flex items-center justify-center px-6 py-3 bg-white text-slate-700 border border-slate-200 font-medium rounded-lg hover:bg-slate-50 transition-colors"
+                        >
+                            <Linkedin className="mr-2 w-4 h-4" />
+                            LinkedIn
+                        </a>
+                    </MagneticButton>
+                </motion.div>
 
                 {/* Web3Forms-powered contact form */}
-                <div className="bg-slate-50 p-8 rounded-2xl border border-slate-100 text-left">
+                <motion.div
+                    className="bg-slate-50 p-8 rounded-2xl border border-slate-100 text-left"
+                    initial={{ opacity: 0, y: 40, rotateX: 2 }}
+                    whileInView={{ opacity: 1, y: 0, rotateX: 0 }}
+                    viewport={{ once: true, margin: '-60px' }}
+                    transition={{ duration: 0.6, ease: [0.22, 1, 0.36, 1], delay: 0.15 }}
+                    style={{ perspective: 800 }}
+                >
                     <h3 className="text-sm font-semibold text-slate-900 uppercase tracking-wider mb-6">Send a quick message</h3>
                     <form className="space-y-4" onSubmit={handleSubmit}>
                         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -157,7 +183,7 @@ export default function ContactSection() {
                             )}
                         </button>
                     </form>
-                </div>
+                </motion.div>
 
                 <footer className="mt-20 text-sm text-slate-400">
                     © {new Date().getFullYear()} Enver Cetin. Built with React & Tailwind.

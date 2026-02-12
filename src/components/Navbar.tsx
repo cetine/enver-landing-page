@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { motion } from 'framer-motion';
 import { Menu, X } from 'lucide-react';
 import { cn } from '../lib/utils';
 
@@ -14,6 +15,7 @@ const navItems = [
 export default function Navbar() {
     const [isOpen, setIsOpen] = useState(false);
     const [scrolled, setScrolled] = useState(false);
+    const [hoveredItem, setHoveredItem] = useState<string | null>(null);
 
     useEffect(() => {
         const handleScroll = () => {
@@ -34,14 +36,32 @@ export default function Navbar() {
                 </a>
 
                 {/* Desktop Nav */}
-                <div className="hidden md:flex space-x-8">
+                <div
+                    className="hidden md:flex space-x-8"
+                    onMouseLeave={() => setHoveredItem(null)}
+                >
                     {navItems.map((item) => (
                         <a
                             key={item.label}
                             href={item.href}
-                            className="text-sm font-medium text-slate-600 hover:text-slate-900 transition-colors"
+                            className="relative text-sm font-medium text-slate-600 hover:text-slate-900 transition-colors py-1"
+                            onMouseEnter={() => setHoveredItem(item.label)}
                         >
                             {item.label}
+                            {hoveredItem === item.label && (
+                                <motion.div
+                                    className="absolute -bottom-0.5 left-0 right-0 h-[2px] rounded-full"
+                                    style={{
+                                        background: 'linear-gradient(90deg, #7c3aed, #2563eb)',
+                                    }}
+                                    layoutId="nav-underline"
+                                    transition={{
+                                        type: 'spring',
+                                        stiffness: 350,
+                                        damping: 30,
+                                    }}
+                                />
+                            )}
                         </a>
                     ))}
                 </div>

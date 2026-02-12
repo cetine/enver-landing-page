@@ -9,3 +9,8 @@
     @apply bg-slate-50 text-slate-900 antialiased;
   }
 }
+
+.custom-cursor-active,
+.custom-cursor-active * {
+  cursor: none !important;
+}

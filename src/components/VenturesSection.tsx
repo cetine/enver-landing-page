@@ -13,6 +13,7 @@ import {
     BadgeEuro,
 } from 'lucide-react';
 import { cn } from '../lib/utils';
+import MagneticButton from './MagneticButton';
 
 // ── AI Council members ──────────────────────────────────────────────
 const aiCouncil = [
@@ -316,7 +317,6 @@ export default function VenturesSection() {
                 'AI-powered products by Enver Cetin. Featuring VertragsKlar — German contract analysis with an AI Council framework.'
             );
         }
-        window.scrollTo(0, 0);
         return () => {
             document.title = 'Enver Cetin — AI Leader & Architect';
         };
@@ -459,24 +459,28 @@ export default function VenturesSection() {
 
                             {/* CTAs */}
                             <div className="flex flex-col sm:flex-row gap-3 pt-2">
-                                <a
-                                    href="https://vertragsklar.de"
-                                    target="_blank"
-                                    rel="noopener noreferrer"
-                                    className="inline-flex items-center justify-center px-7 py-3 bg-blue-500 text-white font-semibold text-sm rounded-xl hover:bg-blue-400 transition-all duration-200 shadow-lg shadow-blue-500/25 hover:shadow-blue-400/35 hover:-translate-y-0.5 active:translate-y-0"
-                                >
-                                    Try VertragsKlar
-                                    <ExternalLink className="ml-2 w-3.5 h-3.5" />
-                                </a>
-                                <a
-                                    href="https://vertragsklar.de"
-                                    target="_blank"
-                                    rel="noopener noreferrer"
-                                    className="inline-flex items-center justify-center px-7 py-3 bg-white/[0.04] text-slate-300 font-medium text-sm rounded-xl border border-white/[0.08] hover:bg-white/[0.08] hover:text-white transition-all duration-200"
-                                >
-                                    Learn More
-                                    <ArrowRight className="ml-2 w-3.5 h-3.5" />
-                                </a>
+                                <MagneticButton>
+                                    <a
+                                        href="https://vertragsklar.de"
+                                        target="_blank"
+                                        rel="noopener noreferrer"
+                                        className="inline-flex items-center justify-center px-7 py-3 bg-blue-500 text-white font-semibold text-sm rounded-xl hover:bg-blue-400 transition-all duration-200 shadow-lg shadow-blue-500/25 hover:shadow-blue-400/35 hover:-translate-y-0.5 active:translate-y-0"
+                                    >
+                                        Try VertragsKlar
+                                        <ExternalLink className="ml-2 w-3.5 h-3.5" />
+                                    </a>
+                                </MagneticButton>
+                                <MagneticButton>
+                                    <a
+                                        href="https://vertragsklar.de"
+                                        target="_blank"
+                                        rel="noopener noreferrer"
+                                        className="inline-flex items-center justify-center px-7 py-3 bg-white/[0.04] text-slate-300 font-medium text-sm rounded-xl border border-white/[0.08] hover:bg-white/[0.08] hover:text-white transition-all duration-200"
+                                    >
+                                        Learn More
+                                        <ArrowRight className="ml-2 w-3.5 h-3.5" />
+                                    </a>
+                                </MagneticButton>
                             </div>
                         </div>
 

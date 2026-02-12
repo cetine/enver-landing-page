@@ -11,7 +11,6 @@ export default function Labs() {
         if (meta) {
             meta.setAttribute('content', 'Labs — Coming soon. Experiments in AI, automation, and applied intelligence by Enver Cetin.');
         }
-        window.scrollTo(0, 0);
         return () => {
             document.title = 'Enver Cetin — AI Leader & Architect';
         };
