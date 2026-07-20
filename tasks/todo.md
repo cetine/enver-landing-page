@@ -11,7 +11,7 @@ Spec: docs/superpowers/specs/2026-07-20-website-redesign-design.md
 - [x] Task 6: Writing-Lib (TDD)
 - [x] Task 7: SEO-Lib (TDD)
 - [x] Task 8: Base-Layout, Nav, Footer, Theme
-- [ ] Task 9: Home (EN+DE)
+- [x] Task 9: Home (EN+DE)
 - [ ] Task 10: Work (EN+DE)
 - [ ] Task 11: Writing Index + Posts (EN+DE)
 - [ ] Task 12: Ventures + About (EN+DE)

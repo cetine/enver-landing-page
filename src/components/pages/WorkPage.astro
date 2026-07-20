@@ -1,0 +1,50 @@
+---
+import { getCollection, render } from 'astro:content';
+import Base from '../../layouts/Base.astro';
+import Eyebrow from '../Eyebrow.astro';
+import { t, type Locale } from '../../i18n/routes';
+import { filterLocale } from '../../lib/writing';
+
+interface Props { locale: Locale }
+const { locale } = Astro.props;
+const tr = t(locale);
+const entries = filterLocale(await getCollection('work'), locale).sort((a, b) => a.data.order - b.data.order);
+const rendered = await Promise.all(entries.map(async (e) => ({ e, C: (await render(e)).Content })));
+const byIndustry: { industry: string; items: typeof rendered }[] = [];
+for (const r of rendered) {
+  const last = byIndustry[byIndustry.length - 1];
+  if (last && last.industry === r.e.data.industry) last.items.push(r);
+  else byIndustry.push({ industry: r.e.data.industry, items: [r] });
+}
+const title = locale === 'de' ? 'Projekte' : 'Work';
+const description = locale === 'de'
+  ? 'Anonymisierte Engagement-Muster aus realen AI-Programmen: BFSI, Fertigung, Logistik, Bau, Enterprise-Strategie.'
+  : 'Anonymized engagement patterns from real AI programs: BFSI, manufacturing, logistics, construction, enterprise strategy.';
+---
+<Base title={title} description={description}>
+  <header class="py-14">
+    <h1 class="font-serif text-4xl font-light">{title}</h1>
+    <p class="mt-3 max-w-[46em] text-[14px] text-muted">{tr('work.disclaimer')}</p>
+  </header>
+  {byIndustry.map((group) => (
+    <section class="border-t border-line py-10">
+      <h2 class="font-mono text-[12px] tracking-[0.18em] uppercase text-muted">{group.industry}</h2>
+      {group.items.map(({ e, C }) => (
+        <article id={e.id.split('/')[1]} class="mt-8 scroll-mt-24">
+          <Eyebrow>{e.data.workType}</Eyebrow>
+          <h3 class="mt-2 font-serif text-2xl font-light">{e.data.title}</h3>
+          <dl class="mt-4 flex flex-wrap gap-x-10 gap-y-2">
+            {e.data.kpis.map((k) => (
+              <div>
+                <dd class="font-mono text-lg font-medium">{k.value}</dd>
+                <dt class="text-[12px] text-muted">{k.label}</dt>
+              </div>
+            ))}
+          </dl>
+          <div class="prose-col mt-4"><C /></div>
+          {e.data.tags.length > 0 && <p class="mt-2 font-mono text-[11px] tracking-wide text-muted">{e.data.tags.join(' · ')}</p>}
+        </article>
+      ))}
+    </section>
+  ))}
+</Base>
