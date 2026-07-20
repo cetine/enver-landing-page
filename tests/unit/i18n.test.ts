@@ -1,5 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import { getLocaleFromPath, localizePath, alternatePath, t } from '../../src/i18n/routes';
+import { ui } from '../../src/i18n/ui';
 
 describe('getLocaleFromPath', () => {
   it('detects de prefix', () => {
@@ -31,8 +32,14 @@ describe('alternatePath', () => {
 });
 
 describe('t', () => {
-  it('returns translated ui strings and falls back to en', () => {
+  it('returns translated ui strings per locale', () => {
     expect(t('de')('nav.work')).toBe('Projekte');
     expect(t('en')('nav.work')).toBe('Work');
+  });
+  it('falls back to en for keys missing in de, and to the key when missing everywhere', () => {
+    Object.assign(ui.en as Record<string, string>, { 'test.fallback': 'Fallback works' });
+    expect(t('de')('test.fallback')).toBe('Fallback works');
+    delete (ui.en as Record<string, string>)['test.fallback'];
+    expect(t('de')('does.not.exist')).toBe('does.not.exist');
   });
 });
