@@ -16,7 +16,7 @@ const slug = entry.id.split('/')[1];
 const url = `https://envercetin.de${localizePath(`/writing/${slug}`, locale)}`;
 const toc = headings.filter((h) => h.depth === 2);
 ---
-<Base title={entry.data.title} description={entry.data.description}
+<Base title={entry.data.title} description={entry.data.description} ogType="article"
   jsonLd={[articleJsonLd({ title: entry.data.title, description: entry.data.description, date: entry.data.date, url, lang: locale })]}>
   <article class="py-14 lg:grid lg:grid-cols-[150px_minmax(0,40em)_1fr] lg:gap-10">
     <aside class="mb-6 font-mono text-[12px] text-muted lg:mb-0">
@@ -36,7 +36,7 @@ const toc = headings.filter((h) => h.depth === 2);
     {toc.length >= 3 && (
       <nav class="hidden lg:block" aria-label="Table of contents" data-pagefind-ignore>
         <div class="sticky top-24 text-[13px]">
-          <p class="font-mono text-[11px] uppercase tracking-[0.15em] text-muted">Contents</p>
+          <p class="font-mono text-[11px] uppercase tracking-[0.15em] text-muted">{tr('chrome.toc')}</p>
           <ul class="mt-3 space-y-2">
             {toc.map((h) => <li><a href={`#${h.slug}`} class="text-muted hover:text-fg">{h.text}</a></li>)}
           </ul>

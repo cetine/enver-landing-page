@@ -119,11 +119,11 @@ const description = locale === 'de'
       ))}
     </ul>
   </section>
-</Base>
 
-<script is:inline>
-  // Legacy hash routes from the old SPA
-  const map = { '#ventures': '/ventures', '#labs': '/', '#projects': '/work', '#contact': '/contact', '#tech-map': '/about' };
-  const target = map[location.hash];
-  if (target && location.pathname === '/') location.replace(target);
-</script>
+  <script is:inline>
+    // Legacy hash routes from the old SPA
+    const map = { '#ventures': '/ventures', '#labs': '/', '#projects': '/work', '#contact': '/contact', '#tech-map': '/about' };
+    const target = map[location.hash];
+    if (target && location.pathname === '/') location.replace(target);
+  </script>
+</Base>
