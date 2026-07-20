@@ -1,0 +1,11 @@
+---
+import { getCollection } from 'astro:content';
+import WritingPostLayout from '../../components/pages/WritingPostLayout.astro';
+
+export async function getStaticPaths() {
+  const entries = await getCollection('writing', ({ id, data }) => id.startsWith('en/') && data.type === 'post' && !data.draft);
+  return entries.map((entry) => ({ params: { slug: entry.id.split('/')[1] }, props: { entry } }));
+}
+const { entry } = Astro.props;
+---
+<WritingPostLayout entry={entry} locale="en" />
