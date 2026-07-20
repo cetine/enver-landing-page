@@ -29,3 +29,4 @@ playwright-report
 *.sln
 *.sw?
 .superpowers/
+.vercel
