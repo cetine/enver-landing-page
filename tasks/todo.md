@@ -21,5 +21,5 @@ Spec: docs/superpowers/specs/2026-07-20-website-redesign-design.md
 - [x] Task 16: RSS, robots, llms.txt
 - [x] Task 17: Playwright-Verifikation
 - [x] Task 18: Performance-Budget-Check
-- [ ] Task 19: Vercel-Preview — ENVER-REVIEW (Inhalte, Impressum, Mail, Artikel-Links)
+- [~] Task 19: Vercel-Preview — ENVER-REVIEW läuft
 - [ ] Task 20: Go-live — Merge, Domain envercetin.de, Analytics
