@@ -20,4 +20,4 @@ Aufgebaut wurde eine prädiktive Dispatch-Plattform, die Echtzeit-Telematik, Wet
 
 ## Ergebnis
 
-Die Termintreue stieg in den mittleren Neunzigerbereich, die Leerkilometer sanken um rund ein Drittel, und das Netzwerk spart heute über anderthalb Millionen Euro pro Jahr.
+Die Termintreue stieg in den mittleren Neunzigerbereich, die Leerkilometer sanken um rund 30 Prozent, und das Netzwerk spart heute über anderthalb Millionen Euro pro Jahr.

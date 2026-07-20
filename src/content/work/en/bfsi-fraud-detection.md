@@ -20,4 +20,4 @@ Replaced static rules with an adaptive detection network: streaming feature pipe
 
 ## Impact
 
-Investigators now start from ranked, pre-summarized cases instead of raw alerts. False positives dropped by an order of magnitude class, materially more novel fraud is caught, and triage time per case collapsed.
+Investigators now start from ranked, pre-summarized cases instead of raw alerts. False positives fell by roughly three quarters, materially more novel fraud is caught, and triage time per case collapsed.

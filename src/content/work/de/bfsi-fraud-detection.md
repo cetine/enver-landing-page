@@ -12,7 +12,7 @@ order: 1
 
 ## Ausgangslage
 
-Die regelbasierte Fraud-Engine markierte überwiegend legitime Transaktionen — die Ermittler verbrachten ihre Tage mit dem Triagieren von Rauschen, während neuartige Betrugsmuster durchrutschten. Die Verluste stiegen trotz wachsendem Team.
+Die regelbasierte Fraud-Engine markierte überwiegend legitime Transaktionen — die Ermittler verbrachten ihre Tage mit dem Triagieren von Rauschen, während neuartige Betrugsmuster durchrutschten. Die Verluste stiegen trotz wachsenden Teams.
 
 ## Vorgehen
 
@@ -20,4 +20,4 @@ Statische Regeln wurden durch ein adaptives Erkennungsnetz ersetzt: Streaming-Fe
 
 ## Ergebnis
 
-Ermittler starten heute mit priorisierten, vorzusammengefassten Fällen statt roher Alerts. False Positives sanken um eine Größenordnung, deutlich mehr neuartiger Betrug wird erkannt, die Triagezeit pro Fall bricht ein.
+Ermittler starten heute mit priorisierten, vorzusammengefassten Fällen statt roher Alerts. False Positives sanken um rund drei Viertel, deutlich mehr neuartiger Betrug wird erkannt, die Triagezeit pro Fall bricht ein.

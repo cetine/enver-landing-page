@@ -20,4 +20,4 @@ Built a predictive dispatch platform that combines real-time telematics, weather
 
 ## Impact
 
-On-time delivery climbed into the mid-nineties, empty miles dropped by roughly a third, and the network now saves over one and a half million euros a year.
+On-time delivery climbed into the mid-nineties, empty miles dropped by roughly 30 percent, and the network now saves over one and a half million euros a year.
