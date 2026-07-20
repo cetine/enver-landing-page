@@ -47,6 +47,9 @@ html {
 .prose-col { max-width: 40em; }
 .prose-col h2 { font-family: var(--font-serif); font-weight: 300; font-size: 1.6rem; margin: 2.2rem 0 0.8rem; }
 .prose-col h3 { font-weight: 600; font-size: 1.1rem; margin: 1.8rem 0 0.6rem; }
+/* /work case-body sections render as h4 (demoted from h2 for a valid outline)
+   but must look identical to the serif h2 used elsewhere in the prose column. */
+.prose-col h4 { font-family: var(--font-serif); font-weight: 300; font-size: 1.6rem; margin: 2.2rem 0 0.8rem; }
 .prose-col p { line-height: 1.7; margin: 0 0 1.1rem; }
 .prose-col a { text-decoration: underline; text-underline-offset: 3px; text-decoration-color: var(--accent); }
 .prose-col ul, .prose-col ol { line-height: 1.7; margin: 0 0 1.1rem 1.2rem; }

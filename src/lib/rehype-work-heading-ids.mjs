@@ -45,6 +45,10 @@ export default function rehypeWorkHeadingIds() {
       node.properties = node.properties || {};
       const slug = slugify(textOf(node));
       node.properties.id = slug ? `${base}-${slug}` : base;
+      // Demote case-body `h2` to `h4` so the single /work page keeps a valid
+      // outline: h1 (page) > h2 (industry) > h3 (case) > h4 (case sections).
+      // The id is set above, so the anchor keeps working after the rewrite.
+      if (node.tagName === 'h2') node.tagName = 'h4';
     });
   };
 }
