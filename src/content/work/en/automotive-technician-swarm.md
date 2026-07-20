@@ -1,7 +1,7 @@
 ---
 title: Technician Support Agentic Swarm
 industry: Automotive & Manufacturing
-workType: Engineering
+workType: Architecture
 kpis:
   - { label: 'Value created', value: '>£1 m' }
   - { label: 'Repair SLA', value: '<1 hr' }
