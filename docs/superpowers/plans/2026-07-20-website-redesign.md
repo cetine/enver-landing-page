@@ -666,7 +666,16 @@ export const profile = {
 export { careerHighlights, volunteerRoles } from '../../legacy/profile';
 ```
 
-- [ ] **Step 6: Verify schemas via build**
+- [ ] **Step 6: Restrict type-checking of legacy files**
+
+In `tsconfig.json`, replace the include entry `"legacy/**/*"` with `"legacy/profile.ts"` — the parked `.tsx` files import deleted dependencies (framer-motion, lucide-react, removed sibling modules) and break `npm run check`; only `legacy/profile.ts` is consumed (re-exported by `src/data/profile.ts`) and must stay type-checked.
+
+```bash
+npm run check
+```
+Expected: 0 errors.
+
+- [ ] **Step 7: Verify schemas via build**
 
 ```bash
 mkdir -p src/content/writing/en src/content/writing/de
@@ -674,7 +683,7 @@ npm run build
 ```
 Expected: build succeeds; no zod schema errors. (Writing collection empty is fine.)
 
-- [ ] **Step 7: Commit**
+- [ ] **Step 8: Commit**
 
 ```bash
 git add -A && git commit -m "feat: content collections with 6 curated cases (en/de), ventures, profile"

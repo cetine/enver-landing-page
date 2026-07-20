@@ -3,7 +3,7 @@
 Plan: docs/superpowers/plans/2026-07-20-website-redesign.md
 Spec: docs/superpowers/specs/2026-07-20-website-redesign-design.md
 
-- [ ] Task 1: Baseline-Commit + Astro-Scaffold (Branch redesign/astro)
+- [x] Task 1: Baseline-Commit + Astro-Scaffold (Branch redesign/astro)
 - [ ] Task 2: Design-Tokens, Fonts, global.css
 - [ ] Task 3: Monogramm, Favicon, OG-Bild
 - [ ] Task 4: i18n-Helfer (TDD)
