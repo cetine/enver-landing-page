@@ -51,8 +51,8 @@ const dot = (cx, cy, rad, fill, stroke = 'none', w = 0) =>
   `<circle cx="${r(cx)}" cy="${r(cy)}" r="${r(rad)}" fill="${fill}"` +
   `${stroke !== 'none' ? ` stroke="${stroke}" stroke-width="${w}"` : ''}/>`;
 
-const poly = (pts, stroke, w, op = 1) =>
-  `<polygon points="${pts.map((p) => `${r(p[0])},${r(p[1])}`).join(' ')}" fill="none" stroke="${stroke}" stroke-width="${w}"` +
+const poly = (pts, stroke, w, op = 1, fill = 'none') =>
+  `<polygon points="${pts.map((p) => `${r(p[0])},${r(p[1])}`).join(' ')}" fill="${fill}" stroke="${stroke}" stroke-width="${w}"` +
   `${op !== 1 ? ` stroke-opacity="${op}"` : ''} stroke-linejoin="round"/>`;
 
 const pline = (pts, stroke, w, op = 1, dash = '') =>
@@ -147,43 +147,53 @@ function plate01() {
 // ===========================================================================
 function plate02() {
   const parts = [];
-  const baseY = 1150;
-  const s = 280;
+  const baseY = 1180; // conveyor upper line; boxes' front-bottom vertex sits here
+  // Non-cubic box: a cube is degenerate in this isometry (back-top projects onto
+  // front-bottom → flat hexagon). Taller-than-footprint reads as a solid machine,
+  // sharing the exact projection language of plate 04.
+  const bw = 240;
+  const bd = 240;
+  const bh = 340;
   const count = 6;
   const emeraldIdx = 3;
   const xStart = 520;
-  const xEnd = 3280;
+  const xEnd = 3320;
   const step = (xEnd - xStart) / (count - 1);
 
-  // conveyor baseline (two parallel lines)
-  parts.push(line(300, baseY, 3540, baseY, GRAY, W_MID, 0.5));
-  parts.push(line(300, baseY + 34, 3540, baseY + 34, GRAY, W_THIN, 0.3));
+  // conveyor: double baseline (full composition width) + roller ticks every 96px.
+  // Drawn first; opaque box faces mask it so the belt reads as running behind them.
+  parts.push(line(260, baseY, 3580, baseY, GRAY, W_MID, 0.5));
+  parts.push(line(260, baseY + 24, 3580, baseY + 24, GRAY, W_THIN, 0.3));
+  for (let x = Math.ceil(260 / CELL) * CELL; x <= 3580; x += CELL) {
+    parts.push(line(x, baseY, x, baseY + 24, GRAY, W_THIN, 0.4));
+  }
 
   for (let i = 0; i < count; i++) {
     const o = { x: xStart + i * step, y: baseY };
-    const stroke = i === emeraldIdx ? EMERALD : GRAY;
-    const w = i === emeraldIdx ? W_BOLD : W_MID;
-    const op = i === emeraldIdx ? 1 : 0.6;
+    const em = i === emeraldIdx;
+    const stroke = em ? EMERALD : GRAY;
+    const w = em ? W_BOLD : W_MID;
+    const op = em ? 1 : 0.6;
+    const dw = em ? W_MID : W_THIN; // detail weight
 
-    const p0 = P(o, 0, 0, 0);
-    const p1 = P(o, s, 0, 0);
-    const p2 = P(o, 0, s, 0);
-    const p4 = P(o, 0, 0, s);
-    const p5 = P(o, s, 0, s);
-    const p6 = P(o, 0, s, s);
-    const p7 = P(o, s, s, s);
+    const b0 = P(o, 0, 0, 0); // front-bottom (on the belt line)
+    const b1 = P(o, bw, 0, 0);
+    const b2 = P(o, 0, bd, 0);
+    const t0 = P(o, 0, 0, bh);
+    const t1 = P(o, bw, 0, bh);
+    const t2 = P(o, 0, bd, bh);
+    const t3 = P(o, bw, bd, bh);
 
-    parts.push(poly([p4, p5, p7, p6], stroke, w, op)); // top
-    parts.push(poly([p0, p1, p5, p4], stroke, w, op)); // right
-    parts.push(poly([p0, p2, p6, p4], stroke, w, op)); // left
+    // closed box: opaque faces (mask grid + belt behind), all edges drawn
+    parts.push(poly([b0, b2, t2, t0], stroke, w, op, BG)); // left side face
+    parts.push(poly([b0, b1, t1, t0], stroke, w, op, BG)); // right side face (front)
+    parts.push(poly([t0, t1, t3, t2], stroke, w, op, BG)); // top face
 
-    // detail strokes — inset top rhombus + two front division lines
-    const c = [(p4[0] + p7[0]) / 2, (p4[1] + p7[1]) / 2];
-    const ins = (p) => [c[0] + (p[0] - c[0]) * 0.5, c[1] + (p[1] - c[1]) * 0.5];
-    parts.push(poly([ins(p4), ins(p5), ins(p7), ins(p6)], stroke, W_THIN, op * 0.8));
-    for (const f of [0.33, 0.66]) {
-      parts.push(line(...P(o, s * f, 0, 0), ...P(o, s * f, 0, s), stroke, W_THIN, op * 0.7));
-    }
+    // interior detail on the front (right) face — dial + panel line = "machine"
+    const face = (u, v) => P(o, bw * u, 0, bh * v);
+    const dc = face(0.5, 0.56);
+    parts.push(circle(dc[0], dc[1], 40, stroke, dw, op * 0.9));
+    parts.push(line(...face(0.24, 0.3), ...face(0.76, 0.3), stroke, dw, op * 0.85));
   }
   return parts.join('\n');
 }
