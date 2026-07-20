@@ -1,0 +1,88 @@
+---
+import Base from '../../layouts/Base.astro';
+import { t, type Locale } from '../../i18n/routes';
+import { profile } from '../../data/profile';
+interface Props { locale: Locale }
+const { locale } = Astro.props;
+const tr = t(locale);
+const key = import.meta.env.PUBLIC_WEB3FORMS_KEY;
+const intents = locale === 'de'
+  ? [{ id: 'speaking', label: 'Speaking / Workshop' }, { id: 'advisory', label: 'Advisory / Sparring' }, { id: 'enterprise', label: 'Enterprise-Projekt' }, { id: 'other', label: 'Sonstiges' }]
+  : [{ id: 'speaking', label: 'Speaking / workshop' }, { id: 'advisory', label: 'Advisory / sparring' }, { id: 'enterprise', label: 'Enterprise project' }, { id: 'other', label: 'Other' }];
+const title = tr('contact.title');
+const description = locale === 'de'
+  ? 'Kontakt zu Enver Cetin — Speaking-Anfragen, Advisory, Enterprise-AI-Projekte.'
+  : 'Contact Enver Cetin — speaking inquiries, advisory, enterprise AI projects.';
+---
+<Base title={title} description={description}>
+  <header class="py-14">
+    <h1 class="font-serif text-4xl font-light">{title}</h1>
+    <p class="mt-3 max-w-[42em] text-[14px] text-muted">
+      {locale === 'de'
+        ? 'Kein Formular-Zwang: eine Mail an '
+        : 'No form required: an email to '}
+      <a href={`mailto:${profile.email}`} class="underline underline-offset-4 decoration-accent">{profile.email}</a>
+      {locale === 'de' ? ' oder eine Nachricht auf ' : ' or a message on '}
+      <a href={profile.linkedin} rel="noopener" class="underline underline-offset-4 decoration-accent">LinkedIn</a>
+      {locale === 'de' ? ' funktioniert genauso.' : ' works just as well.'}
+    </p>
+  </header>
+  <form id="contact-form" class="max-w-[42em] border-t border-line py-10" novalidate>
+    <input type="hidden" name="access_key" value={key} />
+    <fieldset class="flex flex-wrap gap-2">
+      <legend class="mb-2 font-mono text-[11px] uppercase tracking-[0.15em] text-muted">{locale === 'de' ? 'Worum geht es?' : 'What is it about?'}</legend>
+      {intents.map((i, idx) => (
+        <label class="cursor-pointer rounded-full border border-line px-3 py-1 text-[13px] has-checked:border-accent has-checked:text-accent">
+          <input type="radio" name="intent" value={i.id} checked={idx === 3} class="sr-only" />{i.label}
+        </label>
+      ))}
+    </fieldset>
+    <div class="mt-6 grid gap-4 sm:grid-cols-2">
+      <label class="block text-[13px]">Name
+        <input name="name" type="text" required class="mt-1 w-full rounded border border-line bg-transparent px-3 py-2 text-[14px] focus:border-accent focus:outline-none" />
+      </label>
+      <label class="block text-[13px]">Email
+        <input name="email" type="email" required class="mt-1 w-full rounded border border-line bg-transparent px-3 py-2 text-[14px] focus:border-accent focus:outline-none" />
+      </label>
+    </div>
+    <label class="mt-4 block text-[13px]">{locale === 'de' ? 'Nachricht' : 'Message'}
+      <textarea name="message" rows="5" required class="mt-1 w-full rounded border border-line bg-transparent px-3 py-2 text-[14px] focus:border-accent focus:outline-none"></textarea>
+    </label>
+    <button type="submit" class="mt-5 rounded border border-fg px-5 py-2 text-[14px] hover:bg-fg hover:text-bg">
+      {locale === 'de' ? 'Senden' : 'Send'}
+    </button>
+    <p id="form-status" role="status" class="mt-3 hidden text-[13px]"></p>
+  </form>
+</Base>
+<script>
+  import { validateContact } from '../../lib/validate';
+  const form = document.getElementById('contact-form') as HTMLFormElement | null;
+  const status = document.getElementById('form-status')!;
+  const de = document.documentElement.lang === 'de';
+  // Preselect intent from ?intent=
+  const intent = new URLSearchParams(location.search).get('intent');
+  if (intent) form?.querySelector<HTMLInputElement>(`input[name="intent"][value="${intent}"]`)?.click();
+  form?.addEventListener('submit', async (ev) => {
+    ev.preventDefault();
+    const fd = new FormData(form);
+    const check = validateContact({ name: String(fd.get('name') ?? ''), email: String(fd.get('email') ?? ''), message: String(fd.get('message') ?? '') });
+    status.classList.remove('hidden');
+    if (!check.ok) {
+      status.textContent = de ? 'Bitte Name, gültige E-Mail und Nachricht angeben.' : 'Please provide name, a valid email, and a message.';
+      status.className = 'mt-3 text-[13px] text-accent';
+      return;
+    }
+    fd.set('subject', `envercetin.de contact — ${fd.get('intent')}`);
+    status.textContent = de ? 'Senden…' : 'Sending…';
+    try {
+      const res = await fetch('https://api.web3forms.com/submit', { method: 'POST', body: fd });
+      if (!res.ok) throw new Error(String(res.status));
+      form.reset();
+      status.textContent = de ? 'Danke — ich melde mich.' : 'Thanks — I will get back to you.';
+    } catch {
+      status.textContent = de
+        ? 'Senden fehlgeschlagen — bitte direkt per Mail schreiben.'
+        : 'Sending failed — please email me directly.';
+    }
+  });
+</script>
