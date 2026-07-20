@@ -1,0 +1,11 @@
+# Enver Cetin — envercetin.de
+
+Director AI at Ciklum (Munich). Enterprise AI strategy, agentic systems, applied automation.
+
+## Pages
+- /about: bio, expertise, career
+- /work: anonymized engagement patterns from real AI programs
+- /writing: articles and publications
+- /ventures: shipped products (Vertragsklar, Nebenkosten-Ninja)
+- /contact: speaking, advisory and enterprise inquiries
+German versions under /de/.

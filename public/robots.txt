@@ -1,4 +1,3 @@
 User-agent: *
 Allow: /
-
-Sitemap: https://envercetin.com/sitemap.xml
+Sitemap: https://envercetin.de/sitemap-index.xml
