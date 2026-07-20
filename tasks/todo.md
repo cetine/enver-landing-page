@@ -13,11 +13,11 @@ Spec: docs/superpowers/specs/2026-07-20-website-redesign-design.md
 - [x] Task 8: Base-Layout, Nav, Footer, Theme
 - [x] Task 9: Home (EN+DE)
 - [x] Task 10: Work (EN+DE)
-- [ ] Task 11: Writing Index + Posts (EN+DE)
-- [ ] Task 12: Ventures + About (EN+DE)
-- [ ] Task 13: Contact + Formular
-- [ ] Task 14: Impressum/Datenschutz/404
-- [ ] Task 15: Suche (Pagefind + ⌘K)
+- [x] Task 11: Writing Index + Posts (EN+DE)
+- [x] Task 12: Ventures + About (EN+DE)
+- [x] Task 13: Contact + Formular
+- [x] Task 14: Impressum/Datenschutz/404
+- [x] Task 15: Suche (Pagefind + ⌘K)
 - [ ] Task 16: RSS, robots, llms.txt
 - [ ] Task 17: Playwright-Verifikation
 - [ ] Task 18: Performance-Budget-Check

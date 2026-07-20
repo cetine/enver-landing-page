@@ -22,5 +22,14 @@ export default defineConfig({
       i18n: { defaultLocale: 'en', locales: { en: 'en', de: 'de' } },
     }),
   ],
-  vite: { plugins: [tailwindcss(), yaml()] },
+  vite: {
+    plugins: [tailwindcss(), yaml()],
+    build: {
+      rollupOptions: {
+        // Pagefind's bundle only exists after `pagefind --site dist` runs in
+        // postbuild; it is loaded at runtime, so keep Rollup from resolving it.
+        external: ['/pagefind/pagefind.js'],
+      },
+    },
+  },
 });
