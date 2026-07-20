@@ -8,9 +8,9 @@ Spec: docs/superpowers/specs/2026-07-20-website-redesign-design.md
 - [x] Task 3: Monogramm, Favicon, OG-Bild
 - [x] Task 4: i18n-Helfer (TDD)
 - [x] Task 5: Content Collections (6 Cases EN/DE, Ventures, Profil)
-- [ ] Task 6: Writing-Lib (TDD)
-- [ ] Task 7: SEO-Lib (TDD)
-- [ ] Task 8: Base-Layout, Nav, Footer, Theme
+- [x] Task 6: Writing-Lib (TDD)
+- [x] Task 7: SEO-Lib (TDD)
+- [x] Task 8: Base-Layout, Nav, Footer, Theme
 - [ ] Task 9: Home (EN+DE)
 - [ ] Task 10: Work (EN+DE)
 - [ ] Task 11: Writing Index + Posts (EN+DE)
