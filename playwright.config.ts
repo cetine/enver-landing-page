@@ -5,7 +5,7 @@ export default defineConfig({
   webServer: {
     command: 'npm run preview',
     port: 4321,
-    reuseExistingServer: true,
+    reuseExistingServer: !process.env.CI,
   },
   projects: [
     { name: 'mobile', use: { viewport: { width: 390, height: 844 } } },
