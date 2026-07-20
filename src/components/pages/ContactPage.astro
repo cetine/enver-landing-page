@@ -6,6 +6,7 @@ interface Props { locale: Locale }
 const { locale } = Astro.props;
 const tr = t(locale);
 const key = import.meta.env.PUBLIC_WEB3FORMS_KEY;
+if (!key) throw new Error('PUBLIC_WEB3FORMS_KEY not set — configure it in .env / Vercel env vars');
 const intents = locale === 'de'
   ? [{ id: 'speaking', label: 'Speaking / Workshop' }, { id: 'advisory', label: 'Advisory / Sparring' }, { id: 'enterprise', label: 'Enterprise-Projekt' }, { id: 'other', label: 'Sonstiges' }]
   : [{ id: 'speaking', label: 'Speaking / workshop' }, { id: 'advisory', label: 'Advisory / sparring' }, { id: 'enterprise', label: 'Enterprise project' }, { id: 'other', label: 'Other' }];
@@ -27,8 +28,9 @@ const description = locale === 'de'
       {locale === 'de' ? ' funktioniert genauso.' : ' works just as well.'}
     </p>
   </header>
-  <form id="contact-form" class="max-w-[42em] border-t border-line py-10" novalidate>
+  <form id="contact-form" action="https://api.web3forms.com/submit" method="POST" class="max-w-[42em] border-t border-line py-10" novalidate>
     <input type="hidden" name="access_key" value={key} />
+    <input type="checkbox" name="botcheck" class="hidden" style="display:none" tabindex="-1" aria-hidden="true" />
     <fieldset class="flex flex-wrap gap-2">
       <legend class="mb-2 font-mono text-[11px] uppercase tracking-[0.15em] text-muted">{locale === 'de' ? 'Worum geht es?' : 'What is it about?'}</legend>
       {intents.map((i, idx) => (

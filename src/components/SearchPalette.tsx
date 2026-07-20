@@ -16,6 +16,7 @@ export default function SearchPalette({ locale }: { locale: string }) {
     try {
       window.__pagefind = await import(/* @vite-ignore */ '/pagefind/pagefind.js');
       await window.__pagefind.options({ excerptLength: 20 });
+      setError(false);
       return window.__pagefind;
     } catch {
       setError(true);
@@ -42,10 +43,17 @@ export default function SearchPalette({ locale }: { locale: string }) {
       const pf = await ensurePagefind();
       if (!pf) return;
       const search = await pf.search(query);
-      const top = await Promise.all(search.results.slice(0, 8).map((r: any) => r.data()));
+      // Fetch a wider window, then filter by locale BEFORE slicing so a page of
+      // other-locale hits can't crowd out same-locale results (no lost backfill).
+      const datas = await Promise.all(search.results.slice(0, 24).map((r: any) => r.data()));
       if (!cancelled) {
-        setResults(top
-          .filter((d: any) => (de ? d.url.startsWith('/de/') || d.url === '/de' : !d.url.startsWith('/de')))
+        const inLocale = (d: any) => {
+          const isDe = d.url === '/de' || d.url.startsWith('/de/');
+          return de ? isDe : !isDe;
+        };
+        setResults(datas
+          .filter(inLocale)
+          .slice(0, 8)
           .map((d: any) => ({ url: d.url, title: d.meta?.title ?? d.url, excerpt: d.excerpt })));
       }
     })();
