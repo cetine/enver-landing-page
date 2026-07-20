@@ -27,17 +27,33 @@ test('theme toggle switches data-theme', async ({ page, viewport }) => {
   await expect(page.locator('html')).toHaveAttribute('data-theme', 'dark');
 });
 
-test('search opens and finds a case', async ({ page, viewport }) => {
-  test.skip(viewport!.width < 640, 'desktop palette');
-  await page.goto('/');
-  // Search palette is a client:idle island; its keydown listener attaches after
-  // hydration, so retry the shortcut until the palette actually opens.
+// Search palette is a client:idle island; its keydown listener attaches after
+// hydration, so retry the shortcut until the palette actually opens.
+async function openPalette(page: import('@playwright/test').Page) {
   await expect(async () => {
     await page.keyboard.press(process.platform === 'darwin' ? 'Meta+k' : 'Control+k');
     await expect(page.getByPlaceholder('Search…')).toBeVisible({ timeout: 500 });
   }).toPass({ timeout: 10_000 });
+}
+
+test('search opens and finds a case', async ({ page, viewport }) => {
+  test.skip(viewport!.width < 640, 'desktop palette');
+  await page.goto('/');
+  await openPalette(page);
   await page.getByPlaceholder('Search…').fill('fraud');
-  await expect(page.locator('a[href*="/work"]').first()).toBeVisible({ timeout: 5000 });
+  // Scope to the palette overlay (.fixed) so the nav's own /work link cannot
+  // satisfy this assertion — the match must be a real search result.
+  await expect(page.locator('.fixed a[href*="/work"]').first()).toBeVisible({ timeout: 5000 });
+});
+
+test('search shows no-results for a nonsense query', async ({ page, viewport }) => {
+  test.skip(viewport!.width < 640, 'desktop palette');
+  await page.goto('/');
+  await openPalette(page);
+  await page.getByPlaceholder('Search…').fill('zzzznotfound');
+  await expect(page.locator('.fixed').getByText('No results.')).toBeVisible({ timeout: 5000 });
+  // A query with zero hits must yield no palette result link.
+  await expect(page.locator('.fixed a[href*="/work"]')).toHaveCount(0);
 });
 
 test('language toggle keeps the page', async ({ page, viewport }) => {
