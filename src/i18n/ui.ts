@@ -1,0 +1,26 @@
+export const ui = {
+  en: {
+    'nav.work': 'Work', 'nav.writing': 'Writing', 'nav.ventures': 'Ventures',
+    'nav.about': 'About', 'nav.contact': 'Contact', 'nav.search': 'Search',
+    'home.paths.title': 'How we can work together',
+    'home.writing.title': 'Selected writing', 'home.work.title': 'Selected work',
+    'home.ventures.title': 'Ventures', 'home.router.title': 'What now?',
+    'writing.external': 'External', 'writing.readmore': 'Read on',
+    'work.disclaimer': 'Anonymized engagement patterns from real programs I led or architected. Figures are order-of-magnitude.',
+    'footer.imprint': 'Imprint', 'footer.privacy': 'Privacy',
+    'contact.title': 'Get in touch', 'meta.minRead': 'min read',
+    'notfound.title': 'Page not found', 'notfound.back': 'Back to start',
+  },
+  de: {
+    'nav.work': 'Projekte', 'nav.writing': 'Artikel', 'nav.ventures': 'Ventures',
+    'nav.about': 'Über mich', 'nav.contact': 'Kontakt', 'nav.search': 'Suche',
+    'home.paths.title': 'Wie wir zusammenarbeiten können',
+    'home.writing.title': 'Ausgewählte Artikel', 'home.work.title': 'Ausgewählte Projekte',
+    'home.ventures.title': 'Ventures', 'home.router.title': 'Was nun?',
+    'writing.external': 'Extern', 'writing.readmore': 'Weiterlesen auf',
+    'work.disclaimer': 'Anonymisierte Engagement-Muster aus realen Programmen, die ich geleitet oder architektiert habe. Zahlen sind Größenordnungen.',
+    'footer.imprint': 'Impressum', 'footer.privacy': 'Datenschutz',
+    'contact.title': 'Kontakt aufnehmen', 'meta.minRead': 'Min. Lesezeit',
+    'notfound.title': 'Seite nicht gefunden', 'notfound.back': 'Zur Startseite',
+  },
+} as const;
