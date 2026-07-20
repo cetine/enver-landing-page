@@ -9,6 +9,7 @@ const links = [
   { href: localizePath('/writing', locale), label: tr('nav.writing') },
   { href: localizePath('/ventures', locale), label: tr('nav.ventures') },
   { href: localizePath('/about', locale), label: tr('nav.about') },
+  { href: localizePath('/contact', locale), label: tr('nav.contact') },
 ];
 const isActive = (href: string) => pathname === href || pathname.startsWith(`${href}/`);
 ---
@@ -27,17 +28,17 @@ const isActive = (href: string) => pathname === href || pathname.startsWith(`${h
         <kbd class="rounded border border-line px-1.5 py-0.5 font-mono text-[10px]">⌘K</kbd>
       </button>
       <a href={alternatePath(pathname)} class="font-mono text-[11px] text-muted hover:text-fg" rel="alternate">{locale === 'en' ? 'DE' : 'EN'}</a>
-      <button id="theme-toggle" class="text-muted hover:text-fg" aria-label="Toggle theme">◐</button>
+      <button id="theme-toggle" class="text-muted hover:text-fg" aria-label={tr('chrome.theme')}>◐</button>
     </div>
     <div class="flex items-center gap-4 sm:hidden">
       <button id="open-search-mobile" class="text-muted" aria-label={tr('nav.search')}>⌕</button>
       <a href={alternatePath(pathname)} class="font-mono text-[11px] text-muted" rel="alternate">{locale === 'en' ? 'DE' : 'EN'}</a>
-      <button id="menu-toggle" class="text-fg" aria-expanded="false" aria-controls="mobile-menu" aria-label="Menu">☰</button>
+      <button id="menu-toggle" class="text-fg" aria-expanded="false" aria-controls="mobile-menu" aria-label={tr('chrome.menu')}>☰</button>
     </div>
   </nav>
   <div id="mobile-menu" class="hidden border-t border-line px-5 py-3 sm:hidden">
     {links.map((l) => <a href={l.href} class="block py-2 text-sm text-fg">{l.label}</a>)}
-    <button id="theme-toggle-mobile" class="py-2 text-sm text-muted">Light / Dark</button>
+    <button id="theme-toggle-mobile" class="py-2 text-sm text-muted">{tr('chrome.themeToggle')}</button>
   </div>
 </header>
 <script>
@@ -45,7 +46,7 @@ const isActive = (href: string) => pathname === href || pathname.startsWith(`${h
     const html = document.documentElement;
     const next = html.dataset.theme === 'dark' ? 'light' : 'dark';
     html.dataset.theme = next;
-    localStorage.setItem('theme', next);
+    try { localStorage.setItem('theme', next); } catch { /* storage blocked — theme still toggles for this session */ }
   };
   document.getElementById('theme-toggle')?.addEventListener('click', toggle);
   document.getElementById('theme-toggle-mobile')?.addEventListener('click', toggle);

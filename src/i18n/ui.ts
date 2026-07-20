@@ -10,6 +10,8 @@ export const ui = {
     'footer.imprint': 'Imprint', 'footer.privacy': 'Privacy',
     'contact.title': 'Get in touch', 'meta.minRead': 'min read',
     'notfound.title': 'Page not found', 'notfound.back': 'Back to start',
+    'chrome.skip': 'Skip to content', 'chrome.theme': 'Toggle theme',
+    'chrome.menu': 'Menu', 'chrome.toc': 'Contents', 'chrome.themeToggle': 'Light / Dark',
   },
   de: {
     'nav.work': 'Projekte', 'nav.writing': 'Artikel', 'nav.ventures': 'Ventures',
@@ -22,5 +24,7 @@ export const ui = {
     'footer.imprint': 'Impressum', 'footer.privacy': 'Datenschutz',
     'contact.title': 'Kontakt aufnehmen', 'meta.minRead': 'Min. Lesezeit',
     'notfound.title': 'Seite nicht gefunden', 'notfound.back': 'Zur Startseite',
+    'chrome.skip': 'Zum Inhalt springen', 'chrome.theme': 'Farbschema wechseln',
+    'chrome.menu': 'Menü', 'chrome.toc': 'Inhalt', 'chrome.themeToggle': 'Hell / Dunkel',
   },
 } as const;
