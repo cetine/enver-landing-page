@@ -41,7 +41,7 @@ const description = locale === 'de'
       <label class="block text-[13px]">Name
         <input name="name" type="text" required class="mt-1 w-full rounded border border-line bg-transparent px-3 py-2 text-[14px] focus:border-accent focus:outline-none" />
       </label>
-      <label class="block text-[13px]">Email
+      <label class="block text-[13px]">{locale === 'de' ? 'E-Mail' : 'Email'}
         <input name="email" type="email" required class="mt-1 w-full rounded border border-line bg-transparent px-3 py-2 text-[14px] focus:border-accent focus:outline-none" />
       </label>
     </div>
@@ -59,9 +59,13 @@ const description = locale === 'de'
   const form = document.getElementById('contact-form') as HTMLFormElement | null;
   const status = document.getElementById('form-status')!;
   const de = document.documentElement.lang === 'de';
-  // Preselect intent from ?intent=
+  // Preselect intent from ?intent= (whitelisted before any DOM use to avoid selector injection)
+  const allowed = ['speaking', 'advisory', 'enterprise', 'other'];
   const intent = new URLSearchParams(location.search).get('intent');
-  if (intent) form?.querySelector<HTMLInputElement>(`input[name="intent"][value="${intent}"]`)?.click();
+  if (intent && allowed.includes(intent)) {
+    form?.querySelector<HTMLInputElement>(`input[name="intent"][value="${intent}"]`)?.click();
+  }
+  const submitBtn = form?.querySelector<HTMLButtonElement>('button[type="submit"]');
   form?.addEventListener('submit', async (ev) => {
     ev.preventDefault();
     const fd = new FormData(form);
@@ -73,16 +77,22 @@ const description = locale === 'de'
       return;
     }
     fd.set('subject', `envercetin.de contact — ${fd.get('intent')}`);
+    if (submitBtn) submitBtn.disabled = true;
     status.textContent = de ? 'Senden…' : 'Sending…';
+    status.className = 'mt-3 text-[13px] text-muted';
     try {
       const res = await fetch('https://api.web3forms.com/submit', { method: 'POST', body: fd });
       if (!res.ok) throw new Error(String(res.status));
       form.reset();
       status.textContent = de ? 'Danke — ich melde mich.' : 'Thanks — I will get back to you.';
+      status.className = 'mt-3 text-[13px] text-muted';
     } catch {
       status.textContent = de
         ? 'Senden fehlgeschlagen — bitte direkt per Mail schreiben.'
         : 'Sending failed — please email me directly.';
+      status.className = 'mt-3 text-[13px] text-accent';
+    } finally {
+      if (submitBtn) submitBtn.disabled = false;
     }
   });
 </script>
