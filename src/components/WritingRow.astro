@@ -1,0 +1,21 @@
+---
+import { t, localizePath, type Locale } from '../i18n/routes';
+import type { WritingMeta } from '../lib/writing';
+interface Props { item: WritingMeta; locale: Locale }
+const { item, locale } = Astro.props;
+const tr = t(locale);
+const fmt = new Intl.DateTimeFormat(locale === 'de' ? 'de-DE' : 'en-US', { year: 'numeric', month: 'long', day: 'numeric' });
+const href = item.type === 'external' ? item.externalUrl! : localizePath(`/writing/${item.slug}`, locale);
+---
+<article class="py-3">
+  <a href={href} rel={item.type === 'external' ? 'noopener' : undefined} class="group block">
+    <h3 class="text-[17px] font-medium group-hover:underline underline-offset-4 decoration-accent">
+      {item.title}
+      {item.type === 'external' && <span class="ml-2 rounded-full bg-accent-soft px-2 py-0.5 font-mono text-[10px] tracking-wide text-accent align-middle">{item.source ?? tr('writing.external')} ↗</span>}
+    </h3>
+    <p class="mt-1 text-[13px] text-muted">
+      <time datetime={item.date.toISOString().slice(0, 10)}>{fmt.format(item.date)}</time>
+      {item.tags.length > 0 && <span> — {item.tags.join(', ')}</span>}
+    </p>
+  </a>
+</article>
