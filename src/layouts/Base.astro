@@ -13,8 +13,8 @@ import SearchPalette from '../components/SearchPalette';
 import { pageTitle, websiteJsonLd } from '../lib/seo';
 import { alternatePath, getLocaleFromPath, type Locale } from '../i18n/routes';
 
-interface Props { title?: string; description: string; jsonLd?: object[] }
-const { title, description, jsonLd = [] } = Astro.props;
+interface Props { title?: string; description: string; jsonLd?: object[]; noindex?: boolean }
+const { title, description, jsonLd = [], noindex = false } = Astro.props;
 const pathname = Astro.url.pathname.replace(/\/$/, '') || '/';
 const locale: Locale = getLocaleFromPath(pathname);
 const site = 'https://envercetin.de';
@@ -31,6 +31,7 @@ const allJsonLd = [websiteJsonLd(), ...jsonLd];
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>{fullTitle}</title>
     <meta name="description" content={description} />
+    {noindex && <meta name="robots" content="noindex" />}
     <link rel="canonical" href={canonical} />
     <link rel="alternate" hreflang="en" href={enHref} />
     <link rel="alternate" hreflang="de" href={deHref} />
