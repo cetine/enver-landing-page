@@ -1,0 +1,56 @@
+@import 'tailwindcss';
+
+@custom-variant dark (&:where([data-theme='dark'], [data-theme='dark'] *));
+
+:root {
+  --bg: #fafafa;
+  --fg: #16181d;
+  --muted: #5f6572;
+  --line: rgba(22, 24, 29, 0.14);
+  --accent: #0e7c5b;
+  --accent-soft: rgba(14, 124, 91, 0.1);
+}
+[data-theme='dark'] {
+  --bg: #0a0a0a;
+  --fg: #ececec;
+  --muted: #9aa1ad;
+  --line: rgba(236, 236, 236, 0.16);
+  --accent: #2fbd8f;
+  --accent-soft: rgba(47, 189, 143, 0.12);
+}
+
+@theme inline {
+  --color-bg: var(--bg);
+  --color-fg: var(--fg);
+  --color-muted: var(--muted);
+  --color-line: var(--line);
+  --color-accent: var(--accent);
+  --color-accent-soft: var(--accent-soft);
+  --font-sans: 'IBM Plex Sans', ui-sans-serif, system-ui, sans-serif;
+  --font-serif: 'IBM Plex Serif', ui-serif, Georgia, serif;
+  --font-mono: 'IBM Plex Mono', ui-monospace, 'SF Mono', monospace;
+}
+
+html {
+  background: var(--bg);
+  color: var(--fg);
+  font-family: var(--font-sans);
+  scroll-behavior: smooth;
+}
+@media (prefers-reduced-motion: reduce) {
+  html { scroll-behavior: auto; }
+  *, *::before, *::after { animation: none !important; transition: none !important; }
+}
+::selection { background: var(--accent-soft); }
+
+/* Prose column for posts/cases */
+.prose-col { max-width: 40em; }
+.prose-col h2 { font-family: var(--font-serif); font-weight: 300; font-size: 1.6rem; margin: 2.2rem 0 0.8rem; }
+.prose-col h3 { font-weight: 600; font-size: 1.1rem; margin: 1.8rem 0 0.6rem; }
+.prose-col p { line-height: 1.7; margin: 0 0 1.1rem; }
+.prose-col a { text-decoration: underline; text-underline-offset: 3px; text-decoration-color: var(--accent); }
+.prose-col ul, .prose-col ol { line-height: 1.7; margin: 0 0 1.1rem 1.2rem; }
+.prose-col li { margin-bottom: 0.35rem; }
+.prose-col code { font-family: var(--font-mono); font-size: 0.88em; background: var(--accent-soft); padding: 0.1em 0.35em; border-radius: 4px; }
+.prose-col pre { overflow-x: auto; border: 1px solid var(--line); border-radius: 8px; padding: 1rem; margin: 0 0 1.1rem; }
+.prose-col pre code { background: none; padding: 0; }
