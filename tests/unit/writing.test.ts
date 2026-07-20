@@ -18,6 +18,11 @@ describe('sortByDateDesc', () => {
     const sorted = sortByDateDesc([mk('old', '2025-01-01'), mk('new', '2026-06-01')]);
     expect(sorted[0].slug).toBe('new');
   });
+  it('does not mutate the input array', () => {
+    const input = [mk('old', '2025-01-01'), mk('new', '2026-06-01')];
+    sortByDateDesc(input);
+    expect(input[0].slug).toBe('old');
+  });
 });
 
 describe('groupByMonth', () => {
@@ -30,9 +35,9 @@ describe('groupByMonth', () => {
     const items = Array.from({ length: 8 }, (_, i) => mk(`p${i}`, `2026-0${(i % 3) + 1}-15`));
     const en = groupByMonth(items, 'en', 8);
     expect(en.grouped).toBe(true);
-    expect(en.groups[0].label).toMatch(/^2026 /);
+    expect(en.groups[0].label).toBe('2026 March');
     const de = groupByMonth(items, 'de', 8);
-    expect(de.groups[0].label).toMatch(/2026$/); // "März 2026" style
+    expect(de.groups[0].label).toBe('März 2026');
   });
 });
 
