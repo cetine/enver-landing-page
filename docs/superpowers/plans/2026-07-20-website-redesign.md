@@ -493,7 +493,7 @@ git add -A && git commit -m "feat: i18n route helpers and ui strings with tests"
 - Reference (read-only source): `legacy/ProjectsSection.tsx`, `legacy/VenturesSection.tsx`, `legacy/profile.ts`
 
 **Interfaces:**
-- Produces: collections `writing` (empty for now, schema ready) and `work`; `ventures.yaml` shape `[{ id, url, status, en: {name, tagline, story}, de: {...} }]`; `profile` export with `name, role: {en, de}, location: {en, de}, claim: [string, string], linkedin, github, email, expertise: {en: Pillar[], de: Pillar[]}` where `Pillar = { title: string, items: string[] }`.
+- Produces: collections `writing` (empty for now, schema ready) and `work`; `ventures.yaml` shape `[{ id, url, status, en: {name, tagline, story}, de: {...} }]`; `profile` export with `name, role: {en, de}, claim: [string, string], linkedin, github, email, expertise: {en: Pillar[], de: Pillar[]}` where `Pillar = { title: string, items: string[] }`. (No separate `location` field — the role string carries `· Munich`/`· München`.)
 
 - [ ] **Step 1: Write `src/content.config.ts`**
 

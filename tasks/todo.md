@@ -6,8 +6,8 @@ Spec: docs/superpowers/specs/2026-07-20-website-redesign-design.md
 - [x] Task 1: Baseline-Commit + Astro-Scaffold (Branch redesign/astro)
 - [x] Task 2: Design-Tokens, Fonts, global.css
 - [x] Task 3: Monogramm, Favicon, OG-Bild
-- [ ] Task 4: i18n-Helfer (TDD)
-- [ ] Task 5: Content Collections (6 Cases EN/DE, Ventures, Profil)
+- [x] Task 4: i18n-Helfer (TDD)
+- [x] Task 5: Content Collections (6 Cases EN/DE, Ventures, Profil)
 - [ ] Task 6: Writing-Lib (TDD)
 - [ ] Task 7: SEO-Lib (TDD)
 - [ ] Task 8: Base-Layout, Nav, Footer, Theme
