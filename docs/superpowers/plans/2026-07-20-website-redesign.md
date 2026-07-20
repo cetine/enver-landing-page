@@ -1957,7 +1957,9 @@ German versions under /de/.
 
 - [ ] **Step 4: Verify + commit** — `npm run build && ls dist/rss.xml dist/de/rss.xml dist/sitemap-index.xml`; `git commit -am "feat: rss feeds, robots, llms.txt"`
 
----### Task 17: Playwright verification suite
+---
+
+### Task 17: Playwright verification suite
 
 **Files:**
 - Create: `playwright.config.ts`, `tests/e2e/site.spec.ts`

@@ -18,7 +18,7 @@ Spec: docs/superpowers/specs/2026-07-20-website-redesign-design.md
 - [x] Task 13: Contact + Formular
 - [x] Task 14: Impressum/Datenschutz/404
 - [x] Task 15: Suche (Pagefind + ⌘K)
-- [ ] Task 16: RSS, robots, llms.txt
+- [x] Task 16: RSS, robots, llms.txt
 - [ ] Task 17: Playwright-Verifikation
 - [ ] Task 18: Performance-Budget-Check
 - [ ] Task 19: Vercel-Preview — ENVER-REVIEW (Inhalte, Impressum, Mail, Artikel-Links)
