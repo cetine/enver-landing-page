@@ -1,20 +1,14 @@
 
 import { motion } from 'framer-motion';
 import { ArrowLeft, FlaskConical } from 'lucide-react';
-import { useEffect } from 'react';
 import NeuralCanvas from './NeuralCanvas';
+import { useDocumentMeta } from '../hooks/useDocumentMeta';
 
 export default function Labs() {
-    useEffect(() => {
-        document.title = 'Labs — Enver Cetin';
-        const meta = document.querySelector('meta[name="description"]');
-        if (meta) {
-            meta.setAttribute('content', 'Labs — Coming soon. Experiments in AI, automation, and applied intelligence by Enver Cetin.');
-        }
-        return () => {
-            document.title = 'Enver Cetin — AI Leader & Architect';
-        };
-    }, []);
+    useDocumentMeta({
+        title: 'Labs — Enver Cetin',
+        description: 'Labs — Coming soon. Experiments in AI, automation, and applied intelligence by Enver Cetin.',
+    });
 
     return (
         <section className="relative min-h-screen flex flex-col items-center justify-center bg-slate-950 overflow-hidden selection:bg-blue-500/30 selection:text-blue-200">

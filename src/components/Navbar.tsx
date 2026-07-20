@@ -70,6 +70,8 @@ export default function Navbar() {
                 <button
                     className="md:hidden p-2 text-slate-600"
                     onClick={() => setIsOpen(!isOpen)}
+                    aria-label="Toggle navigation menu"
+                    aria-expanded={isOpen}
                 >
                     {isOpen ? <X size={24} /> : <Menu size={24} />}
                 </button>

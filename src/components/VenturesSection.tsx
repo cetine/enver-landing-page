@@ -14,6 +14,7 @@ import {
 } from 'lucide-react';
 import { cn } from '../lib/utils';
 import MagneticButton from './MagneticButton';
+import { useDocumentMeta } from '../hooks/useDocumentMeta';
 
 // ── AI Council members ──────────────────────────────────────────────
 const aiCouncil = [
@@ -308,19 +309,10 @@ function StepResults() {
 //  VenturesSection — full-page standalone route
 // ═══════════════════════════════════════════════════════════════════
 export default function VenturesSection() {
-    useEffect(() => {
-        document.title = 'Ventures — Enver Cetin';
-        const meta = document.querySelector('meta[name="description"]');
-        if (meta) {
-            meta.setAttribute(
-                'content',
-                'AI-powered products by Enver Cetin. Featuring VertragsKlar — German contract analysis with an AI Council framework.'
-            );
-        }
-        return () => {
-            document.title = 'Enver Cetin — AI Leader & Architect';
-        };
-    }, []);
+    useDocumentMeta({
+        title: 'Ventures — Enver Cetin',
+        description: 'AI-powered products by Enver Cetin. Featuring VertragsKlar — German contract analysis with an AI Council framework.',
+    });
 
     return (
         <section className="relative min-h-screen flex flex-col items-center justify-center bg-slate-950 overflow-hidden selection:bg-blue-500/30 selection:text-blue-200">
@@ -368,12 +360,12 @@ export default function VenturesSection() {
                     >
                         Ventures
                     </motion.p>
-                    <motion.h2
+                    <motion.h1
                         variants={itemVariants}
                         className="text-3xl sm:text-4xl lg:text-5xl font-bold text-white mb-4 tracking-tight"
                     >
                         Products I'm Building
-                    </motion.h2>
+                    </motion.h1>
                     <motion.p
                         variants={itemVariants}
                         className="text-base sm:text-lg text-slate-400 max-w-2xl mx-auto leading-relaxed"
@@ -384,7 +376,7 @@ export default function VenturesSection() {
                 </div>
 
                 {/* ── Glassmorphism card ──────────────────────── */}
-                <motion.div
+                <motion.article
                     variants={itemVariants}
                     className="relative max-w-5xl mx-auto rounded-2xl border border-white/[0.08] bg-white/[0.03] backdrop-blur-xl shadow-2xl shadow-black/30"
                 >
@@ -489,7 +481,7 @@ export default function VenturesSection() {
                             <InteractivePreview />
                         </div>
                     </div>
-                </motion.div>
+                </motion.article>
 
                 {/* ── "More coming" teaser ────────────────────── */}
                 <motion.div

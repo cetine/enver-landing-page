@@ -339,7 +339,7 @@ export default function ProjectsSection() {
                                     >
                                         <div className="grid grid-cols-1 md:grid-cols-2 gap-8 max-w-6xl mx-auto pb-4">
                                             {group.items.map((project, index) => (
-                                                <div
+                                                <article
                                                     key={index}
                                                     className="group bg-white rounded-2xl p-8 border border-slate-200 shadow-sm hover:shadow-2xl hover:-translate-y-1 transition-all duration-300 flex flex-col h-full relative overflow-hidden"
                                                 >
@@ -409,7 +409,8 @@ export default function ProjectsSection() {
                                                                     >
                                                                         <img
                                                                             src={tool.src}
-                                                                            alt={tool.name}
+                                                                            alt={`${tool.name} logo`}
+                                                                            loading="lazy"
                                                                             className="h-full w-auto object-contain"
                                                                         />
                                                                     </div>
@@ -417,7 +418,7 @@ export default function ProjectsSection() {
                                                             </div>
                                                         </div>
                                                     </div>
-                                                </div>
+                                                </article>
                                             ))}
                                         </div>
                                     </motion.div>

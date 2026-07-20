@@ -60,9 +60,9 @@ export default function Hero() {
                     className="space-y-8"
                 >
                     <div className="space-y-2">
-                        <h2 className="text-lg font-medium text-blue-600 tracking-wide uppercase">
+                        <p className="text-lg font-medium text-blue-600 tracking-wide uppercase">
                             {profile.primaryTitle}
-                        </h2>
+                        </p>
                         <h1 className="text-5xl sm:text-6xl font-bold text-slate-900 tracking-tight leading-tight">
                             {profile.name}
                         </h1>
@@ -214,7 +214,7 @@ export default function Hero() {
                         <div className="w-56 h-56 rounded-2xl overflow-hidden ring-4 ring-white shadow-2xl shadow-slate-900/10">
                             <img
                                 src="/images/Enver_Cetin.png"
-                                alt={profile.name}
+                                alt="Portrait of Enver Cetin, AI Leader and Architect"
                                 className="w-full h-full object-cover object-top"
                             />
                         </div>
