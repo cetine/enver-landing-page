@@ -1,0 +1,27 @@
+---
+import Base from '../../layouts/Base.astro';
+import VentureCard from '../VentureCard.astro';
+import ventures from '../../content/ventures.yaml';
+import type { Locale } from '../../i18n/routes';
+
+interface Props { locale: Locale }
+const { locale } = Astro.props;
+const title = 'Ventures';
+const intro = locale === 'de'
+  ? 'Produkte, die ich nebenbei baue und betreibe — Beleg, dass ich AI nicht nur berate, sondern shippe.'
+  : "Products I build and run on the side — proof that I don't just advise on AI, I ship it.";
+const description = locale === 'de'
+  ? 'Produkte, die Enver Cetin nebenbei baut und betreibt: Vertragsklar und Nebenkosten-Ninja — AI-Produkte für Verbraucher im deutschen Markt.'
+  : 'Products Enver Cetin builds and runs on the side: Vertragsklar and Nebenkosten-Ninja — consumer AI products for the German market.';
+---
+<Base title={title} description={description}>
+  <header class="py-14">
+    <h1 class="font-serif text-4xl font-light">{title}</h1>
+    <p class="mt-3 max-w-[46em] text-[14px] text-muted">{intro}</p>
+  </header>
+  <section class="border-t border-line py-10">
+    <div class="grid gap-5 sm:grid-cols-2">
+      {ventures.map((v: any) => <VentureCard venture={v} locale={locale} withStory />)}
+    </div>
+  </section>
+</Base>

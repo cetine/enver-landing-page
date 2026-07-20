@@ -1,0 +1,73 @@
+---
+import Base from '../../layouts/Base.astro';
+import Eyebrow from '../Eyebrow.astro';
+import { profile, careerHighlights, volunteerRoles } from '../../data/profile';
+import { personJsonLd } from '../../lib/seo';
+import { localizePath, type Locale } from '../../i18n/routes';
+interface Props { locale: Locale }
+const { locale } = Astro.props;
+const title = locale === 'de' ? 'Über mich' : 'About';
+const description = locale === 'de'
+  ? 'Enver Cetin — Director AI bei Ciklum. Werdegang: Wacker Chemie, Andreas Schmid Group, Ciklum. CSU-Digitalbeauftragter, Atlantik-Brücke-Alumnus, Lecturer bei Bots & People.'
+  : 'Enver Cetin — Director AI at Ciklum. Career: Wacker Chemie, Andreas Schmid Group, Ciklum. CSU digital lead, Atlantik-Brücke alumnus, lecturer at Bots & People.';
+const bio = {
+  en: [
+    "I build AI that actually works. Not in labs. Not in theory. But inside the German Mittelstand and Fortune 500 companies that run the world's supply chains, finance, and industries.",
+    "I help organizations move from AI hype to real business value. I lead programs across the globe that bring AI, agentic systems, and automation into daily operations. My focus is on designing and delivering AI-first architectures that unlock efficiency, resilience, and new opportunities.",
+    "I'm especially passionate about the shift from traditional automation to agentic AI systems that reason, adapt, and integrate seamlessly with enterprise data and processes.",
+    "Beyond my work with enterprises, I contribute to digital initiatives for the largest political party in Germany (CSU, Bavaria) and stay active in international US–German dialogue through Atlantik-Brücke's Fellowship. This mix of business, politics, and thought leadership allows me to bridge technology with strategy, regulation, and society.",
+  ],
+  de: [
+    'Ich baue AI, die wirklich funktioniert. Nicht im Labor. Nicht in der Theorie. Sondern mitten im deutschen Mittelstand und in den Fortune-500-Unternehmen, die die Lieferketten, das Finanzwesen und die Industrien der Welt am Laufen halten.',
+    'Ich helfe Organisationen, vom AI-Hype zu echtem geschäftlichem Mehrwert zu gelangen. Ich verantworte Programme weltweit, die AI, agentische Systeme und Automatisierung in den operativen Alltag bringen. Mein Fokus liegt auf dem Entwurf und der Umsetzung von AI-first-Architekturen, die Effizienz, Resilienz und neue Chancen erschließen.',
+    'Besonders begeistert mich der Wandel von klassischer Automatisierung hin zu agentischen AI-Systemen, die schlussfolgern, sich anpassen und sich nahtlos in Unternehmensdaten und -prozesse einfügen.',
+    'Über meine Arbeit mit Unternehmen hinaus engagiere ich mich in Digitalinitiativen der größten politischen Partei Deutschlands (CSU, Bayern) und bleibe über das Fellowship der Atlantik-Brücke im internationalen deutsch-amerikanischen Dialog aktiv. Diese Verbindung aus Wirtschaft, Politik und Thought Leadership erlaubt es mir, Technologie mit Strategie, Regulierung und Gesellschaft zu verbinden.',
+  ],
+} as const;
+---
+<Base title={title} description={description} jsonLd={[personJsonLd()]}>
+  <header class="py-14">
+    <h1 class="font-serif text-4xl font-light">{title}</h1>
+    <p class="mt-2 font-mono text-[12px] tracking-[0.15em] uppercase text-muted">{profile.role[locale]}</p>
+  </header>
+  <section class="prose-col border-t border-line py-10">
+    {bio[locale].map((para) => <p>{para}</p>)}
+    <p>
+      {locale === 'de'
+        ? 'Wenn Sie sich für praxisnahe AI-Adoption, Digitalstrategie oder den Gedankenaustausch über die Zukunft intelligenter Systeme interessieren, '
+        : "If you're interested in practical AI adoption, digital strategy, or exchanging thoughts on the future of intelligent systems, "}
+      <a href={localizePath('/contact', locale)}>{locale === 'de' ? 'nehmen Sie gern Kontakt auf' : 'get in touch'}</a>.
+    </p>
+  </section>
+  <section class="border-t border-line py-10">
+    <h2 class="font-serif text-2xl font-light">{locale === 'de' ? 'Expertise' : 'Expertise'}</h2>
+    <div class="mt-6 grid gap-8 sm:grid-cols-2 lg:grid-cols-3">
+      {profile.expertise[locale].map((p, i) => (
+        <div>
+          <Eyebrow>{String(i + 1).padStart(2, '0')} · {p.title}</Eyebrow>
+          <ul class="mt-3 space-y-1.5 text-[14px]">{p.items.map((it) => <li>{it}</li>)}</ul>
+        </div>
+      ))}
+    </div>
+  </section>
+  <section class="border-t border-line py-10">
+    <h2 class="font-serif text-2xl font-light">{locale === 'de' ? 'Werdegang' : 'Career'}</h2>
+    <ol class="mt-6 space-y-8">
+      {careerHighlights.map((c) => (
+        <li class="grid gap-1 sm:grid-cols-[180px_1fr] sm:gap-6">
+          <span class="font-mono text-[12px] text-muted">{c.period}</span>
+          <div>
+            <h3 class="font-medium">{c.role} · {c.company}</h3>
+            <p class="mt-1 text-[14px] leading-relaxed text-muted">{c.summary}</p>
+          </div>
+        </li>
+      ))}
+    </ol>
+  </section>
+  <section class="border-t border-line py-10">
+    <h2 class="font-serif text-2xl font-light">{locale === 'de' ? 'Ehrenamt & Netzwerk' : 'Volunteering & network'}</h2>
+    <ul class="mt-4 space-y-2 text-[14px]">
+      {volunteerRoles.map((v) => <li><span class="font-medium">{v.role}</span> · {v.organization} <span class="font-mono text-[12px] text-muted">({v.period})</span></li>)}
+    </ul>
+  </section>
+</Base>
