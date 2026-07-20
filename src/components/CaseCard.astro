@@ -1,11 +1,21 @@
 ---
 import type { CollectionEntry } from 'astro:content';
+import { Image } from 'astro:assets';
 import { localizePath, type Locale } from '../i18n/routes';
+import { workArt } from '../data/workArt';
 interface Props { entry: CollectionEntry<'work'>; locale: Locale; compact?: boolean }
 const { entry, locale, compact = false } = Astro.props;
 const { title, industry, workType, kpis } = entry.data;
+const art = workArt[industry];
 ---
 <article class="border-t border-line py-6">
+  {compact && art && (
+    <a href={localizePath('/work', locale) + '#' + art.anchor} class="mb-4 block transition-opacity hover:opacity-90">
+      <Image src={art.image} alt={art.alt[locale]} widths={[480, 960, 1440]}
+        sizes="(min-width: 64rem) 960px, 100vw"
+        class="w-full aspect-[16/9] object-cover object-center rounded-lg border border-line" loading="lazy" />
+    </a>
+  )}
   <p class="font-mono text-[11px] tracking-[0.15em] uppercase text-muted">{industry} · <span class="text-accent">{workType}</span></p>
   <h3 class="mt-2 text-lg font-medium">
     <a href={`${localizePath('/work', locale)}#${entry.id.split('/')[1]}`} class="hover:underline underline-offset-4 decoration-accent">{title}</a>
