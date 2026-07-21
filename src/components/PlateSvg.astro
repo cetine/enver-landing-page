@@ -3,9 +3,10 @@
 // CSS variables resolved by global.css) so ONE file renders in both themes and
 // stays crisp at any size — no <img>, no <picture>, no second DOM variant.
 //
-// `animate` selects the motion intensity the wrapper advertises via data-motion;
-// global.css keys all keyframes off [data-motion='a'|'b'] (and honours
-// prefers-reduced-motion). 'none' is fully static — the default on main pages.
+// `animate` picks the motion tier the wrapper advertises via data-motion:
+// 'auto' (default) = idle tier always on + a livelier hover tier; 'none' = fully
+// static. global.css keys the two tiers off [data-motion='auto'] (and honours
+// prefers-reduced-motion). Main pages use the default; nothing needs 'none'.
 import { workArt } from '../data/workArt';
 import { getLocaleFromPath, type Locale } from '../i18n/routes';
 
@@ -27,10 +28,10 @@ const RAW: Record<string, string> = {
 interface Props {
   industry: string;
   class?: string;
-  animate?: 'none' | 'a' | 'b';
+  animate?: 'auto' | 'none';
 }
 
-const { industry, class: klass = '', animate = 'none' } = Astro.props;
+const { industry, class: klass = '', animate = 'auto' } = Astro.props;
 
 const svg = RAW[industry];
 const art = workArt[industry];

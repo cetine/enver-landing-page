@@ -215,12 +215,13 @@ function plate02(pal, L) {
   const parts = [];
   const step = (xEnd - xStart) / (count - 1);
 
-  // conveyor: double baseline + roller ticks. Ticks extend one CELL beyond each
-  // edge so a one-tick-spacing drift (intensity A) loops seamlessly.
+  // conveyor: double baseline + roller ticks. Ticks extend TWO CELLs beyond each
+  // edge so the idle two-cell drift (and the faster hover boost on top) loop
+  // seamlessly — no gap enters the visible belt as the group shifts.
   parts.push(line(beltL, baseY, beltR, baseY, pal.gray, W_MID, 0.65));
   parts.push(line(beltL, baseY + 24, beltR, baseY + 24, pal.gray, W_THIN, 0.55));
   const ticks = [];
-  for (let x = Math.floor(beltL / CELL) * CELL - CELL; x <= beltR + CELL; x += CELL) {
+  for (let x = Math.floor(beltL / CELL) * CELL - 2 * CELL; x <= beltR + 2 * CELL; x += CELL) {
     ticks.push(line(x, baseY, x, baseY + 24, pal.gray, W_THIN, 0.6));
   }
   parts.push(group('p-ticks', ticks.join('\n')));
