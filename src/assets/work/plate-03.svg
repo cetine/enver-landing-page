@@ -1,0 +1,40 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 3840 2160" preserveAspectRatio="xMidYMid meet" role="presentation" aria-hidden="true">
+<rect width="3840" height="2160" fill="var(--plate-bg)"/>
+<path d="M0 0V2160M96 0V2160M192 0V2160M288 0V2160M384 0V2160M480 0V2160M576 0V2160M672 0V2160M768 0V2160M864 0V2160M960 0V2160M1056 0V2160M1152 0V2160M1248 0V2160M1344 0V2160M1440 0V2160M1536 0V2160M1632 0V2160M1728 0V2160M1824 0V2160M1920 0V2160M2016 0V2160M2112 0V2160M2208 0V2160M2304 0V2160M2400 0V2160M2496 0V2160M2592 0V2160M2688 0V2160M2784 0V2160M2880 0V2160M2976 0V2160M3072 0V2160M3168 0V2160M3264 0V2160M3360 0V2160M3456 0V2160M3552 0V2160M3648 0V2160M3744 0V2160M3840 0V2160M0 0H3840M0 96H3840M0 192H3840M0 288H3840M0 384H3840M0 480H3840M0 576H3840M0 672H3840M0 768H3840M0 864H3840M0 960H3840M0 1056H3840M0 1152H3840M0 1248H3840M0 1344H3840M0 1440H3840M0 1536H3840M0 1632H3840M0 1728H3840M0 1824H3840M0 1920H3840M0 2016H3840M0 2112H3840" stroke="var(--plate-grid)" stroke-width="1" fill="none"/>
+<g class="p-motif">
+<polyline points="360,520 360,800 760,1200" fill="none" stroke="var(--plate-stroke)" stroke-width="2" stroke-opacity="0.6" stroke-linejoin="round" stroke-linecap="round"/>
+<polyline points="760,1200 1300,1200 1520,980" fill="none" stroke="var(--plate-stroke)" stroke-width="2" stroke-opacity="0.6" stroke-linejoin="round" stroke-linecap="round"/>
+<polyline points="1180,460 1180,640 1520,980" fill="none" stroke="var(--plate-stroke)" stroke-width="2" stroke-opacity="0.6" stroke-linejoin="round" stroke-linecap="round"/>
+<polyline points="1520,980 1820,980 2180,620" fill="none" stroke="var(--plate-stroke)" stroke-width="2" stroke-opacity="0.6" stroke-linejoin="round" stroke-linecap="round"/>
+<polyline points="2180,620 2180,800 2560,1180" fill="none" stroke="var(--plate-stroke)" stroke-width="2" stroke-opacity="0.6" stroke-linejoin="round" stroke-linecap="round"/>
+<polyline points="2560,1180 2580,1180 2980,780" fill="none" stroke="var(--plate-stroke)" stroke-width="2" stroke-opacity="0.6" stroke-linejoin="round" stroke-linecap="round"/>
+<polyline points="2980,780 2980,1000 3320,1340" fill="none" stroke="var(--plate-stroke)" stroke-width="2" stroke-opacity="0.6" stroke-linejoin="round" stroke-linecap="round"/>
+<polyline points="1980,1480 2260,1480 2560,1180" fill="none" stroke="var(--plate-stroke)" stroke-width="2" stroke-opacity="0.6" stroke-linejoin="round" stroke-linecap="round"/>
+<polyline points="360,520 1120,520 1180,460" fill="none" stroke="var(--plate-stroke)" stroke-width="2" stroke-opacity="0.6" stroke-linejoin="round" stroke-linecap="round"/>
+<polyline points="3460,460 3300,460 2980,780" fill="none" stroke="var(--plate-stroke)" stroke-width="2" stroke-opacity="0.6" stroke-linejoin="round" stroke-linecap="round"/>
+<polyline points="760,1200 1700,1200 1980,1480" fill="none" stroke="var(--plate-stroke)" stroke-width="2" stroke-opacity="0.6" stroke-linejoin="round" stroke-linecap="round"/>
+<polyline points="2180,620 3300,620 3460,460" fill="none" stroke="var(--plate-stroke)" stroke-width="2" stroke-opacity="0.6" stroke-linejoin="round" stroke-linecap="round"/>
+<g class="p-depots-gray">
+<rect x="349" y="509" width="22" height="22" fill="var(--plate-bg)" stroke="var(--plate-stroke)" stroke-width="2" stroke-opacity="0.72"/>
+<rect x="749" y="1189" width="22" height="22" fill="var(--plate-bg)" stroke="var(--plate-stroke)" stroke-width="2" stroke-opacity="0.72"/>
+<rect x="1169" y="449" width="22" height="22" fill="var(--plate-bg)" stroke="var(--plate-stroke)" stroke-width="2" stroke-opacity="0.72"/>
+<rect x="1509" y="969" width="22" height="22" fill="var(--plate-bg)" stroke="var(--plate-stroke)" stroke-width="2" stroke-opacity="0.72"/>
+<rect x="1969" y="1469" width="22" height="22" fill="var(--plate-bg)" stroke="var(--plate-stroke)" stroke-width="2" stroke-opacity="0.72"/>
+<rect x="2169" y="609" width="22" height="22" fill="var(--plate-bg)" stroke="var(--plate-stroke)" stroke-width="2" stroke-opacity="0.72"/>
+<rect x="2549" y="1169" width="22" height="22" fill="var(--plate-bg)" stroke="var(--plate-stroke)" stroke-width="2" stroke-opacity="0.72"/>
+<rect x="2969" y="769" width="22" height="22" fill="var(--plate-bg)" stroke="var(--plate-stroke)" stroke-width="2" stroke-opacity="0.72"/>
+<rect x="3309" y="1329" width="22" height="22" fill="var(--plate-bg)" stroke="var(--plate-stroke)" stroke-width="2" stroke-opacity="0.72"/>
+<rect x="3449" y="449" width="22" height="22" fill="var(--plate-bg)" stroke="var(--plate-stroke)" stroke-width="2" stroke-opacity="0.72"/>
+</g>
+<polyline class="p-route" points="280,520 360,520 1060,520 1520,980 1520,980 2360,980 2560,1180 2560,1180 3160,1180 3320,1340 3560,1340" fill="none" stroke="var(--plate-accent)" stroke-width="6" stroke-linejoin="round" stroke-linecap="round"/>
+<g class="p-depots">
+<rect class="p-depot" x="347" y="507" width="26" height="26" fill="var(--plate-bg)" stroke="var(--plate-accent)" stroke-width="6"/>
+<rect class="p-depot" x="1507" y="967" width="26" height="26" fill="var(--plate-bg)" stroke="var(--plate-accent)" stroke-width="6"/>
+<rect class="p-depot" x="2547" y="1167" width="26" height="26" fill="var(--plate-bg)" stroke="var(--plate-accent)" stroke-width="6"/>
+<rect class="p-depot" x="3307" y="1327" width="26" height="26" fill="var(--plate-bg)" stroke="var(--plate-accent)" stroke-width="6"/>
+</g>
+</g>
+<rect x="2400" y="1800" width="1200" height="120" fill="var(--plate-bg)" stroke="var(--plate-line)" stroke-width="1"/>
+<text x="2440" y="1858" font-family="'Courier New', Courier, monospace" font-size="40" letter-spacing="8" fill="var(--plate-accent)">PLATE 03 · LOGISTICS &amp; SUPPLY CHAIN</text>
+<text x="2440" y="1898" font-family="'Courier New', Courier, monospace" font-size="26" letter-spacing="6" fill="var(--plate-muted)">ENVER CETIN · WORK</text>
+</svg>

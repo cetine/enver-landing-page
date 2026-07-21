@@ -9,6 +9,15 @@
   --line: rgba(22, 24, 29, 0.14);
   --accent: #0e7c5b;
   --accent-soft: rgba(14, 124, 91, 0.1);
+  /* Industry plates (PlateSvg.astro) — one inline SVG, colours carried by these
+     variables so a single file renders in both themes. */
+  --plate-bg: var(--bg);
+  --plate-stroke: #5f6572;
+  --plate-strong: #3d434e;
+  --plate-grid: rgba(22, 24, 29, 0.05);
+  --plate-line: rgba(22, 24, 29, 0.25);
+  --plate-muted: rgba(22, 24, 29, 0.4);
+  --plate-accent: var(--accent);
 }
 [data-theme='dark'] {
   --bg: #0a0a0a;
@@ -17,6 +26,14 @@
   --line: rgba(236, 236, 236, 0.16);
   --accent: #2fbd8f;
   --accent-soft: rgba(47, 189, 143, 0.12);
+  /* Brighter plate strokes in dark — the old raster plates read too dim. */
+  --plate-bg: var(--bg);
+  --plate-stroke: #c2c8d2;
+  --plate-strong: #e4e7ec;
+  --plate-grid: rgba(236, 236, 236, 0.08);
+  --plate-line: rgba(236, 236, 236, 0.3);
+  --plate-muted: rgba(236, 236, 236, 0.45);
+  --plate-accent: var(--accent);
 }
 
 @theme inline {
@@ -43,11 +60,53 @@ html {
 }
 ::selection { background: var(--accent-soft); }
 
-/* Theme-matched art plates (ThemedPlate.astro): both variants are in the DOM,
-   CSS decides which shows so there is no flash before the theme script runs.
-   The SSR default is data-theme='light', so the light variant paints first. */
-[data-theme='dark'] .plate--light { display: none; }
-[data-theme='light'] .plate--dark { display: none; }
+/* Theme-adaptive inline plates (PlateSvg.astro): a single SVG whose colours are
+   --plate-* variables, so one element renders correctly in both themes with no
+   second DOM variant and no flash. Scales fluidly from its 16:9 viewBox. */
+.plate { display: block; }
+.plate > svg { display: block; width: 100%; height: auto; }
+
+/* -------------------------------------------------------------------------
+   Plate motion. Fully static by default; the wrapper's data-motion opts in.
+   'a' = minimal (only the emerald element moves); 'b' = a + one gray micro-
+   motion. All transforms/opacity/stroke-dashoffset only (GPU-friendly). The
+   prefers-reduced-motion rule above (universal selector) disables all of it.
+   ------------------------------------------------------------------------- */
+@keyframes p-dash { to { stroke-dashoffset: -360; } }
+@keyframes p-drift { to { transform: translateX(-96px); } }
+@keyframes p-lift { 0% { transform: translateY(-76px); } 100% { transform: translateY(76px); } }
+@keyframes p-orbit { 0% { transform: rotate(-12deg); } 100% { transform: rotate(12deg); } }
+@keyframes p-shimmer { 0%, 100% { opacity: 0.5; } 50% { opacity: 0.8; } }
+@keyframes p-pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.4; } }
+
+/* Intensity A — the single emerald element per plate (also inherited by B). */
+[data-motion='a'] .p-accent-path,
+[data-motion='b'] .p-accent-path { stroke-dasharray: 22 14; animation: p-dash 8s linear infinite; }
+[data-motion='a'] .p-ticks,
+[data-motion='b'] .p-ticks { animation: p-drift 6s linear infinite; }
+[data-motion='a'] .p-route,
+[data-motion='b'] .p-route { stroke-dasharray: 20 16; animation: p-dash 10s linear infinite; }
+[data-motion='a'] .p-plane,
+[data-motion='b'] .p-plane { animation: p-lift 7s ease-in-out infinite alternate; }
+[data-motion='a'] .p-arc, [data-motion='a'] .p-orbit-node,
+[data-motion='b'] .p-arc, [data-motion='b'] .p-orbit-node {
+  transform-box: view-box; transform-origin: 1920px 1060px;
+  animation: p-orbit 9s ease-in-out infinite alternate;
+}
+
+/* Intensity B — one secondary gray micro-motion, staggered where it repeats. */
+[data-motion='b'] .p-nodes circle { animation: p-shimmer 6s ease-in-out infinite; }
+[data-motion='b'] .p-nodes circle:nth-of-type(3n+2) { animation-delay: -2s; }
+[data-motion='b'] .p-nodes circle:nth-of-type(3n) { animation-delay: -4s; }
+[data-motion='b'] .p-station-dial { animation: p-pulse 5s ease-in-out infinite; }
+[data-motion='b'] .p-depots-gray rect { animation: p-shimmer 6s ease-in-out infinite; }
+[data-motion='b'] .p-depots-gray rect:nth-of-type(3n+2) { animation-delay: -2s; }
+[data-motion='b'] .p-depots-gray rect:nth-of-type(3n) { animation-delay: -4s; }
+[data-motion='b'] .p-dim-ticks line { animation: p-shimmer 6s ease-in-out infinite; }
+[data-motion='b'] .p-dim-ticks line:nth-of-type(2n) { animation-delay: -3s; }
+[data-motion='b'] .p-ring-nodes circle { animation: p-shimmer 6s ease-in-out infinite; }
+[data-motion='b'] .p-ring-nodes circle:nth-of-type(3n+2) { animation-delay: -2s; }
+[data-motion='b'] .p-ring-nodes circle:nth-of-type(3n) { animation-delay: -4s; }
 
 /* Prose column for posts/cases */
 .prose-col { max-width: 40em; }

@@ -1,0 +1,78 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 3840 2160" preserveAspectRatio="xMidYMid meet" role="presentation" aria-hidden="true">
+<rect width="3840" height="2160" fill="var(--plate-bg)"/>
+<path d="M0 0V2160M96 0V2160M192 0V2160M288 0V2160M384 0V2160M480 0V2160M576 0V2160M672 0V2160M768 0V2160M864 0V2160M960 0V2160M1056 0V2160M1152 0V2160M1248 0V2160M1344 0V2160M1440 0V2160M1536 0V2160M1632 0V2160M1728 0V2160M1824 0V2160M1920 0V2160M2016 0V2160M2112 0V2160M2208 0V2160M2304 0V2160M2400 0V2160M2496 0V2160M2592 0V2160M2688 0V2160M2784 0V2160M2880 0V2160M2976 0V2160M3072 0V2160M3168 0V2160M3264 0V2160M3360 0V2160M3456 0V2160M3552 0V2160M3648 0V2160M3744 0V2160M3840 0V2160M0 0H3840M0 96H3840M0 192H3840M0 288H3840M0 384H3840M0 480H3840M0 576H3840M0 672H3840M0 768H3840M0 864H3840M0 960H3840M0 1056H3840M0 1152H3840M0 1248H3840M0 1344H3840M0 1440H3840M0 1536H3840M0 1632H3840M0 1728H3840M0 1824H3840M0 1920H3840M0 2016H3840M0 2112H3840" stroke="var(--plate-grid)" stroke-width="1" fill="none"/>
+<g class="p-motif">
+<circle cx="1920" cy="1060" r="300" fill="none" stroke="var(--plate-stroke)" stroke-width="2" stroke-opacity="0.65"/>
+<circle cx="1920" cy="1060" r="470" fill="none" stroke="var(--plate-stroke)" stroke-width="2" stroke-opacity="0.65"/>
+<circle cx="1920" cy="1060" r="640" fill="none" stroke="var(--plate-stroke)" stroke-width="2" stroke-opacity="0.65"/>
+<circle cx="1920" cy="1060" r="810" fill="none" stroke="var(--plate-strong)" stroke-width="3" stroke-opacity="0.7"/>
+<line x1="2220" y1="1060" x2="2730" y2="1060" stroke="var(--plate-stroke)" stroke-width="2" stroke-opacity="0.55" stroke-linecap="round"/>
+<line x1="2179.81" y1="1210" x2="2621.48" y2="1465" stroke="var(--plate-stroke)" stroke-width="2" stroke-opacity="0.55" stroke-linecap="round"/>
+<line x1="2070" y1="1319.81" x2="2325" y2="1761.48" stroke="var(--plate-stroke)" stroke-width="2" stroke-opacity="0.55" stroke-linecap="round"/>
+<line x1="1920" y1="1360" x2="1920" y2="1870" stroke="var(--plate-stroke)" stroke-width="2" stroke-opacity="0.55" stroke-linecap="round"/>
+<line x1="1770" y1="1319.81" x2="1515" y2="1761.48" stroke="var(--plate-stroke)" stroke-width="2" stroke-opacity="0.55" stroke-linecap="round"/>
+<line x1="1660.19" y1="1210" x2="1218.52" y2="1465" stroke="var(--plate-stroke)" stroke-width="2" stroke-opacity="0.55" stroke-linecap="round"/>
+<line x1="1620" y1="1060" x2="1110" y2="1060" stroke="var(--plate-stroke)" stroke-width="2" stroke-opacity="0.55" stroke-linecap="round"/>
+<line x1="1660.19" y1="910" x2="1218.52" y2="655" stroke="var(--plate-stroke)" stroke-width="2" stroke-opacity="0.55" stroke-linecap="round"/>
+<line x1="1770" y1="800.19" x2="1515" y2="358.52" stroke="var(--plate-stroke)" stroke-width="2" stroke-opacity="0.55" stroke-linecap="round"/>
+<line x1="1920" y1="760" x2="1920" y2="250" stroke="var(--plate-stroke)" stroke-width="2" stroke-opacity="0.55" stroke-linecap="round"/>
+<line x1="2070" y1="800.19" x2="2325" y2="358.52" stroke="var(--plate-stroke)" stroke-width="2" stroke-opacity="0.55" stroke-linecap="round"/>
+<line x1="2179.81" y1="910" x2="2621.48" y2="655" stroke="var(--plate-stroke)" stroke-width="2" stroke-opacity="0.55" stroke-linecap="round"/>
+<line x1="2730" y1="1060" x2="2752" y2="1060" stroke="var(--plate-stroke)" stroke-width="2" stroke-opacity="0.65" stroke-linecap="round"/>
+<line x1="2702.4" y1="1269.64" x2="2723.65" y2="1275.34" stroke="var(--plate-stroke)" stroke-width="2" stroke-opacity="0.65" stroke-linecap="round"/>
+<line x1="2621.48" y1="1465" x2="2640.53" y2="1476" stroke="var(--plate-stroke)" stroke-width="2" stroke-opacity="0.65" stroke-linecap="round"/>
+<line x1="2492.76" y1="1632.76" x2="2508.31" y2="1648.31" stroke="var(--plate-stroke)" stroke-width="2" stroke-opacity="0.65" stroke-linecap="round"/>
+<line x1="2325" y1="1761.48" x2="2336" y2="1780.53" stroke="var(--plate-stroke)" stroke-width="2" stroke-opacity="0.65" stroke-linecap="round"/>
+<line x1="2129.64" y1="1842.4" x2="2135.34" y2="1863.65" stroke="var(--plate-stroke)" stroke-width="2" stroke-opacity="0.65" stroke-linecap="round"/>
+<line x1="1920" y1="1870" x2="1920" y2="1892" stroke="var(--plate-stroke)" stroke-width="2" stroke-opacity="0.65" stroke-linecap="round"/>
+<line x1="1710.36" y1="1842.4" x2="1704.66" y2="1863.65" stroke="var(--plate-stroke)" stroke-width="2" stroke-opacity="0.65" stroke-linecap="round"/>
+<line x1="1515" y1="1761.48" x2="1504" y2="1780.53" stroke="var(--plate-stroke)" stroke-width="2" stroke-opacity="0.65" stroke-linecap="round"/>
+<line x1="1347.24" y1="1632.76" x2="1331.69" y2="1648.31" stroke="var(--plate-stroke)" stroke-width="2" stroke-opacity="0.65" stroke-linecap="round"/>
+<line x1="1218.52" y1="1465" x2="1199.47" y2="1476" stroke="var(--plate-stroke)" stroke-width="2" stroke-opacity="0.65" stroke-linecap="round"/>
+<line x1="1137.6" y1="1269.64" x2="1116.35" y2="1275.34" stroke="var(--plate-stroke)" stroke-width="2" stroke-opacity="0.65" stroke-linecap="round"/>
+<line x1="1110" y1="1060" x2="1088" y2="1060" stroke="var(--plate-stroke)" stroke-width="2" stroke-opacity="0.65" stroke-linecap="round"/>
+<line x1="1137.6" y1="850.36" x2="1116.35" y2="844.66" stroke="var(--plate-stroke)" stroke-width="2" stroke-opacity="0.65" stroke-linecap="round"/>
+<line x1="1218.52" y1="655" x2="1199.47" y2="644" stroke="var(--plate-stroke)" stroke-width="2" stroke-opacity="0.65" stroke-linecap="round"/>
+<line x1="1347.24" y1="487.24" x2="1331.69" y2="471.69" stroke="var(--plate-stroke)" stroke-width="2" stroke-opacity="0.65" stroke-linecap="round"/>
+<line x1="1515" y1="358.52" x2="1504" y2="339.47" stroke="var(--plate-stroke)" stroke-width="2" stroke-opacity="0.65" stroke-linecap="round"/>
+<line x1="1710.36" y1="277.6" x2="1704.66" y2="256.35" stroke="var(--plate-stroke)" stroke-width="2" stroke-opacity="0.65" stroke-linecap="round"/>
+<line x1="1920" y1="250" x2="1920" y2="228" stroke="var(--plate-stroke)" stroke-width="2" stroke-opacity="0.65" stroke-linecap="round"/>
+<line x1="2129.64" y1="277.6" x2="2135.34" y2="256.35" stroke="var(--plate-stroke)" stroke-width="2" stroke-opacity="0.65" stroke-linecap="round"/>
+<line x1="2325" y1="358.52" x2="2336" y2="339.47" stroke="var(--plate-stroke)" stroke-width="2" stroke-opacity="0.65" stroke-linecap="round"/>
+<line x1="2492.76" y1="487.24" x2="2508.31" y2="471.69" stroke="var(--plate-stroke)" stroke-width="2" stroke-opacity="0.65" stroke-linecap="round"/>
+<line x1="2621.48" y1="655" x2="2640.53" y2="644" stroke="var(--plate-stroke)" stroke-width="2" stroke-opacity="0.65" stroke-linecap="round"/>
+<line x1="2702.4" y1="850.36" x2="2723.65" y2="844.66" stroke="var(--plate-stroke)" stroke-width="2" stroke-opacity="0.65" stroke-linecap="round"/>
+<circle cx="1920" cy="1060" r="10" fill="var(--plate-stroke)"/>
+<g class="p-ring-nodes">
+<circle cx="2390" cy="1060" r="10" fill="var(--plate-stroke)"/>
+<circle cx="2560" cy="1060" r="10" fill="var(--plate-stroke)"/>
+<circle cx="2327.03" cy="1295" r="10" fill="var(--plate-stroke)"/>
+<circle cx="2474.26" cy="1380" r="10" fill="var(--plate-stroke)"/>
+<circle cx="2155" cy="1467.03" r="10" fill="var(--plate-stroke)"/>
+<circle cx="2240" cy="1614.26" r="10" fill="var(--plate-stroke)"/>
+<circle cx="1920" cy="1530" r="10" fill="var(--plate-stroke)"/>
+<circle cx="1920" cy="1700" r="10" fill="var(--plate-stroke)"/>
+<circle cx="1685" cy="1467.03" r="10" fill="var(--plate-stroke)"/>
+<circle cx="1600" cy="1614.26" r="10" fill="var(--plate-stroke)"/>
+<circle cx="1512.97" cy="1295" r="10" fill="var(--plate-stroke)"/>
+<circle cx="1365.74" cy="1380" r="10" fill="var(--plate-stroke)"/>
+<circle cx="1450" cy="1060" r="10" fill="var(--plate-stroke)"/>
+<circle cx="1280" cy="1060" r="10" fill="var(--plate-stroke)"/>
+<circle cx="1512.97" cy="825" r="10" fill="var(--plate-stroke)"/>
+<circle cx="1365.74" cy="740" r="10" fill="var(--plate-stroke)"/>
+<circle cx="1685" cy="652.97" r="10" fill="var(--plate-stroke)"/>
+<circle cx="1600" cy="505.74" r="10" fill="var(--plate-stroke)"/>
+<circle cx="1920" cy="590" r="10" fill="var(--plate-stroke)"/>
+<circle cx="1920" cy="420" r="10" fill="var(--plate-stroke)"/>
+<circle cx="2155" cy="652.97" r="10" fill="var(--plate-stroke)"/>
+<circle cx="2240" cy="505.74" r="10" fill="var(--plate-stroke)"/>
+<circle cx="2327.03" cy="825" r="10" fill="var(--plate-stroke)"/>
+<circle cx="2474.26" cy="740" r="10" fill="var(--plate-stroke)"/>
+</g>
+<path class="p-arc" d="M2538.19 894.36 A 640 640 0 0 1 2287.09 1584.26" fill="none" stroke="var(--plate-accent)" stroke-width="6" stroke-linecap="round"/>
+<circle class="p-orbit-node" cx="2287.09" cy="1584.26" r="16" fill="var(--plate-accent)"/>
+</g>
+<rect x="2400" y="1800" width="1200" height="120" fill="var(--plate-bg)" stroke="var(--plate-line)" stroke-width="1"/>
+<text x="2440" y="1858" font-family="'Courier New', Courier, monospace" font-size="40" letter-spacing="8" fill="var(--plate-accent)">PLATE 05 · STRATEGIC AI &amp; ENTERPRISE</text>
+<text x="2440" y="1898" font-family="'Courier New', Courier, monospace" font-size="26" letter-spacing="6" fill="var(--plate-muted)">ENVER CETIN · WORK</text>
+</svg>
