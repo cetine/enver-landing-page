@@ -4,7 +4,7 @@ export const profile = {
   name: 'Enver Cetin',
   claim: ['I build AI that actually works.', 'Not in labs. Not in theory.'],
   role: { en: 'Director AI, Ciklum · Munich · Working globally', de: 'Director AI, Ciklum · München · Global tätig' },
-  email: 'mail@envercetin.de', // verify with Enver before launch
+  email: 'envercetin.work@gmail.com',
   linkedin: 'https://www.linkedin.com/in/enver-cetin',
   github: 'https://github.com/cetine',
   expertise: {
