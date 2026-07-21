@@ -20,8 +20,8 @@ const set = art.images[format];
 const locale: Locale = getLocaleFromPath(Astro.url.pathname.replace(/\/$/, '') || '/');
 const alt = art.alt[locale];
 
-// Per-format defaults; callers may override.
-const w = widths ?? (format === 'wide' ? [768, 1280, 1920] : [320, 640, 960]);
+// Default widths for the standard 16:9 plate; callers may override.
+const w = widths ?? [320, 640, 960];
 const s = sizes ?? '100vw';
 ---
 {/*

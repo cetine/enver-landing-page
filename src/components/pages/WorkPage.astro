@@ -49,6 +49,11 @@ const description = locale === 'de'
             {e.data.tags.length > 0 && (
               <p class="order-5 mt-4 font-mono text-[11px] tracking-wide text-muted lg:mt-6">{e.data.tags.join(' · ')}</p>
             )}
+            {art && (
+              <ThemedPlate industry={group.industry} format="standard" widths={[320, 640]}
+                sizes="(min-width: 64rem) 260px, 320px"
+                class="order-6 mt-4 w-full max-w-xs rounded-md opacity-90 lg:mt-6" />
+            )}
           </div>
           <div class="contents lg:block">
             <h3 class="order-2 mt-2 font-serif text-2xl font-light lg:mt-0">{e.data.title}</h3>
@@ -56,14 +61,6 @@ const description = locale === 'de'
           </div>
         </article>
       ))}
-      {/* Wide plate closes the section: its baked-in industry label is a visual
-          bookend after the last case. Heading above stays the a11y/Pagefind anchor. */}
-      {art && (
-        <ThemedPlate industry={group.industry} format="wide"
-          widths={[768, 1536, 2560, 3840]}
-          sizes="(min-width: 64rem) 984px, calc(100vw - 2.5rem)"
-          class="mt-10 w-full rounded-lg" />
-      )}
     </section>
     );
   })}
