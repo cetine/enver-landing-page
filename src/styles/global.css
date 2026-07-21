@@ -43,6 +43,12 @@ html {
 }
 ::selection { background: var(--accent-soft); }
 
+/* Theme-matched art plates (ThemedPlate.astro): both variants are in the DOM,
+   CSS decides which shows so there is no flash before the theme script runs.
+   The SSR default is data-theme='light', so the light variant paints first. */
+[data-theme='dark'] .plate--light { display: none; }
+[data-theme='light'] .plate--dark { display: none; }
+
 /* Prose column for posts/cases */
 .prose-col { max-width: 40em; }
 /* /work case bodies use the wider column afforded by the two-column layout */

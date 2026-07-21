@@ -1,5 +1,5 @@
 ---
-import { Image } from 'astro:assets';
+import ThemedPlate from './ThemedPlate.astro';
 import { localizePath, type Locale } from '../i18n/routes';
 import type { WorkArt } from '../data/workArt';
 
@@ -15,9 +15,9 @@ const workPath = localizePath('/work', locale);
 ---
 <div>
   <a href={`${workPath}#${art.anchor}`} class="group block">
-    <Image src={art.image} alt={art.alt[locale]} widths={[320, 640, 960]}
+    <ThemedPlate industry={industry} widths={[320, 640, 960]}
       sizes="(min-width: 64rem) 400px, (min-width: 40rem) 45vw, 100vw"
-      class="aspect-video w-full rounded-lg border border-line object-cover object-center opacity-80 transition-opacity group-hover:opacity-100" loading="lazy" />
+      class="aspect-video w-full rounded-lg object-cover object-center opacity-80 transition-opacity group-hover:opacity-100" />
     <p class="mt-3 font-mono text-[11px] tracking-[0.15em] uppercase text-muted">{industry}</p>
   </a>
   <ul class="mt-2 space-y-1">
