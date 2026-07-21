@@ -3,7 +3,7 @@ import { profile } from '../data/profile';
 const SITE = 'https://envercetin.de';
 
 export function pageTitle(title?: string): string {
-  return title ? `${title} — ${profile.name}` : `${profile.name} — Director AI`;
+  return title ? `${title} · ${profile.name}` : `${profile.name} · Director AI`;
 }
 
 export function personJsonLd() {

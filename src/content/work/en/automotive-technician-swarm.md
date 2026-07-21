@@ -16,8 +16,8 @@ Growing complexity in vehicle electronics pushed diagnostic times up, with techn
 
 ## Approach
 
-Built a multi-agent system — intake, diagnostic, and repair agents — that automates root-cause analysis. The agents retrieve knowledge from more than 22,000 manuals and guide technicians through repairs step by step.
+Built a multi-agent system, with intake, diagnostic, and repair agents, that automates root-cause analysis. The agents retrieve knowledge from more than 22,000 manuals and guide technicians through repairs step by step.
 
 ## Impact
 
-Average handle time fell by roughly two-thirds, repairs resolve within the SLA window, and first-time fix rates improved — together generating over a million pounds in value.
+Average handle time fell by roughly two-thirds, repairs resolve within the SLA window, and first-time fix rates improved, together generating over a million pounds in value.

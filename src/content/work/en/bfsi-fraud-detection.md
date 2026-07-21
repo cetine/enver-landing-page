@@ -12,7 +12,7 @@ order: 1
 
 ## Challenge
 
-The legacy rule-based fraud engine flagged overwhelmingly legitimate transactions — investigators spent their days triaging noise while novel fraud patterns slipped through. Losses were rising despite a growing team.
+The legacy rule-based fraud engine flagged overwhelmingly legitimate transactions, so investigators spent their days triaging noise while novel fraud patterns slipped through. Losses were rising despite a growing team.
 
 ## Approach
 

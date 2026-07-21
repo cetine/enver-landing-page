@@ -8,11 +8,11 @@ interface Props { locale: Locale }
 const { locale } = Astro.props;
 const title = 'Ventures';
 const intro = locale === 'de'
-  ? 'Produkte, die ich nebenbei baue und betreibe — Beleg, dass ich AI nicht nur berate, sondern shippe.'
-  : "Products I build and run on the side — proof that I don't just advise on AI, I ship it.";
+  ? 'Produkte, die ich nebenbei baue und betreibe: Beleg, dass ich AI nicht nur berate, sondern shippe.'
+  : "Products I build and run on the side: proof that I don't just advise on AI, I ship it.";
 const description = locale === 'de'
-  ? 'Produkte, die Enver Cetin nebenbei baut und betreibt: Vertragsklar und Nebenkosten-Ninja — AI-Produkte für Verbraucher im deutschen Markt.'
-  : 'Products Enver Cetin builds and runs on the side: Vertragsklar and Nebenkosten-Ninja — consumer AI products for the German market.';
+  ? 'Produkte, die Enver Cetin nebenbei baut und betreibt: Vertragsklar und Nebenkosten-Ninja, AI-Produkte für Verbraucher im deutschen Markt.'
+  : 'Products Enver Cetin builds and runs on the side: Vertragsklar and Nebenkosten-Ninja, consumer AI products for the German market.';
 ---
 <Base title={title} description={description}>
   <header class="py-14">

@@ -12,7 +12,7 @@ order: 1
 
 ## Ausgangslage
 
-Die regelbasierte Fraud-Engine markierte überwiegend legitime Transaktionen — die Ermittler verbrachten ihre Tage mit dem Triagieren von Rauschen, während neuartige Betrugsmuster durchrutschten. Die Verluste stiegen trotz wachsenden Teams.
+Die regelbasierte Fraud-Engine markierte überwiegend legitime Transaktionen, sodass die Ermittler ihre Tage mit dem Triagieren von Rauschen verbrachten, während neuartige Betrugsmuster durchrutschten. Die Verluste stiegen trotz wachsenden Teams.
 
 ## Vorgehen
 

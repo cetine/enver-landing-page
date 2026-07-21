@@ -6,11 +6,11 @@ interface Props { locale: Locale }
 const { locale } = Astro.props;
 const tr = t(locale);
 const key = import.meta.env.PUBLIC_WEB3FORMS_KEY;
-if (!key) throw new Error('PUBLIC_WEB3FORMS_KEY not set — configure it in .env / Vercel env vars');
+if (!key) throw new Error('PUBLIC_WEB3FORMS_KEY not set: configure it in .env / Vercel env vars');
 const title = tr('contact.title');
 const description = locale === 'de'
-  ? 'Kontakt zu Enver Cetin — Speaking-Anfragen, Advisory, Enterprise-AI-Projekte.'
-  : 'Contact Enver Cetin — speaking inquiries, advisory, enterprise AI projects.';
+  ? 'Kontakt zu Enver Cetin: Speaking-Anfragen, Advisory, Enterprise-AI-Projekte.'
+  : 'Contact Enver Cetin: speaking inquiries, advisory, enterprise AI projects.';
 ---
 <Base title={title} description={description}>
   <header class="py-14">
@@ -69,12 +69,12 @@ const description = locale === 'de'
       const res = await fetch('https://api.web3forms.com/submit', { method: 'POST', body: fd });
       if (!res.ok) throw new Error(String(res.status));
       form.reset();
-      status.textContent = de ? 'Danke — ich melde mich.' : 'Thanks — I will get back to you.';
+      status.textContent = de ? 'Danke, ich melde mich.' : 'Thanks, I will get back to you.';
       status.className = 'mt-3 text-[13px] text-muted';
     } catch {
       status.textContent = de
-        ? 'Senden fehlgeschlagen — bitte direkt per Mail schreiben.'
-        : 'Sending failed — please email me directly.';
+        ? 'Senden fehlgeschlagen: bitte direkt per Mail schreiben.'
+        : 'Sending failed: please email me directly.';
       status.className = 'mt-3 text-[13px] text-accent';
     } finally {
       if (submitBtn) submitBtn.disabled = false;

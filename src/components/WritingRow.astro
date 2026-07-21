@@ -15,7 +15,7 @@ const href = item.type === 'external' ? item.externalUrl! : localizePath(`/writi
     </h3>
     <p class="mt-1 text-[13px] text-muted">
       <time datetime={item.date.toISOString().slice(0, 10)}>{fmt.format(item.date)}</time>
-      {item.tags.length > 0 && <span> — {item.tags.join(', ')}</span>}
+      {item.tags.length > 0 && <span> · {item.tags.join(', ')}</span>}
     </p>
   </a>
 </article>

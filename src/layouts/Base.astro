@@ -48,7 +48,7 @@ const allJsonLd = [websiteJsonLd(), ...jsonLd];
     <meta name="twitter:card" content="summary_large_image" />
     <script is:inline>
       let saved = null;
-      try { saved = localStorage.getItem('theme'); } catch (e) { /* storage blocked — fall back to media query */ }
+      try { saved = localStorage.getItem('theme'); } catch (e) { /* storage blocked: fall back to media query */ }
       const preferred = saved ?? (matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
       document.documentElement.dataset.theme = preferred;
     </script>

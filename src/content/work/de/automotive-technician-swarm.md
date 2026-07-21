@@ -20,4 +20,4 @@ Aufgebaut wurde ein Multi-Agent-System aus Intake-, Diagnose- und Reparatur-Agen
 
 ## Ergebnis
 
-Die durchschnittliche Bearbeitungszeit sank um rund zwei Drittel, Reparaturen bleiben im SLA-Fenster, und die First-Time-Fix-Raten verbesserten sich — zusammen ein Wertbeitrag von über einer Million Pfund.
+Die durchschnittliche Bearbeitungszeit sank um rund zwei Drittel, Reparaturen bleiben im SLA-Fenster, und die First-Time-Fix-Raten verbesserten sich: zusammen ein Wertbeitrag von über einer Million Pfund.

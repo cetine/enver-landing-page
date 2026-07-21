@@ -5,7 +5,7 @@ import type { APIContext } from 'astro';
 export async function GET(context: APIContext) {
   const entries = await getCollection('writing', ({ id, data }) => id.startsWith('en/') && !data.draft);
   return rss({
-    title: 'Enver Cetin — Writing',
+    title: 'Enver Cetin · Writing',
     description: 'Enterprise AI, agentic systems, applied automation.',
     site: context.site!,
     items: entries.map((e) => ({

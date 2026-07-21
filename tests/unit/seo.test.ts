@@ -3,8 +3,8 @@ import { pageTitle, personJsonLd, articleJsonLd } from '../../src/lib/seo';
 
 describe('pageTitle', () => {
   it('default and page variants', () => {
-    expect(pageTitle()).toBe('Enver Cetin — Director AI');
-    expect(pageTitle('Writing')).toBe('Writing — Enver Cetin');
+    expect(pageTitle()).toBe('Enver Cetin · Director AI');
+    expect(pageTitle('Writing')).toBe('Writing · Enver Cetin');
   });
 });
 

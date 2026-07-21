@@ -15,36 +15,36 @@ export const workArt: Record<string, WorkArt> = {
   BFSI: {
     anchor: 'bfsi',
     alt: {
-      en: 'Abstract transaction-network diagram — financial services engagements',
-      de: 'Abstraktes Transaktionsnetz-Diagramm — Financial-Services-Projekte',
+      en: 'Abstract transaction-network diagram for financial services engagements',
+      de: 'Abstraktes Transaktionsnetz-Diagramm für Financial-Services-Projekte',
     },
   },
   'Automotive & Manufacturing': {
     anchor: 'automotive-manufacturing',
     alt: {
-      en: 'Isometric assembly-line diagram — automotive and manufacturing engagements',
-      de: 'Isometrisches Fertigungslinien-Diagramm — Automotive- und Fertigungsprojekte',
+      en: 'Isometric assembly-line diagram for automotive and manufacturing engagements',
+      de: 'Isometrisches Fertigungslinien-Diagramm für Automotive- und Fertigungsprojekte',
     },
   },
   'Logistics & Supply Chain': {
     anchor: 'logistics-supply-chain',
     alt: {
-      en: 'Abstract route-map diagram — logistics and supply-chain engagements',
-      de: 'Abstraktes Routen-Diagramm — Logistik- und Supply-Chain-Projekte',
+      en: 'Abstract route-map diagram for logistics and supply-chain engagements',
+      de: 'Abstraktes Routen-Diagramm für Logistik- und Supply-Chain-Projekte',
     },
   },
   'EPCM & Construction': {
     anchor: 'epcm-construction',
     alt: {
-      en: 'Isometric building-wireframe diagram — EPCM and construction engagements',
-      de: 'Isometrisches Gebäude-Drahtmodell — EPCM- und Bauprojekte',
+      en: 'Isometric building-wireframe diagram for EPCM and construction engagements',
+      de: 'Isometrisches Gebäude-Drahtmodell für EPCM- und Bauprojekte',
     },
   },
   'Strategic AI & Enterprise': {
     anchor: 'strategic-ai-enterprise',
     alt: {
-      en: 'Concentric operating-model diagram — strategic AI and enterprise engagements',
-      de: 'Konzentrisches Operating-Model-Diagramm — strategische AI- und Enterprise-Projekte',
+      en: 'Concentric operating-model diagram for strategic AI and enterprise engagements',
+      de: 'Konzentrisches Operating-Model-Diagramm für strategische AI- und Enterprise-Projekte',
     },
   },
 };

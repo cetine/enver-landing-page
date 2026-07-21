@@ -26,9 +26,9 @@ export const profile = {
   engagement: {
     en: {
       networks: [
-        'Atlantik-Brücke — alumni, New Bridge Program',
-        'Deutsch-Britische Gesellschaft — Young Königswinter alumni',
-        'CSU — digital affairs lead (Bavaria)',
+        'Atlantik-Brücke, New Bridge Program alumnus',
+        'Deutsch-Britische Gesellschaft, Young Königswinter alumnus',
+        'CSU digital affairs lead (Bavaria)',
       ],
       teaching: [
         'AI trainings & executive education for leadership teams',
@@ -38,9 +38,9 @@ export const profile = {
     },
     de: {
       networks: [
-        'Atlantik-Brücke — Alumnus, New Bridge Program',
-        'Deutsch-Britische Gesellschaft — Young-Königswinter-Alumnus',
-        'CSU — Digitalbeauftragter (Bayern)',
+        'Atlantik-Brücke, Alumnus des New Bridge Program',
+        'Deutsch-Britische Gesellschaft, Young-Königswinter-Alumnus',
+        'CSU-Digitalbeauftragter (Bayern)',
       ],
       teaching: [
         'AI-Trainings & Executive Education für Führungsteams',

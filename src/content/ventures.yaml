@@ -3,20 +3,20 @@
   status: live
   en:
     name: Vertragsklar
-    tagline: AI contract analysis for consumers — five specialized legal AI agents review German contracts in under two minutes.
+    tagline: 'AI contract analysis for consumers: five specialized legal AI agents review German contracts in under two minutes.'
     story: Built to make contract risks understandable for non-lawyers. An "AI council" of five specialized agents (contract law, T&C, tenancy, labor law, risk) cross-validates findings and produces a plain-language PDF report. GDPR-compliant, German servers, one-time pricing.
   de:
     name: Vertragsklar
-    tagline: KI-Vertragsanalyse für Verbraucher — fünf spezialisierte Legal-KI-Agenten prüfen deutsche Verträge in unter zwei Minuten.
+    tagline: 'KI-Vertragsanalyse für Verbraucher: fünf spezialisierte Legal-KI-Agenten prüfen deutsche Verträge in unter zwei Minuten.'
     story: Gebaut, um Vertragsrisiken für Nicht-Juristen verständlich zu machen. Ein „KI-Rat" aus fünf spezialisierten Agenten (Vertragsrecht, AGB, Mietrecht, Arbeitsrecht, Risiko) validiert Befunde gegenseitig und erzeugt einen verständlichen PDF-Report. DSGVO-konform, deutsche Server, Einmalpreis.
 - id: nebenkosten-ninja
   url: https://nebenkosten-ninja.vercel.app
   status: live
   en:
     name: Nebenkosten-Ninja
-    tagline: Freemium checker for German utility-cost statements — a client-side rules engine spots the most common billing errors.
-    story: German tenants overpay through faulty utility statements every year. Nebenkosten-Ninja checks a statement against a curated rule set entirely in the browser — no upload, no account — and explains every finding in plain language.
+    tagline: 'Freemium checker for German utility-cost statements: a client-side rules engine spots the most common billing errors.'
+    story: German tenants overpay through faulty utility statements every year. Nebenkosten-Ninja checks a statement against a curated rule set entirely in the browser, with no upload and no account, and explains every finding in plain language.
   de:
     name: Nebenkosten-Ninja
-    tagline: Freemium-Check für Nebenkostenabrechnungen — eine client-seitige Regel-Engine findet die häufigsten Abrechnungsfehler.
-    story: Mieter zahlen jedes Jahr durch fehlerhafte Nebenkostenabrechnungen drauf. Nebenkosten-Ninja prüft eine Abrechnung vollständig im Browser gegen ein kuratiertes Regelwerk — ohne Upload, ohne Konto — und erklärt jeden Befund verständlich.
+    tagline: 'Freemium-Check für Nebenkostenabrechnungen: eine client-seitige Regel-Engine findet die häufigsten Abrechnungsfehler.'
+    story: Mieter zahlen jedes Jahr durch fehlerhafte Nebenkostenabrechnungen drauf. Nebenkosten-Ninja prüft eine Abrechnung vollständig im Browser gegen ein kuratiertes Regelwerk, ganz ohne Upload und ohne Konto, und erklärt jeden Befund verständlich.
