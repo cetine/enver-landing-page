@@ -35,7 +35,7 @@ const description = locale === 'de'
       {art && (
         <Image src={art.image} alt={art.alt[locale]} widths={[768, 1536, 2560, 3840]}
           sizes="(min-width: 64rem) 960px, 100vw"
-          class="mb-8 w-full aspect-[21/9] object-cover object-center rounded-lg border border-line" loading="lazy" />
+          class="mb-8 h-24 w-full rounded-lg border border-line object-cover object-center opacity-90 sm:h-32" loading="lazy" />
       )}
       <h2 class="font-mono text-[12px] tracking-[0.18em] uppercase text-muted">{group.industry}</h2>
       {group.items.map(({ e, C }) => (
