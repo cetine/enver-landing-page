@@ -3,7 +3,7 @@ import { getCollection } from 'astro:content';
 import { Image } from 'astro:assets';
 import Base from '../../layouts/Base.astro';
 import Eyebrow from '../Eyebrow.astro';
-import CaseCard from '../CaseCard.astro';
+import IndustryTile from '../IndustryTile.astro';
 import VentureCard from '../VentureCard.astro';
 import WritingRow from '../WritingRow.astro';
 import ventures from '../../content/ventures.yaml';
@@ -12,13 +12,24 @@ import { profile } from '../../data/profile';
 import { personJsonLd } from '../../lib/seo';
 import { t, localizePath, type Locale } from '../../i18n/routes';
 import { filterLocale, sortByDateDesc, type WritingMeta } from '../../lib/writing';
+import { workArt, type WorkArt } from '../../data/workArt';
 
 interface Props { locale: Locale }
 const { locale } = Astro.props;
 const tr = t(locale);
 
-const work = filterLocale(await getCollection('work'), locale)
-  .sort((a, b) => a.data.order - b.data.order).slice(0, 4);
+// One tile per industry (each shown exactly once), ordered by the industry's
+// first case `order`; entries are pre-sorted, so grouping preserves that order.
+const workEntries = filterLocale(await getCollection('work'), locale)
+  .sort((a, b) => a.data.order - b.data.order);
+type IndustryGroup = { industry: string; art: WorkArt; cases: { title: string; slug: string }[] };
+const industries: IndustryGroup[] = [];
+for (const e of workEntries) {
+  const caseLink = { title: e.data.title, slug: e.id.split('/')[1] };
+  const existing = industries.find((g) => g.industry === e.data.industry);
+  if (existing) existing.cases.push(caseLink);
+  else industries.push({ industry: e.data.industry, art: workArt[e.data.industry], cases: [caseLink] });
+}
 
 const writingAll = filterLocale(await getCollection('writing', ({ data }) => !data.draft), locale);
 const writing: WritingMeta[] = sortByDateDesc(
@@ -94,7 +105,7 @@ const description = locale === 'de'
       <h2 class="font-serif text-2xl font-light">{tr('home.work.title')}</h2>
       <a href={localizePath('/work', locale)} class="text-[13px] text-muted hover:text-fg">{locale === 'de' ? 'Alle Projekte' : 'All work'} →</a>
     </div>
-    <div class="mt-2">{work.map((e) => <CaseCard entry={e} locale={locale} compact />)}</div>
+    <div class="mt-5 grid gap-5 sm:grid-cols-2 lg:grid-cols-3">{industries.map((g) => <IndustryTile industry={g.industry} art={g.art} cases={g.cases} locale={locale} />)}</div>
   </section>
 
   <!-- Ventures -->
