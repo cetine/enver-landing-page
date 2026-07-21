@@ -33,15 +33,7 @@ const description = locale === 'de'
     const art = workArt[group.industry];
     return (
     <section id={art?.anchor} class="scroll-mt-24 border-t border-line py-10">
-      {/* The industry name is typeset INTO the wide plate; the real heading is
-          kept for screen readers + Pagefind (sr-only text is still in the DOM). */}
-      <h2 class="sr-only">{group.industry}</h2>
-      {art && (
-        <ThemedPlate industry={group.industry} format="wide"
-          widths={[768, 1536, 2560, 3840]}
-          sizes="(min-width: 64rem) 984px, calc(100vw - 2.5rem)"
-          class="w-full rounded-lg" />
-      )}
+      <h2 class="font-mono text-[12px] tracking-[0.18em] uppercase text-muted">{group.industry}</h2>
       {group.items.map(({ e, C }) => (
         <article id={e.id.split('/')[1]} class="mt-10 flex flex-col scroll-mt-24 lg:grid lg:grid-cols-[260px_minmax(0,1fr)] lg:gap-10 lg:items-start">
           <div class="contents lg:block">
@@ -64,6 +56,14 @@ const description = locale === 'de'
           </div>
         </article>
       ))}
+      {/* Wide plate closes the section: its baked-in industry label is a visual
+          bookend after the last case. Heading above stays the a11y/Pagefind anchor. */}
+      {art && (
+        <ThemedPlate industry={group.industry} format="wide"
+          widths={[768, 1536, 2560, 3840]}
+          sizes="(min-width: 64rem) 984px, calc(100vw - 2.5rem)"
+          class="mt-10 w-full rounded-lg" />
+      )}
     </section>
     );
   })}
