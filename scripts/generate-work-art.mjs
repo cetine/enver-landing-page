@@ -331,6 +331,15 @@ function plate05() {
   // hub
   parts.push(dot(cx, cy, 10, GRAY));
 
+  // small filled nodes where each spoke crosses ring-2 (r=470) and ring-3 (r=640) —
+  // turns the abstract lattice into a legible "operating model" of tiered nodes.
+  for (let i = 0; i < spokes; i++) {
+    const a = (i / spokes) * Math.PI * 2;
+    for (const rr of [radii[1], radii[2]]) {
+      parts.push(dot(cx + rr * Math.cos(a), cy + rr * Math.sin(a), 10, GRAY));
+    }
+  }
+
   // ONE emerald arc segment (~70°) on ring r=640
   const ar = 640;
   const a0 = (-15 * Math.PI) / 180;
@@ -340,6 +349,8 @@ function plate05() {
   const ex = cx + ar * Math.cos(a1);
   const ey = cy + ar * Math.sin(a1);
   parts.push(`<path d="M${r(sx)} ${r(sy)} A ${ar} ${ar} 0 0 1 ${r(ex)} ${r(ey)}" fill="none" stroke="${EMERALD}" stroke-width="${W_BOLD}" stroke-linecap="round"/>`);
+  // emerald filled node terminating the arc — anchors the highlighted path
+  parts.push(dot(ex, ey, 16, EMERALD));
 
   return parts.join('\n');
 }
