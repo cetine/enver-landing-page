@@ -3,6 +3,7 @@ import { getCollection, render } from 'astro:content';
 import { Image } from 'astro:assets';
 import Base from '../../layouts/Base.astro';
 import Eyebrow from '../Eyebrow.astro';
+import TechLogos from '../TechLogos.astro';
 import { t, type Locale } from '../../i18n/routes';
 import { filterLocale } from '../../lib/writing';
 import { workArt } from '../../data/workArt';
@@ -32,29 +33,40 @@ const description = locale === 'de'
     const art = workArt[group.industry];
     return (
     <section id={art?.anchor} class="scroll-mt-24 border-t border-line py-10">
-      {art && (
-        <Image src={art.image} alt={art.alt[locale]} widths={[768, 1536, 2560, 3840]}
-          sizes="(min-width: 64rem) 960px, 100vw"
-          class="mb-8 h-24 w-full rounded-lg border border-line object-cover object-center opacity-90 sm:h-32" loading="lazy" />
-      )}
-      <h2 class="font-mono text-[12px] tracking-[0.18em] uppercase text-muted">{group.industry}</h2>
+      <div class="grid gap-4 sm:grid-cols-[1fr_auto] sm:items-center">
+        <h2 class="font-mono text-[12px] tracking-[0.18em] uppercase text-muted">{group.industry}</h2>
+        {art && (
+          <Image src={art.image} alt={art.alt[locale]} widths={[320, 640]}
+            sizes="(min-width: 640px) 256px, 320px"
+            class="w-full max-w-xs aspect-video rounded-md border border-line object-contain opacity-90 sm:w-64" loading="lazy" />
+        )}
+      </div>
       {group.items.map(({ e, C }) => (
-        <article id={e.id.split('/')[1]} class="mt-8 scroll-mt-24">
-          <Eyebrow>{e.data.workType}</Eyebrow>
-          <h3 class="mt-2 font-serif text-2xl font-light">{e.data.title}</h3>
-          <dl class="mt-4 flex flex-wrap gap-x-10 gap-y-2">
-            {e.data.kpis.map((k) => (
-              <div>
-                <dd class="font-mono text-lg font-medium">{k.value}</dd>
-                <dt class="text-[12px] text-muted">{k.label}</dt>
-              </div>
-            ))}
-          </dl>
-          <div class="prose-col mt-4"><C /></div>
-          {e.data.tags.length > 0 && <p class="mt-2 font-mono text-[11px] tracking-wide text-muted">{e.data.tags.join(' · ')}</p>}
+        <article id={e.id.split('/')[1]} class="mt-10 flex flex-col scroll-mt-24 lg:grid lg:grid-cols-[260px_minmax(0,1fr)] lg:gap-10 lg:items-start">
+          <div class="contents lg:block">
+            <div class="order-1"><Eyebrow>{e.data.workType}</Eyebrow></div>
+            <dl class="order-3 mt-4 space-y-3 lg:mt-5">
+              {e.data.kpis.map((k) => (
+                <div>
+                  <dd class="font-mono text-lg font-medium">{k.value}</dd>
+                  <dt class="text-[12px] text-muted">{k.label}</dt>
+                </div>
+              ))}
+            </dl>
+            {e.data.tags.length > 0 && (
+              <p class="order-5 mt-4 font-mono text-[11px] tracking-wide text-muted lg:mt-6">{e.data.tags.join(' · ')}</p>
+            )}
+          </div>
+          <div class="contents lg:block">
+            <h3 class="order-2 mt-2 font-serif text-2xl font-light lg:mt-0">{e.data.title}</h3>
+            <div class="prose-col prose-col--wide order-4 mt-4"><C /></div>
+          </div>
         </article>
       ))}
     </section>
     );
   })}
+  <section class="border-t border-line py-14">
+    <TechLogos />
+  </section>
 </Base>

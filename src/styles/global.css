@@ -45,6 +45,8 @@ html {
 
 /* Prose column for posts/cases */
 .prose-col { max-width: 40em; }
+/* /work case bodies use the wider column afforded by the two-column layout */
+.prose-col--wide { max-width: 52em; }
 .prose-col h2 { font-family: var(--font-serif); font-weight: 300; font-size: 1.6rem; margin: 2.2rem 0 0.8rem; }
 .prose-col h3 { font-weight: 600; font-size: 1.1rem; margin: 1.8rem 0 0.6rem; }
 /* /work case-body sections render as h4 (demoted from h2 for a valid outline)
