@@ -20,10 +20,11 @@ export default defineConfig({
     preact({ compat: true }),
     sitemap({
       i18n: { defaultLocale: 'en', locales: { en: 'en', de: 'de' } },
-      // Legal pages are noindex — keep them out of the sitemap too.
+      // Legal pages + the internal plate-motion preview are noindex — keep them
+      // out of the sitemap too.
       filter: (page) => {
         const path = page.replace('https://envercetin.de', '').replace(/\/$/, '');
-        return !['/impressum', '/datenschutz', '/de/impressum', '/de/datenschutz'].includes(path);
+        return !['/impressum', '/datenschutz', '/de/impressum', '/de/datenschutz', '/design/plate-motion'].includes(path);
       },
     }),
   ],

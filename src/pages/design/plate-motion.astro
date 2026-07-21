@@ -1,0 +1,36 @@
+---
+// Internal, unlinked preview of the plate motion options (noindex, kept out of
+// the sitemap and search). One row per industry: the same plate at intensity A
+// (minimal) and B (livelier), side by side, so a reviewer can pick. Main pages
+// stay animate="none" until the choice is made. Toggle the theme in the nav.
+import Base from '../../layouts/Base.astro';
+import PlateSvg from '../../components/PlateSvg.astro';
+import { workArt } from '../../data/workArt';
+
+const industries = Object.keys(workArt);
+---
+<Base title="Plate motion" description="Internal preview of the industry-plate animation options." noindex>
+  <div data-pagefind-ignore>
+    <header class="py-14">
+      <h1 class="font-serif text-4xl font-light">Plate motion</h1>
+      <p class="mt-3 max-w-[46em] text-[14px] text-muted">
+        Interne Vorschau — Animations-Optionen. A = minimal, B = lebendiger. Theme oben umschalten.
+      </p>
+    </header>
+    {industries.map((industry) => (
+      <section class="border-t border-line py-10">
+        <h2 class="font-mono text-[12px] tracking-[0.18em] uppercase text-muted">{industry}</h2>
+        <div class="mt-5 grid gap-6 sm:grid-cols-2">
+          <div>
+            <p class="font-mono text-[11px] tracking-[0.15em] uppercase text-muted">A — MINIMAL</p>
+            <PlateSvg industry={industry} animate="a" class="mt-2 w-full overflow-hidden rounded-lg" />
+          </div>
+          <div>
+            <p class="font-mono text-[11px] tracking-[0.15em] uppercase text-muted">B — LEBENDIGER</p>
+            <PlateSvg industry={industry} animate="b" class="mt-2 w-full overflow-hidden rounded-lg" />
+          </div>
+        </div>
+      </section>
+    ))}
+  </div>
+</Base>
