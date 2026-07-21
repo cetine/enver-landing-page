@@ -61,13 +61,11 @@
 <polygon points="1640,840 1847.85,960 1640,1080 1432.15,960" fill="var(--plate-bg)" stroke="var(--plate-stroke)" stroke-width="3" stroke-opacity="0.72" stroke-linejoin="round"/>
 <circle cx="1743.92" cy="1049.6" r="40" fill="none" stroke="var(--plate-stroke)" stroke-width="2" stroke-opacity="0.648"/>
 <line x1="1689.88" y1="1106.8" x2="1797.96" y2="1169.2" stroke="var(--plate-stroke)" stroke-width="2" stroke-opacity="0.612" stroke-linecap="round"/>
-<g class="p-station">
-<polygon points="2200,1180 1992.15,1300 1992.15,960 2200,840" fill="var(--plate-bg)" stroke="var(--plate-accent)" stroke-width="6" stroke-linejoin="round"/>
-<polygon points="2200,1180 2407.85,1300 2407.85,960 2200,840" fill="var(--plate-bg)" stroke="var(--plate-accent)" stroke-width="6" stroke-linejoin="round"/>
-<polygon points="2200,840 2407.85,960 2200,1080 1992.15,960" fill="var(--plate-bg)" stroke="var(--plate-accent)" stroke-width="6" stroke-linejoin="round"/>
-<circle cx="2303.92" cy="1049.6" r="40" fill="none" stroke="var(--plate-accent)" stroke-width="3" stroke-opacity="0.9"/>
-<line class="p-station-dial" x1="2249.88" y1="1106.8" x2="2357.96" y2="1169.2" stroke="var(--plate-accent)" stroke-width="3" stroke-opacity="0.85" stroke-linecap="round"/>
-</g>
+<polygon points="2200,1180 1992.15,1300 1992.15,960 2200,840" fill="var(--plate-bg)" stroke="var(--plate-stroke)" stroke-width="3" stroke-opacity="0.72" stroke-linejoin="round"/>
+<polygon points="2200,1180 2407.85,1300 2407.85,960 2200,840" fill="var(--plate-bg)" stroke="var(--plate-stroke)" stroke-width="3" stroke-opacity="0.72" stroke-linejoin="round"/>
+<polygon points="2200,840 2407.85,960 2200,1080 1992.15,960" fill="var(--plate-bg)" stroke="var(--plate-stroke)" stroke-width="3" stroke-opacity="0.72" stroke-linejoin="round"/>
+<circle cx="2303.92" cy="1049.6" r="40" fill="none" stroke="var(--plate-stroke)" stroke-width="2" stroke-opacity="0.648"/>
+<line x1="2249.88" y1="1106.8" x2="2357.96" y2="1169.2" stroke="var(--plate-stroke)" stroke-width="2" stroke-opacity="0.612" stroke-linecap="round"/>
 <polygon points="2760,1180 2552.15,1300 2552.15,960 2760,840" fill="var(--plate-bg)" stroke="var(--plate-stroke)" stroke-width="3" stroke-opacity="0.72" stroke-linejoin="round"/>
 <polygon points="2760,1180 2967.85,1300 2967.85,960 2760,840" fill="var(--plate-bg)" stroke="var(--plate-stroke)" stroke-width="3" stroke-opacity="0.72" stroke-linejoin="round"/>
 <polygon points="2760,840 2967.85,960 2760,1080 2552.15,960" fill="var(--plate-bg)" stroke="var(--plate-stroke)" stroke-width="3" stroke-opacity="0.72" stroke-linejoin="round"/>
@@ -78,6 +76,50 @@
 <polygon points="3320,840 3527.85,960 3320,1080 3112.15,960" fill="var(--plate-bg)" stroke="var(--plate-stroke)" stroke-width="3" stroke-opacity="0.72" stroke-linejoin="round"/>
 <circle cx="3423.92" cy="1049.6" r="40" fill="none" stroke="var(--plate-stroke)" stroke-width="2" stroke-opacity="0.648"/>
 <line x1="3369.88" y1="1106.8" x2="3477.96" y2="1169.2" stroke="var(--plate-stroke)" stroke-width="2" stroke-opacity="0.612" stroke-linecap="round"/>
+<g class="p-stations-hl">
+<g class="p-station-hl" opacity="0">
+<polygon points="520,1180 312.15,1300 312.15,960 520,840" fill="var(--plate-bg)" stroke="var(--plate-accent)" stroke-width="6" stroke-linejoin="round"/>
+<polygon points="520,1180 727.85,1300 727.85,960 520,840" fill="var(--plate-bg)" stroke="var(--plate-accent)" stroke-width="6" stroke-linejoin="round"/>
+<polygon points="520,840 727.85,960 520,1080 312.15,960" fill="var(--plate-bg)" stroke="var(--plate-accent)" stroke-width="6" stroke-linejoin="round"/>
+<circle cx="623.92" cy="1049.6" r="40" fill="none" stroke="var(--plate-accent)" stroke-width="3" stroke-opacity="0.9"/>
+<line x1="569.88" y1="1106.8" x2="677.96" y2="1169.2" stroke="var(--plate-accent)" stroke-width="3" stroke-opacity="0.85" stroke-linecap="round"/>
+</g>
+<g class="p-station-hl" opacity="0">
+<polygon points="1080,1180 872.15,1300 872.15,960 1080,840" fill="var(--plate-bg)" stroke="var(--plate-accent)" stroke-width="6" stroke-linejoin="round"/>
+<polygon points="1080,1180 1287.85,1300 1287.85,960 1080,840" fill="var(--plate-bg)" stroke="var(--plate-accent)" stroke-width="6" stroke-linejoin="round"/>
+<polygon points="1080,840 1287.85,960 1080,1080 872.15,960" fill="var(--plate-bg)" stroke="var(--plate-accent)" stroke-width="6" stroke-linejoin="round"/>
+<circle cx="1183.92" cy="1049.6" r="40" fill="none" stroke="var(--plate-accent)" stroke-width="3" stroke-opacity="0.9"/>
+<line x1="1129.88" y1="1106.8" x2="1237.96" y2="1169.2" stroke="var(--plate-accent)" stroke-width="3" stroke-opacity="0.85" stroke-linecap="round"/>
+</g>
+<g class="p-station-hl" opacity="0">
+<polygon points="1640,1180 1432.15,1300 1432.15,960 1640,840" fill="var(--plate-bg)" stroke="var(--plate-accent)" stroke-width="6" stroke-linejoin="round"/>
+<polygon points="1640,1180 1847.85,1300 1847.85,960 1640,840" fill="var(--plate-bg)" stroke="var(--plate-accent)" stroke-width="6" stroke-linejoin="round"/>
+<polygon points="1640,840 1847.85,960 1640,1080 1432.15,960" fill="var(--plate-bg)" stroke="var(--plate-accent)" stroke-width="6" stroke-linejoin="round"/>
+<circle cx="1743.92" cy="1049.6" r="40" fill="none" stroke="var(--plate-accent)" stroke-width="3" stroke-opacity="0.9"/>
+<line x1="1689.88" y1="1106.8" x2="1797.96" y2="1169.2" stroke="var(--plate-accent)" stroke-width="3" stroke-opacity="0.85" stroke-linecap="round"/>
+</g>
+<g class="p-station-hl" opacity="0">
+<polygon points="2200,1180 1992.15,1300 1992.15,960 2200,840" fill="var(--plate-bg)" stroke="var(--plate-accent)" stroke-width="6" stroke-linejoin="round"/>
+<polygon points="2200,1180 2407.85,1300 2407.85,960 2200,840" fill="var(--plate-bg)" stroke="var(--plate-accent)" stroke-width="6" stroke-linejoin="round"/>
+<polygon points="2200,840 2407.85,960 2200,1080 1992.15,960" fill="var(--plate-bg)" stroke="var(--plate-accent)" stroke-width="6" stroke-linejoin="round"/>
+<circle cx="2303.92" cy="1049.6" r="40" fill="none" stroke="var(--plate-accent)" stroke-width="3" stroke-opacity="0.9"/>
+<line x1="2249.88" y1="1106.8" x2="2357.96" y2="1169.2" stroke="var(--plate-accent)" stroke-width="3" stroke-opacity="0.85" stroke-linecap="round"/>
+</g>
+<g class="p-station-hl" opacity="0">
+<polygon points="2760,1180 2552.15,1300 2552.15,960 2760,840" fill="var(--plate-bg)" stroke="var(--plate-accent)" stroke-width="6" stroke-linejoin="round"/>
+<polygon points="2760,1180 2967.85,1300 2967.85,960 2760,840" fill="var(--plate-bg)" stroke="var(--plate-accent)" stroke-width="6" stroke-linejoin="round"/>
+<polygon points="2760,840 2967.85,960 2760,1080 2552.15,960" fill="var(--plate-bg)" stroke="var(--plate-accent)" stroke-width="6" stroke-linejoin="round"/>
+<circle cx="2863.92" cy="1049.6" r="40" fill="none" stroke="var(--plate-accent)" stroke-width="3" stroke-opacity="0.9"/>
+<line x1="2809.88" y1="1106.8" x2="2917.96" y2="1169.2" stroke="var(--plate-accent)" stroke-width="3" stroke-opacity="0.85" stroke-linecap="round"/>
+</g>
+<g class="p-station-hl" opacity="0">
+<polygon points="3320,1180 3112.15,1300 3112.15,960 3320,840" fill="var(--plate-bg)" stroke="var(--plate-accent)" stroke-width="6" stroke-linejoin="round"/>
+<polygon points="3320,1180 3527.85,1300 3527.85,960 3320,840" fill="var(--plate-bg)" stroke="var(--plate-accent)" stroke-width="6" stroke-linejoin="round"/>
+<polygon points="3320,840 3527.85,960 3320,1080 3112.15,960" fill="var(--plate-bg)" stroke="var(--plate-accent)" stroke-width="6" stroke-linejoin="round"/>
+<circle cx="3423.92" cy="1049.6" r="40" fill="none" stroke="var(--plate-accent)" stroke-width="3" stroke-opacity="0.9"/>
+<line x1="3369.88" y1="1106.8" x2="3477.96" y2="1169.2" stroke="var(--plate-accent)" stroke-width="3" stroke-opacity="0.85" stroke-linecap="round"/>
+</g>
+</g>
 </g>
 <rect x="2400" y="1800" width="1200" height="120" fill="var(--plate-bg)" stroke="var(--plate-line)" stroke-width="1"/>
 <text x="2440" y="1858" font-family="'Courier New', Courier, monospace" font-size="40" letter-spacing="8" fill="var(--plate-accent)">PLATE 02 · AUTOMOTIVE &amp; MANUFACTURING</text>

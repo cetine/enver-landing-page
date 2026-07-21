@@ -211,9 +211,29 @@ function plate01(pal, L) {
 // PLATE 02 — Automotive & Manufacturing · isometric assembly line
 // ===========================================================================
 function plate02(pal, L) {
-  const { baseY, bw, bd, bh, count, emeraldIdx, xStart, xEnd, beltL, beltR } = L;
+  const { baseY, bw, bd, bh, count, xStart, xEnd, beltL, beltR } = L;
   const parts = [];
   const step = (xEnd - xStart) / (count - 1);
+
+  // one isometric station box (faces + dial + panel line) in a given ink weight.
+  const station = (o, stroke, w, op, dw) => {
+    const b0 = P(o, 0, 0, 0);
+    const b1 = P(o, bw, 0, 0);
+    const b2 = P(o, 0, bd, 0);
+    const t0 = P(o, 0, 0, bh);
+    const t1 = P(o, bw, 0, bh);
+    const t2 = P(o, 0, bd, bh);
+    const t3 = P(o, bw, bd, bh);
+    const face = (u, v) => P(o, bw * u, 0, bh * v);
+    const dc = face(0.5, 0.56);
+    return [
+      poly([b0, b2, t2, t0], stroke, w, op, pal.bg),
+      poly([b0, b1, t1, t0], stroke, w, op, pal.bg),
+      poly([t0, t1, t3, t2], stroke, w, op, pal.bg),
+      circle(dc[0], dc[1], Math.round(bh * 0.118), stroke, dw, op * 0.9),
+      line(...face(0.24, 0.3), ...face(0.76, 0.3), stroke, dw, op * 0.85),
+    ].join('\n');
+  };
 
   // conveyor: double baseline + roller ticks. Ticks extend TWO CELLs beyond each
   // edge so the idle two-cell drift (and the faster hover boost on top) loop
@@ -226,36 +246,21 @@ function plate02(pal, L) {
   }
   parts.push(group('p-ticks', ticks.join('\n')));
 
+  // Base: all six stations in gray — no permanently-emerald station.
   for (let i = 0; i < count; i++) {
-    const o = { x: xStart + i * step, y: baseY };
-    const em = i === emeraldIdx;
-    const stroke = em ? pal.emerald : pal.gray;
-    const w = em ? W_BOLD : W_MID;
-    const op = em ? 1 : 0.72;
-    const dw = em ? W_MID : W_THIN;
-
-    const b0 = P(o, 0, 0, 0);
-    const b1 = P(o, bw, 0, 0);
-    const b2 = P(o, 0, bd, 0);
-    const t0 = P(o, 0, 0, bh);
-    const t1 = P(o, bw, 0, bh);
-    const t2 = P(o, 0, bd, bh);
-    const t3 = P(o, bw, bd, bh);
-
-    const box = [
-      poly([b0, b2, t2, t0], stroke, w, op, pal.bg),
-      poly([b0, b1, t1, t0], stroke, w, op, pal.bg),
-      poly([t0, t1, t3, t2], stroke, w, op, pal.bg),
-    ];
-    const face = (u, v) => P(o, bw * u, 0, bh * v);
-    const dc = face(0.5, 0.56);
-    box.push(circle(dc[0], dc[1], Math.round(bh * 0.118), stroke, dw, op * 0.9));
-    const dialLine = line(...face(0.24, 0.3), ...face(0.76, 0.3), stroke, dw, op * 0.85);
-    // emerald station: grouped (stable target), its dial line separately classed
-    // so intensity B can pulse just that line.
-    box.push(em ? cls(dialLine, 'p-station-dial') : dialLine);
-    parts.push(em ? group('p-station', box.join('\n')) : box.join('\n'));
+    parts.push(station({ x: xStart + i * step, y: baseY }, pal.gray, W_MID, 0.72, W_THIN));
   }
+  // Emerald overlay twin per station (opacity 0 at rest), same geometry in bold
+  // emerald. CSS lights them one after another (station-cycle) to read as an
+  // assembly-line progression sweeping left→right. Grouped so :nth-of-type keys
+  // the per-station stagger cleanly.
+  const overlays = [];
+  for (let i = 0; i < count; i++) {
+    const box = station({ x: xStart + i * step, y: baseY }, pal.emerald, W_BOLD, 1, W_MID);
+    overlays.push(`<g class="p-station-hl" opacity="0">\n${box}\n</g>`);
+  }
+  parts.push(group('p-stations-hl', overlays.join('\n')));
+
   return parts.join('\n');
 }
 

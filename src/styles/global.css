@@ -92,6 +92,8 @@ html {
 @keyframes ph-ping { 0%, 100% { transform: scale(1); opacity: 1; } 50% { transform: scale(1.55); opacity: 0.6; } }
 @keyframes ph-shimmer { 0%, 100% { opacity: 1; } 50% { opacity: 0.4; } }
 @keyframes ph-blink { 0%, 100% { opacity: 1; } 50% { opacity: 0.12; } }
+/* Automotive station highlight — an overlay is lit for its ~1/6 slot then dark. */
+@keyframes station-cycle { 0% { opacity: 0; } 3% { opacity: 1; } 13% { opacity: 1; } 16% { opacity: 0; } 100% { opacity: 0; } }
 
 /* ---- BFSI: idle accent flow · hover fast pulse + emerald ping + gray shimmer */
 [data-motion='auto'] .p-accent-path {
@@ -108,14 +110,35 @@ html {
 [data-motion='auto'] .p-nodes circle:nth-of-type(3n) { animation-delay: 0.5s; }
 [data-motion='auto']:hover .p-nodes circle { animation-play-state: running; }
 
-/* ---- Automotive: idle conveyor drift (2-cell, visible) · hover clearly running + dial blink */
+/* ---- Automotive: idle conveyor drift (2-cell, visible) + emerald jumping
+   station→station in sequence · hover = faster conveyor + faster station cycle.
+   The station cycle staggers one keyframe across the six overlays; the highlight
+   sweeps left→right endlessly. Hover only re-times it (name unchanged → the
+   sequence stays coherent, no scramble), and the conveyor boost is the usual
+   paused→running additive layer. Conveyor drift itself is unchanged. */
 [data-motion='auto'] .p-ticks {
   animation: pd-drift 5s linear infinite, ph-drift 2.5s linear infinite paused;
   animation-composition: replace, add;
 }
 [data-motion='auto']:hover .p-ticks { animation-play-state: running, running; }
-[data-motion='auto'] .p-station-dial { animation: ph-blink 1.1s ease-in-out infinite paused; }
-[data-motion='auto']:hover .p-station-dial { animation-play-state: running; }
+[data-motion='auto'] .p-station-hl { animation: station-cycle 7.2s linear infinite; }
+[data-motion='auto'] .p-station-hl:nth-of-type(1) { animation-delay: 0s; }
+[data-motion='auto'] .p-station-hl:nth-of-type(2) { animation-delay: 1.2s; }
+[data-motion='auto'] .p-station-hl:nth-of-type(3) { animation-delay: 2.4s; }
+[data-motion='auto'] .p-station-hl:nth-of-type(4) { animation-delay: 3.6s; }
+[data-motion='auto'] .p-station-hl:nth-of-type(5) { animation-delay: 4.8s; }
+[data-motion='auto'] .p-station-hl:nth-of-type(6) { animation-delay: 6s; }
+[data-motion='auto']:hover .p-station-hl { animation-duration: 2.4s; }
+[data-motion='auto']:hover .p-station-hl:nth-of-type(1) { animation-delay: 0s; }
+[data-motion='auto']:hover .p-station-hl:nth-of-type(2) { animation-delay: 0.4s; }
+[data-motion='auto']:hover .p-station-hl:nth-of-type(3) { animation-delay: 0.8s; }
+[data-motion='auto']:hover .p-station-hl:nth-of-type(4) { animation-delay: 1.2s; }
+[data-motion='auto']:hover .p-station-hl:nth-of-type(5) { animation-delay: 1.6s; }
+[data-motion='auto']:hover .p-station-hl:nth-of-type(6) { animation-delay: 2s; }
+/* Reduced-motion: no sweep — keep one station lit so the plate retains its accent. */
+@media (prefers-reduced-motion: reduce) {
+  .p-station-hl:nth-of-type(3) { opacity: 1; }
+}
 
 /* ---- Logistics: idle route flow · hover faster flow + depots blinking in sequence */
 [data-motion='auto'] .p-route {
