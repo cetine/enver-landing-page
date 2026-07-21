@@ -61,4 +61,15 @@ export const careerStations: CareerStation[] = [
   { company: 'Wacker Chemie', role: { en: 'Robotic Process Automation Lead', de: 'Robotic Process Automation Lead' } },
 ];
 
-export { volunteerRoles } from '../../legacy/profile';
+// Volunteer & network roles (previously re-exported from legacy/profile.ts,
+// now inlined here so the legacy sources can be removed). Values unchanged.
+export type VolunteerRole = { role: string; organization: string; period: string };
+export const volunteerRoles: VolunteerRole[] = [
+  { role: 'Alumni', organization: 'Atlantik-Brücke NBP', period: 'Jun 2024 – Present' },
+  { role: 'Digitalbeauftragter', organization: 'Christlich-Soziale Union (CSU)', period: 'Mar 2025 – Present' },
+  { role: 'Alumni', organization: 'Young Königswinter', period: 'Nov 2025 – Present' },
+  { role: 'Mentor', organization: 'Deutschlandstiftung Integration', period: 'Jul 2025 – Present' },
+  { role: 'Member', organization: 'German Council on Foreign Relations (DGAP)', period: 'Dec 2024 – Present' },
+  { role: 'Community Member', organization: '2hearts', period: 'Jan 2022 – Present' },
+  { role: 'Member', organization: 'InteGREATer e.V.', period: 'Oct 2022 – Present' },
+];

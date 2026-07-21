@@ -5,6 +5,6 @@
       "/pagefind/pagefind.js": ["./src/types/pagefind.ts"]
     }
   },
-  "include": [".astro/types.d.ts", "src/**/*", "tests/**/*", "legacy/profile.ts"],
+  "include": [".astro/types.d.ts", "src/**/*", "tests/**/*"],
   "exclude": ["dist"]
 }
