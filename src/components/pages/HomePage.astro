@@ -37,25 +37,13 @@ const writing: WritingMeta[] = sortByDateDesc(
 ).slice(0, 3);
 
 const paths = locale === 'de' ? [
-  { n: '01', title: 'Speaking & Workshops', text: 'Keynotes, Vorträge und Executive-Workshops zu Enterprise AI, agentischen Systemen und AI-Adoption — praxisnah statt Hype.', cta: 'Vortrag anfragen' },
-  { n: '02', title: 'Advisory', text: 'Sparring für Führungskräfte: AI-Strategie, Operating Models, Architektur-Reviews. Direkt, unabhängig, umsetzungsnah.', cta: 'Sparring vereinbaren' },
-  { n: '03', title: 'Enterprise AI', text: 'AI-Programme mit Team: von der Strategie bis zum produktiven Agenten-System — für Mittelstand und Konzerne.', cta: 'Projekt besprechen' },
+  { n: '01', title: 'Speaking & Workshops', text: 'Keynotes, Vorträge und Executive-Workshops zu Enterprise AI, agentischen Systemen und AI-Adoption — praxisnah statt Hype.' },
+  { n: '02', title: 'Advisory', text: 'Sparring für Führungskräfte: AI-Strategie, Operating Models, Architektur-Reviews. Direkt, unabhängig, umsetzungsnah.' },
+  { n: '03', title: 'Enterprise AI', text: 'AI-Programme mit Team: von der Strategie bis zum produktiven Agenten-System — für Mittelstand und Konzerne.' },
 ] : [
-  { n: '01', title: 'Speaking & Workshops', text: 'Keynotes, talks and executive workshops on enterprise AI, agentic systems and AI adoption — grounded in practice, not hype.', cta: 'Request a talk' },
-  { n: '02', title: 'Advisory', text: 'Sparring for leaders: AI strategy, operating models, architecture reviews. Direct, independent, close to execution.', cta: 'Book a sparring session' },
-  { n: '03', title: 'Enterprise AI', text: 'AI programs with a team: from strategy to production agentic systems — for Mittelstand and global enterprises.', cta: 'Discuss a project' },
-];
-
-const router = locale === 'de' ? [
-  { q: 'Sie planen ein Event und suchen einen Speaker?', a: 'Vortrag anfragen', href: '/contact' },
-  { q: 'Sie wollen AI in Ihrem Unternehmen ernsthaft voranbringen?', a: 'Projekt besprechen', href: '/contact' },
-  { q: 'Sie wünschen sich ein zweites Paar Augen auf Ihre AI-Strategie?', a: 'Sparring vereinbaren', href: '/contact' },
-  { q: 'Einfach nur mitlesen?', a: 'LinkedIn folgen', href: profile.linkedin, external: true },
-] : [
-  { q: 'Planning an event and looking for a speaker?', a: 'Request a talk', href: '/contact' },
-  { q: 'Serious about moving AI forward in your company?', a: 'Discuss a project', href: '/contact' },
-  { q: 'Want a second pair of eyes on your AI strategy?', a: 'Book a sparring session', href: '/contact' },
-  { q: 'Just want to follow along?', a: 'Follow on LinkedIn', href: profile.linkedin, external: true },
+  { n: '01', title: 'Speaking & Workshops', text: 'Keynotes, talks and executive workshops on enterprise AI, agentic systems and AI adoption — grounded in practice, not hype.' },
+  { n: '02', title: 'Advisory', text: 'Sparring for leaders: AI strategy, operating models, architecture reviews. Direct, independent, close to execution.' },
+  { n: '03', title: 'Enterprise AI', text: 'AI programs with a team: from strategy to production agentic systems — for Mittelstand and global enterprises.' },
 ];
 
 const engagement = profile.engagement[locale];
@@ -84,7 +72,6 @@ const description = locale === 'de'
         <div>
           <Eyebrow>{p.n} · {p.title}</Eyebrow>
           <p class="mt-3 text-[14px] leading-relaxed">{p.text}</p>
-          <a href={localizePath('/contact', locale)} class="mt-3 inline-block text-[13px] underline underline-offset-4 decoration-accent hover:text-accent">{p.cta} →</a>
         </div>
       ))}
     </div>
@@ -138,18 +125,19 @@ const description = locale === 'de'
     </div>
   </section>
 
-  <!-- What now? router -->
+  <!-- Get in touch -->
   <section class="border-t border-line py-14">
-    <h2 class="font-serif text-2xl font-light">{tr('home.router.title')}</h2>
-    <ul class="mt-5 space-y-3">
-      {router.map((r) => (
-        <li class="flex flex-wrap items-baseline gap-x-3 gap-y-1 text-[14px]">
-          <span>{r.q}</span>
-          <a href={r.external ? r.href : localizePath(r.href, locale)} rel={r.external ? 'noopener' : undefined}
-            class="underline underline-offset-4 decoration-accent hover:text-accent">{r.a} →</a>
-        </li>
-      ))}
-    </ul>
+    <h2 class="font-serif text-2xl font-light">{locale === 'de' ? 'Kontakt' : 'Get in touch'}</h2>
+    <p class="mt-3 max-w-[42em] text-[14px] leading-relaxed">
+      {locale === 'de'
+        ? 'Ob Vortrag, Sparring oder Projekt — schreiben Sie mir gern.'
+        : "Whether it's a talk, a sparring session or a project — my inbox is open."}
+    </p>
+    <a href={localizePath('/contact', locale)} class="mt-4 inline-block text-[14px] underline underline-offset-4 decoration-accent hover:text-accent">{locale === 'de' ? 'Kontakt aufnehmen' : 'Contact'} →</a>
+    <p class="mt-4 text-[13px] text-muted">
+      {locale === 'de' ? 'Oder einfach mitlesen auf ' : 'Or just follow along on '}
+      <a href={profile.linkedin} rel="noopener" class="underline underline-offset-4 decoration-accent hover:text-fg">LinkedIn</a>.
+    </p>
   </section>
 
   <script is:inline>
