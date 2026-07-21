@@ -2,14 +2,15 @@
 // industry, rendered to PNG with sharp. NO stock photos, NO AI-photo look:
 // every coordinate is computed, every plate shares ONE technical-drawing style
 // derived from the site's design system (blueprint grid, gray strokes, a single
-// emerald accent element, a bottom-right title block).
+// emerald accent element).
 //
 // Each plate is emitted in TWO themes (dark / light) and TWO formats
 // (standard 16:9 · wide 3840×1080), i.e. 4 files per industry → 20 files total.
 // The motif code is written ONCE and parameterized by a palette + a per-format
-// layout object; the light theme is the dark system inverted, and the wide
-// format recomposes (does not squash) into a left-third label + right-two-thirds
-// motif.
+// layout object; the light theme is the dark system inverted. The STANDARD
+// plate carries a bottom-right title block; the WIDE plate drops it and instead
+// recomposes (does not squash) into a left-third industry label + right-two-
+// thirds motif, the label alone identifying the plate.
 //
 // Run: `node scripts/generate-work-art.mjs` → writes src/assets/work/*.png
 import sharp from 'sharp';
@@ -41,12 +42,13 @@ const LIGHT = {
 };
 
 // ---------------------------------------------------------------------------
-// Formats — canvas + title-block metrics. `standard` reproduces the original
-// 16:9 plate exactly (byte-for-byte in the dark theme); `wide` recomposes.
+// Formats — canvas + (standard-only) title-block metrics. `standard` reproduces
+// the original 16:9 plate exactly (byte-for-byte in the dark theme); `wide`
+// recomposes and carries no title block, so it needs only canvas + margin.
 // ---------------------------------------------------------------------------
 const FORMATS = {
   standard: { W: 3840, H: 2160, margin: 240, tbW: 1200, tbH: 120, pad: 40, y1: 58, y2: 98, fs1: 40, fs2: 26, ls1: 8, ls2: 6 },
-  wide: { W: 3840, H: 1080, margin: 120, tbW: 1000, tbH: 108, pad: 34, y1: 48, y2: 84, fs1: 34, fs2: 22, ls1: 7, ls2: 5 },
+  wide: { W: 3840, H: 1080, margin: 120 },
 };
 
 const CELL = 96; // blueprint grid cell (constant in both formats)
@@ -447,7 +449,9 @@ function compose(pal, format, plate) {
     grid(pal, g),
     format === 'wide' ? wideLabel(pal, g, plate.industry) : null,
     plate.motif(pal, L),
-    titleBlock(pal, g, plate.label),
+    // Title block on STANDARD only. WIDE is identified by its large left-third
+    // label alone, so the small title box would be redundant there.
+    format === 'wide' ? null : titleBlock(pal, g, plate.label),
   ].filter(Boolean).join('\n');
   return `<svg xmlns="http://www.w3.org/2000/svg" width="${g.W}" height="${g.H}" viewBox="0 0 ${g.W} ${g.H}">\n${body}\n</svg>`;
 }
