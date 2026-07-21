@@ -1,0 +1,120 @@
+---
+import { getCollection, render } from 'astro:content';
+import Base from '../../layouts/Base.astro';
+import Eyebrow from '../../components/Eyebrow.astro';
+import ThemedPlate from '../../components/ThemedPlate.astro';
+import { filterLocale } from '../../lib/writing';
+
+// Internal, unlinked preview to compare /work layout treatments side by side.
+// EN only, noindex, excluded from sitemap + pagefind. Not linked from any nav.
+// The Automotive & Manufacturing industry (longest label) is the stress test.
+const INDUSTRY = 'Automotive & Manufacturing';
+const entries = filterLocale(await getCollection('work'), 'en')
+  .filter((e) => e.data.industry === INDUSTRY)
+  .sort((a, b) => a.data.order - b.data.order);
+const items = await Promise.all(entries.map(async (e) => ({ e, C: (await render(e)).Content })));
+---
+<Base title="Work variants (internal)" description="Internal preview of /work layout variants." noindex>
+  <div data-pagefind-ignore>
+    <header class="py-14">
+      <p class="font-mono text-[12px] tracking-[0.15em] text-muted">Interne Vorschau — Layout-Varianten für /work. Nicht verlinkt.</p>
+    </header>
+
+    {/* --- VARIANT A — LABEL IM ARTWORK ------------------------------------ */}
+    <section class="border-t-2 border-line py-10">
+      <p class="font-mono text-sm font-bold tracking-[0.2em] uppercase text-fg">Variant A — Label im Artwork</p>
+      <h2 class="sr-only">{INDUSTRY}</h2>
+      <ThemedPlate industry={INDUSTRY} format="wide"
+        sizes="(min-width: 64rem) 1024px, 100vw"
+        class="mt-6 w-full rounded-lg" />
+      {/* temporary: case markup duplicated from WorkPage.astro for the preview */}
+      {items.map(({ e, C }) => (
+        <article class="mt-10 flex flex-col lg:grid lg:grid-cols-[260px_minmax(0,1fr)] lg:gap-10 lg:items-start">
+          <div class="contents lg:block">
+            <div class="order-1"><Eyebrow>{e.data.workType}</Eyebrow></div>
+            <dl class="order-3 mt-4 space-y-3 lg:mt-5">
+              {e.data.kpis.map((k) => (
+                <div>
+                  <dd class="font-mono text-lg font-medium">{k.value}</dd>
+                  <dt class="text-[12px] text-muted">{k.label}</dt>
+                </div>
+              ))}
+            </dl>
+            {e.data.tags.length > 0 && (
+              <p class="order-5 mt-4 font-mono text-[11px] tracking-wide text-muted lg:mt-6">{e.data.tags.join(' · ')}</p>
+            )}
+          </div>
+          <div class="contents lg:block">
+            <h3 class="order-2 mt-2 font-serif text-2xl font-light lg:mt-0">{e.data.title}</h3>
+            <div class="prose-col prose-col--wide order-4 mt-4"><C /></div>
+          </div>
+        </article>
+      ))}
+    </section>
+
+    {/* --- VARIANT B — ARTWORK UNTER DEM LABEL ---------------------------- */}
+    <section class="border-t-2 border-line py-10">
+      <p class="font-mono text-sm font-bold tracking-[0.2em] uppercase text-fg">Variant B — Artwork unter dem Label</p>
+      <h2 class="mt-6 font-mono text-[12px] tracking-[0.18em] uppercase text-muted">{INDUSTRY}</h2>
+      <ThemedPlate industry={INDUSTRY}
+        sizes="(min-width: 64rem) 1024px, 100vw"
+        class="mt-4 w-full max-h-64 rounded-lg object-contain" />
+      {/* temporary: case markup duplicated from WorkPage.astro for the preview */}
+      {items.map(({ e, C }) => (
+        <article class="mt-10 flex flex-col lg:grid lg:grid-cols-[260px_minmax(0,1fr)] lg:gap-10 lg:items-start">
+          <div class="contents lg:block">
+            <div class="order-1"><Eyebrow>{e.data.workType}</Eyebrow></div>
+            <dl class="order-3 mt-4 space-y-3 lg:mt-5">
+              {e.data.kpis.map((k) => (
+                <div>
+                  <dd class="font-mono text-lg font-medium">{k.value}</dd>
+                  <dt class="text-[12px] text-muted">{k.label}</dt>
+                </div>
+              ))}
+            </dl>
+            {e.data.tags.length > 0 && (
+              <p class="order-5 mt-4 font-mono text-[11px] tracking-wide text-muted lg:mt-6">{e.data.tags.join(' · ')}</p>
+            )}
+          </div>
+          <div class="contents lg:block">
+            <h3 class="order-2 mt-2 font-serif text-2xl font-light lg:mt-0">{e.data.title}</h3>
+            <div class="prose-col prose-col--wide order-4 mt-4"><C /></div>
+          </div>
+        </article>
+      ))}
+    </section>
+
+    {/* --- VARIANT C — KOMPAKTE ZEILE ------------------------------------- */}
+    <section class="border-t-2 border-line py-10">
+      <p class="font-mono text-sm font-bold tracking-[0.2em] uppercase text-fg">Variant C — Kompakte Zeile</p>
+      <div class="mt-6 flex flex-wrap items-center gap-6">
+        <ThemedPlate industry={INDUSTRY} widths={[224, 448]} sizes="224px"
+          class="w-56 shrink-0 rounded-md" />
+        <h2 class="font-mono text-[12px] tracking-[0.18em] uppercase text-muted">{INDUSTRY}</h2>
+      </div>
+      {/* temporary: case markup duplicated from WorkPage.astro for the preview */}
+      {items.map(({ e, C }) => (
+        <article class="mt-10 flex flex-col lg:grid lg:grid-cols-[260px_minmax(0,1fr)] lg:gap-10 lg:items-start">
+          <div class="contents lg:block">
+            <div class="order-1"><Eyebrow>{e.data.workType}</Eyebrow></div>
+            <dl class="order-3 mt-4 space-y-3 lg:mt-5">
+              {e.data.kpis.map((k) => (
+                <div>
+                  <dd class="font-mono text-lg font-medium">{k.value}</dd>
+                  <dt class="text-[12px] text-muted">{k.label}</dt>
+                </div>
+              ))}
+            </dl>
+            {e.data.tags.length > 0 && (
+              <p class="order-5 mt-4 font-mono text-[11px] tracking-wide text-muted lg:mt-6">{e.data.tags.join(' · ')}</p>
+            )}
+          </div>
+          <div class="contents lg:block">
+            <h3 class="order-2 mt-2 font-serif text-2xl font-light lg:mt-0">{e.data.title}</h3>
+            <div class="prose-col prose-col--wide order-4 mt-4"><C /></div>
+          </div>
+        </article>
+      ))}
+    </section>
+  </div>
+</Base>
