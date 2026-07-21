@@ -1,0 +1,28 @@
+---
+import Base from '../../layouts/Base.astro';
+import { profile } from '../../data/profile';
+import type { Locale } from '../../i18n/routes';
+
+interface Props { locale: Locale }
+const { locale } = Astro.props;
+const title = 'Impressum';
+const description = locale === 'de'
+  ? 'Impressum und Anbieterkennzeichnung gemäß § 5 TMG.'
+  : 'Legal notice (Impressum) as required under German law.';
+---
+<Base title={title} description={description} noindex>
+  <article class="prose-col py-14" data-pagefind-ignore lang="de">
+    <h1 class="font-serif text-4xl font-light">{title}</h1>
+    {locale === 'en' && (
+      <p class="text-muted">This legal notice is required under German law and provided in German.</p>
+    )}
+    <h2>Angaben gemäß § 5 TMG</h2>
+    <p>
+      {profile.name}<br />
+      Lärchenstraße 20C<br />
+      84435 Lengdorf
+    </p>
+    <p>Kontakt: E-Mail: <a href={`mailto:${profile.email}`}>{profile.email}</a></p>
+    <p>Verantwortlich im Sinne des § 18 Abs. 2 MStV: {profile.name}</p>
+  </article>
+</Base>

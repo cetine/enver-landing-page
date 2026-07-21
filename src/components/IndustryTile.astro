@@ -1,0 +1,29 @@
+---
+import PlateSvg from './PlateSvg.astro';
+import { localizePath, type Locale } from '../i18n/routes';
+import type { WorkArt } from '../data/workArt';
+
+interface CaseLink { title: string; slug: string }
+interface Props {
+  industry: string;
+  art: WorkArt;
+  cases: CaseLink[];
+  locale: Locale;
+}
+const { industry, art, cases, locale } = Astro.props;
+const workPath = localizePath('/work', locale);
+---
+<div>
+  <a href={`${workPath}#${art.anchor}`} class="group block">
+    <PlateSvg industry={industry}
+      class="w-full overflow-hidden rounded-lg opacity-80 transition-opacity group-hover:opacity-100" />
+    <p class="mt-3 font-mono text-[11px] tracking-[0.15em] uppercase text-muted">{industry}</p>
+  </a>
+  <ul class="mt-2 space-y-1">
+    {cases.map((c) => (
+      <li>
+        <a href={`${workPath}#${c.slug}`} class="text-[13px] text-muted underline-offset-4 decoration-accent hover:text-fg hover:underline">{c.title}</a>
+      </li>
+    ))}
+  </ul>
+</div>

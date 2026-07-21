@@ -1,0 +1,77 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 3840 2160" preserveAspectRatio="xMidYMid meet" role="presentation" aria-hidden="true">
+<rect width="3840" height="2160" fill="var(--plate-bg)"/>
+<path d="M0 0V2160M96 0V2160M192 0V2160M288 0V2160M384 0V2160M480 0V2160M576 0V2160M672 0V2160M768 0V2160M864 0V2160M960 0V2160M1056 0V2160M1152 0V2160M1248 0V2160M1344 0V2160M1440 0V2160M1536 0V2160M1632 0V2160M1728 0V2160M1824 0V2160M1920 0V2160M2016 0V2160M2112 0V2160M2208 0V2160M2304 0V2160M2400 0V2160M2496 0V2160M2592 0V2160M2688 0V2160M2784 0V2160M2880 0V2160M2976 0V2160M3072 0V2160M3168 0V2160M3264 0V2160M3360 0V2160M3456 0V2160M3552 0V2160M3648 0V2160M3744 0V2160M3840 0V2160M0 0H3840M0 96H3840M0 192H3840M0 288H3840M0 384H3840M0 480H3840M0 576H3840M0 672H3840M0 768H3840M0 864H3840M0 960H3840M0 1056H3840M0 1152H3840M0 1248H3840M0 1344H3840M0 1440H3840M0 1536H3840M0 1632H3840M0 1728H3840M0 1824H3840M0 1920H3840M0 2016H3840M0 2112H3840" stroke="var(--plate-grid)" stroke-width="1" fill="none"/>
+<g class="p-motif">
+<line x1="1920" y1="280" x2="2232.4" y2="351.3" stroke="var(--plate-stroke)" stroke-width="2" stroke-opacity="0.6" stroke-linecap="round"/>
+<line x1="2232.4" y1="351.3" x2="2482.92" y2="551.09" stroke="var(--plate-stroke)" stroke-width="2" stroke-opacity="0.6" stroke-linecap="round"/>
+<line x1="2482.92" y1="551.09" x2="2621.95" y2="839.78" stroke="var(--plate-stroke)" stroke-width="2" stroke-opacity="0.6" stroke-linecap="round"/>
+<line x1="2621.95" y1="839.78" x2="2621.95" y2="1160.22" stroke="var(--plate-stroke)" stroke-width="2" stroke-opacity="0.6" stroke-linecap="round"/>
+<line x1="2621.95" y1="1160.22" x2="2482.92" y2="1448.91" stroke="var(--plate-stroke)" stroke-width="2" stroke-opacity="0.6" stroke-linecap="round"/>
+<line x1="2482.92" y1="1448.91" x2="2232.4" y2="1648.7" stroke="var(--plate-stroke)" stroke-width="2" stroke-opacity="0.6" stroke-linecap="round"/>
+<line x1="2232.4" y1="1648.7" x2="1920" y2="1720" stroke="var(--plate-stroke)" stroke-width="2" stroke-opacity="0.6" stroke-linecap="round"/>
+<line x1="1920" y1="1720" x2="1607.6" y2="1648.7" stroke="var(--plate-stroke)" stroke-width="2" stroke-opacity="0.6" stroke-linecap="round"/>
+<line x1="1607.6" y1="1648.7" x2="1357.08" y2="1448.91" stroke="var(--plate-stroke)" stroke-width="2" stroke-opacity="0.6" stroke-linecap="round"/>
+<line x1="1357.08" y1="1448.91" x2="1218.05" y2="1160.22" stroke="var(--plate-stroke)" stroke-width="2" stroke-opacity="0.6" stroke-linecap="round"/>
+<line x1="1218.05" y1="1160.22" x2="1218.05" y2="839.78" stroke="var(--plate-stroke)" stroke-width="2" stroke-opacity="0.6" stroke-linecap="round"/>
+<line x1="1218.05" y1="839.78" x2="1357.08" y2="551.09" stroke="var(--plate-stroke)" stroke-width="2" stroke-opacity="0.6" stroke-linecap="round"/>
+<line x1="1357.08" y1="551.09" x2="1607.6" y2="351.3" stroke="var(--plate-stroke)" stroke-width="2" stroke-opacity="0.6" stroke-linecap="round"/>
+<line x1="1607.6" y1="351.3" x2="1920" y2="280" stroke="var(--plate-stroke)" stroke-width="2" stroke-opacity="0.6" stroke-linecap="round"/>
+<line x1="2080.73" y1="611.97" x2="2308.03" y2="839.27" stroke="var(--plate-stroke)" stroke-width="2" stroke-opacity="0.6" stroke-linecap="round"/>
+<line x1="2308.03" y1="839.27" x2="2308.03" y2="1160.73" stroke="var(--plate-stroke)" stroke-width="2" stroke-opacity="0.6" stroke-linecap="round"/>
+<line x1="2308.03" y1="1160.73" x2="2080.73" y2="1388.03" stroke="var(--plate-stroke)" stroke-width="2" stroke-opacity="0.6" stroke-linecap="round"/>
+<line x1="2080.73" y1="1388.03" x2="1759.27" y2="1388.03" stroke="var(--plate-stroke)" stroke-width="2" stroke-opacity="0.6" stroke-linecap="round"/>
+<line x1="1759.27" y1="1388.03" x2="1531.97" y2="1160.73" stroke="var(--plate-stroke)" stroke-width="2" stroke-opacity="0.6" stroke-linecap="round"/>
+<line x1="1531.97" y1="1160.73" x2="1531.97" y2="839.27" stroke="var(--plate-stroke)" stroke-width="2" stroke-opacity="0.6" stroke-linecap="round"/>
+<line x1="1531.97" y1="839.27" x2="1759.27" y2="611.97" stroke="var(--plate-stroke)" stroke-width="2" stroke-opacity="0.6" stroke-linecap="round"/>
+<line x1="1759.27" y1="611.97" x2="2080.73" y2="611.97" stroke="var(--plate-stroke)" stroke-width="2" stroke-opacity="0.6" stroke-linecap="round"/>
+<line x1="2080.73" y1="611.97" x2="1920" y2="280" stroke="var(--plate-stroke)" stroke-width="2" stroke-opacity="0.6" stroke-linecap="round"/>
+<line x1="2308.03" y1="839.27" x2="2482.92" y2="551.09" stroke="var(--plate-stroke)" stroke-width="2" stroke-opacity="0.6" stroke-linecap="round"/>
+<line x1="2308.03" y1="1160.73" x2="2621.95" y2="1160.22" stroke="var(--plate-stroke)" stroke-width="2" stroke-opacity="0.6" stroke-linecap="round"/>
+<line x1="2080.73" y1="1388.03" x2="2232.4" y2="1648.7" stroke="var(--plate-stroke)" stroke-width="2" stroke-opacity="0.6" stroke-linecap="round"/>
+<line x1="1759.27" y1="1388.03" x2="1607.6" y2="1648.7" stroke="var(--plate-stroke)" stroke-width="2" stroke-opacity="0.6" stroke-linecap="round"/>
+<line x1="1531.97" y1="1160.73" x2="1218.05" y2="1160.22" stroke="var(--plate-stroke)" stroke-width="2" stroke-opacity="0.6" stroke-linecap="round"/>
+<line x1="1531.97" y1="839.27" x2="1357.08" y2="551.09" stroke="var(--plate-stroke)" stroke-width="2" stroke-opacity="0.6" stroke-linecap="round"/>
+<line x1="1759.27" y1="611.97" x2="1920" y2="280" stroke="var(--plate-stroke)" stroke-width="2" stroke-opacity="0.6" stroke-linecap="round"/>
+<line x1="2080.73" y1="611.97" x2="2018.99" y2="1098.99" stroke="var(--plate-stroke)" stroke-width="2" stroke-opacity="0.6" stroke-linecap="round"/>
+<line x1="2308.03" y1="839.27" x2="1821.01" y2="901.01" stroke="var(--plate-stroke)" stroke-width="2" stroke-opacity="0.6" stroke-linecap="round"/>
+<line x1="2308.03" y1="1160.73" x2="2018.99" y2="1098.99" stroke="var(--plate-stroke)" stroke-width="2" stroke-opacity="0.6" stroke-linecap="round"/>
+<line x1="2080.73" y1="1388.03" x2="1821.01" y2="901.01" stroke="var(--plate-stroke)" stroke-width="2" stroke-opacity="0.6" stroke-linecap="round"/>
+<line x1="1759.27" y1="1388.03" x2="2018.99" y2="1098.99" stroke="var(--plate-stroke)" stroke-width="2" stroke-opacity="0.6" stroke-linecap="round"/>
+<line x1="1531.97" y1="1160.73" x2="1821.01" y2="901.01" stroke="var(--plate-stroke)" stroke-width="2" stroke-opacity="0.6" stroke-linecap="round"/>
+<line x1="1531.97" y1="839.27" x2="2018.99" y2="1098.99" stroke="var(--plate-stroke)" stroke-width="2" stroke-opacity="0.6" stroke-linecap="round"/>
+<line x1="1759.27" y1="611.97" x2="1821.01" y2="901.01" stroke="var(--plate-stroke)" stroke-width="2" stroke-opacity="0.6" stroke-linecap="round"/>
+<line x1="2018.99" y1="1098.99" x2="1821.01" y2="901.01" stroke="var(--plate-stroke)" stroke-width="2" stroke-opacity="0.6" stroke-linecap="round"/>
+<g class="p-nodes">
+<circle cx="1920" cy="280" r="9" fill="var(--plate-stroke)" stroke="var(--plate-bg)" stroke-width="2"/>
+<circle cx="2232.4" cy="351.3" r="9" fill="var(--plate-stroke)" stroke="var(--plate-bg)" stroke-width="2"/>
+<circle cx="2482.92" cy="551.09" r="9" fill="var(--plate-stroke)" stroke="var(--plate-bg)" stroke-width="2"/>
+<circle cx="2621.95" cy="839.78" r="9" fill="var(--plate-stroke)" stroke="var(--plate-bg)" stroke-width="2"/>
+<circle cx="2621.95" cy="1160.22" r="9" fill="var(--plate-stroke)" stroke="var(--plate-bg)" stroke-width="2"/>
+<circle cx="2482.92" cy="1448.91" r="9" fill="var(--plate-stroke)" stroke="var(--plate-bg)" stroke-width="2"/>
+<circle cx="2232.4" cy="1648.7" r="9" fill="var(--plate-stroke)" stroke="var(--plate-bg)" stroke-width="2"/>
+<circle cx="1920" cy="1720" r="9" fill="var(--plate-stroke)" stroke="var(--plate-bg)" stroke-width="2"/>
+<circle cx="1607.6" cy="1648.7" r="9" fill="var(--plate-stroke)" stroke="var(--plate-bg)" stroke-width="2"/>
+<circle cx="1357.08" cy="1448.91" r="9" fill="var(--plate-stroke)" stroke="var(--plate-bg)" stroke-width="2"/>
+<circle cx="1218.05" cy="1160.22" r="9" fill="var(--plate-stroke)" stroke="var(--plate-bg)" stroke-width="2"/>
+<circle cx="1218.05" cy="839.78" r="9" fill="var(--plate-stroke)" stroke="var(--plate-bg)" stroke-width="2"/>
+<circle cx="1357.08" cy="551.09" r="9" fill="var(--plate-stroke)" stroke="var(--plate-bg)" stroke-width="2"/>
+<circle cx="1607.6" cy="351.3" r="9" fill="var(--plate-stroke)" stroke="var(--plate-bg)" stroke-width="2"/>
+<circle cx="2080.73" cy="611.97" r="9" fill="var(--plate-stroke)" stroke="var(--plate-bg)" stroke-width="2"/>
+<circle cx="2308.03" cy="839.27" r="9" fill="var(--plate-stroke)" stroke="var(--plate-bg)" stroke-width="2"/>
+<circle cx="2308.03" cy="1160.73" r="9" fill="var(--plate-stroke)" stroke="var(--plate-bg)" stroke-width="2"/>
+<circle cx="2080.73" cy="1388.03" r="9" fill="var(--plate-stroke)" stroke="var(--plate-bg)" stroke-width="2"/>
+<circle cx="1759.27" cy="1388.03" r="9" fill="var(--plate-stroke)" stroke="var(--plate-bg)" stroke-width="2"/>
+<circle cx="1531.97" cy="1160.73" r="9" fill="var(--plate-stroke)" stroke="var(--plate-bg)" stroke-width="2"/>
+<circle cx="1531.97" cy="839.27" r="9" fill="var(--plate-stroke)" stroke="var(--plate-bg)" stroke-width="2"/>
+<circle cx="1759.27" cy="611.97" r="9" fill="var(--plate-stroke)" stroke="var(--plate-bg)" stroke-width="2"/>
+<circle cx="2018.99" cy="1098.99" r="9" fill="var(--plate-stroke)" stroke="var(--plate-bg)" stroke-width="2"/>
+<circle cx="1821.01" cy="901.01" r="9" fill="var(--plate-stroke)" stroke="var(--plate-bg)" stroke-width="2"/>
+</g>
+<polyline class="p-accent-path" points="2621.95,839.78 2308.03,839.27 2018.99,1098.99 1531.97,1160.73" fill="none" stroke="var(--plate-accent)" stroke-width="6" stroke-linejoin="round" stroke-linecap="round"/>
+<circle class="p-accent-node" cx="2308.03" cy="839.27" r="15" fill="var(--plate-accent)"/>
+<circle class="p-accent-node" cx="2018.99" cy="1098.99" r="15" fill="var(--plate-accent)"/>
+</g>
+<rect x="2400" y="1800" width="1200" height="120" fill="var(--plate-bg)" stroke="var(--plate-line)" stroke-width="1"/>
+<text x="2440" y="1858" font-family="'Courier New', Courier, monospace" font-size="40" letter-spacing="8" fill="var(--plate-accent)">PLATE 01 · BFSI</text>
+<text x="2440" y="1898" font-family="'Courier New', Courier, monospace" font-size="26" letter-spacing="6" fill="var(--plate-muted)">ENVER CETIN · WORK</text>
+</svg>

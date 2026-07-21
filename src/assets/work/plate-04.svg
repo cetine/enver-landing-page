@@ -1,0 +1,43 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 3840 2160" preserveAspectRatio="xMidYMid meet" role="presentation" aria-hidden="true">
+<rect width="3840" height="2160" fill="var(--plate-bg)"/>
+<path d="M0 0V2160M96 0V2160M192 0V2160M288 0V2160M384 0V2160M480 0V2160M576 0V2160M672 0V2160M768 0V2160M864 0V2160M960 0V2160M1056 0V2160M1152 0V2160M1248 0V2160M1344 0V2160M1440 0V2160M1536 0V2160M1632 0V2160M1728 0V2160M1824 0V2160M1920 0V2160M2016 0V2160M2112 0V2160M2208 0V2160M2304 0V2160M2400 0V2160M2496 0V2160M2592 0V2160M2688 0V2160M2784 0V2160M2880 0V2160M2976 0V2160M3072 0V2160M3168 0V2160M3264 0V2160M3360 0V2160M3456 0V2160M3552 0V2160M3648 0V2160M3744 0V2160M3840 0V2160M0 0H3840M0 96H3840M0 192H3840M0 288H3840M0 384H3840M0 480H3840M0 576H3840M0 672H3840M0 768H3840M0 864H3840M0 960H3840M0 1056H3840M0 1152H3840M0 1248H3840M0 1344H3840M0 1440H3840M0 1536H3840M0 1632H3840M0 1728H3840M0 1824H3840M0 1920H3840M0 2016H3840M0 2112H3840" stroke="var(--plate-grid)" stroke-width="1" fill="none"/>
+<g class="p-motif">
+<polygon points="1780,1450 2143.73,1660 1780,1870 1416.27,1660" fill="none" stroke="var(--plate-strong)" stroke-width="3" stroke-opacity="0.72" stroke-linejoin="round"/>
+<polygon points="1780,1320 2143.73,1530 1780,1740 1416.27,1530" fill="none" stroke="var(--plate-stroke)" stroke-width="2" stroke-opacity="0.6" stroke-linejoin="round"/>
+<polygon points="1780,1190 2143.73,1400 1780,1610 1416.27,1400" fill="none" stroke="var(--plate-stroke)" stroke-width="2" stroke-opacity="0.6" stroke-linejoin="round"/>
+<polygon points="1780,1060 2143.73,1270 1780,1480 1416.27,1270" fill="none" stroke="var(--plate-stroke)" stroke-width="2" stroke-opacity="0.6" stroke-linejoin="round"/>
+<polygon points="1780,930 2143.73,1140 1780,1350 1416.27,1140" fill="none" stroke="var(--plate-stroke)" stroke-width="2" stroke-opacity="0.6" stroke-linejoin="round"/>
+<polygon points="1780,800 2143.73,1010 1780,1220 1416.27,1010" fill="none" stroke="var(--plate-stroke)" stroke-width="2" stroke-opacity="0.6" stroke-linejoin="round"/>
+<polygon points="1780,540 2143.73,750 1780,960 1416.27,750" fill="none" stroke="var(--plate-stroke)" stroke-width="2" stroke-opacity="0.6" stroke-linejoin="round"/>
+<polygon points="1780,410 2143.73,620 1780,830 1416.27,620" fill="none" stroke="var(--plate-stroke)" stroke-width="2" stroke-opacity="0.6" stroke-linejoin="round"/>
+<polygon points="1780,280 2143.73,490 1780,700 1416.27,490" fill="none" stroke="var(--plate-strong)" stroke-width="3" stroke-opacity="0.72" stroke-linejoin="round"/>
+<line x1="1780" y1="1450" x2="1780" y2="280" stroke="var(--plate-strong)" stroke-width="3" stroke-opacity="0.7" stroke-linecap="round"/>
+<line x1="2143.73" y1="1660" x2="2143.73" y2="490" stroke="var(--plate-strong)" stroke-width="3" stroke-opacity="0.7" stroke-linecap="round"/>
+<line x1="1416.27" y1="1660" x2="1416.27" y2="490" stroke="var(--plate-strong)" stroke-width="3" stroke-opacity="0.7" stroke-linecap="round"/>
+<line x1="1780" y1="1870" x2="1780" y2="700" stroke="var(--plate-strong)" stroke-width="3" stroke-opacity="0.7" stroke-linecap="round"/>
+<line x1="1286.27" y1="490" x2="1286.27" y2="1660" stroke="var(--plate-stroke)" stroke-width="2" stroke-opacity="0.65" stroke-linecap="round"/>
+<g class="p-dim-ticks">
+<line x1="1270.27" y1="1660" x2="1302.27" y2="1660" stroke="var(--plate-stroke)" stroke-width="2" stroke-opacity="0.65" stroke-linecap="round"/>
+<line x1="1270.27" y1="1530" x2="1302.27" y2="1530" stroke="var(--plate-stroke)" stroke-width="2" stroke-opacity="0.65" stroke-linecap="round"/>
+<line x1="1270.27" y1="1400" x2="1302.27" y2="1400" stroke="var(--plate-stroke)" stroke-width="2" stroke-opacity="0.65" stroke-linecap="round"/>
+<line x1="1270.27" y1="1270" x2="1302.27" y2="1270" stroke="var(--plate-stroke)" stroke-width="2" stroke-opacity="0.65" stroke-linecap="round"/>
+<line x1="1270.27" y1="1140" x2="1302.27" y2="1140" stroke="var(--plate-stroke)" stroke-width="2" stroke-opacity="0.65" stroke-linecap="round"/>
+<line x1="1270.27" y1="1010" x2="1302.27" y2="1010" stroke="var(--plate-stroke)" stroke-width="2" stroke-opacity="0.65" stroke-linecap="round"/>
+<line x1="1270.27" y1="880" x2="1302.27" y2="880" stroke="var(--plate-stroke)" stroke-width="2" stroke-opacity="0.65" stroke-linecap="round"/>
+<line x1="1270.27" y1="750" x2="1302.27" y2="750" stroke="var(--plate-stroke)" stroke-width="2" stroke-opacity="0.65" stroke-linecap="round"/>
+<line x1="1270.27" y1="620" x2="1302.27" y2="620" stroke="var(--plate-stroke)" stroke-width="2" stroke-opacity="0.65" stroke-linecap="round"/>
+<line x1="1270.27" y1="490" x2="1302.27" y2="490" stroke="var(--plate-stroke)" stroke-width="2" stroke-opacity="0.65" stroke-linecap="round"/>
+</g>
+<line x1="1196.27" y1="1200" x2="2363.73" y2="1200" stroke="var(--plate-stroke)" stroke-width="2" stroke-opacity="0.6" stroke-dasharray="28 22" stroke-linecap="round"/>
+<g class="p-plane">
+<polygon points="1780,670 2143.73,880 1780,1090 1416.27,880" fill="none" stroke="var(--plate-accent)" stroke-width="6" stroke-linejoin="round"/>
+<line x1="1852.75" y1="712" x2="1489.02" y2="922" stroke="var(--plate-accent)" stroke-width="2" stroke-opacity="0.8" stroke-linecap="round"/>
+<line x1="1925.49" y1="754" x2="1561.76" y2="964" stroke="var(--plate-accent)" stroke-width="2" stroke-opacity="0.8" stroke-linecap="round"/>
+<line x1="1998.24" y1="796" x2="1634.51" y2="1006" stroke="var(--plate-accent)" stroke-width="2" stroke-opacity="0.8" stroke-linecap="round"/>
+<line x1="2070.98" y1="838" x2="1707.25" y2="1048" stroke="var(--plate-accent)" stroke-width="2" stroke-opacity="0.8" stroke-linecap="round"/>
+</g>
+</g>
+<rect x="2400" y="1800" width="1200" height="120" fill="var(--plate-bg)" stroke="var(--plate-line)" stroke-width="1"/>
+<text x="2440" y="1858" font-family="'Courier New', Courier, monospace" font-size="40" letter-spacing="8" fill="var(--plate-accent)">PLATE 04 · EPCM &amp; CONSTRUCTION</text>
+<text x="2440" y="1898" font-family="'Courier New', Courier, monospace" font-size="26" letter-spacing="6" fill="var(--plate-muted)">ENVER CETIN · WORK</text>
+</svg>

@@ -1,0 +1,47 @@
+---
+import { render, type CollectionEntry } from 'astro:content';
+import Base from '../../layouts/Base.astro';
+import { t, localizePath, type Locale } from '../../i18n/routes';
+import { readingTimeMinutes } from '../../lib/writing';
+import { articleJsonLd } from '../../lib/seo';
+import { profile } from '../../data/profile';
+
+interface Props { entry: CollectionEntry<'writing'>; locale: Locale }
+const { entry, locale } = Astro.props;
+const tr = t(locale);
+const { Content, headings } = await render(entry);
+const minutes = readingTimeMinutes(entry.body ?? '');
+const fmt = new Intl.DateTimeFormat(locale === 'de' ? 'de-DE' : 'en-US', { year: 'numeric', month: 'long', day: 'numeric' });
+const slug = entry.id.split('/')[1];
+const url = `https://envercetin.de${localizePath(`/writing/${slug}`, locale)}`;
+const toc = headings.filter((h) => h.depth === 2);
+---
+<Base title={entry.data.title} description={entry.data.description} ogType="article"
+  jsonLd={[articleJsonLd({ title: entry.data.title, description: entry.data.description, date: entry.data.date, url, lang: locale })]}>
+  <article class="py-14 lg:grid lg:grid-cols-[150px_minmax(0,40em)_1fr] lg:gap-10">
+    <aside class="mb-6 font-mono text-[12px] text-muted lg:mb-0">
+      <time datetime={entry.data.date.toISOString().slice(0, 10)}>{fmt.format(entry.data.date)}</time>
+      <p class="mt-1">{minutes} {tr('meta.minRead')}</p>
+    </aside>
+    <div>
+      <h1 class="font-serif text-3xl font-light leading-tight sm:text-4xl">{entry.data.title}</h1>
+      <div class="prose-col mt-8"><Content /></div>
+      <p class="mt-12 border-t border-line pt-6 text-[14px] text-muted">
+        {locale === 'de' ? 'Fragen oder Gedanken dazu? ' : 'Questions or thoughts? '}
+        <a href={profile.linkedin} rel="noopener" class="underline underline-offset-4 decoration-accent hover:text-accent">LinkedIn</a>
+        {' · '}
+        <a href={`mailto:${profile.email}`} class="underline underline-offset-4 decoration-accent hover:text-accent">Mail</a>
+      </p>
+    </div>
+    {toc.length >= 3 && (
+      <nav class="hidden lg:block" aria-label="Table of contents" data-pagefind-ignore>
+        <div class="sticky top-24 text-[13px]">
+          <p class="font-mono text-[11px] uppercase tracking-[0.15em] text-muted">{tr('chrome.toc')}</p>
+          <ul class="mt-3 space-y-2">
+            {toc.map((h) => <li><a href={`#${h.slug}`} class="text-muted hover:text-fg">{h.text}</a></li>)}
+          </ul>
+        </div>
+      </nav>
+    )}
+  </article>
+</Base>

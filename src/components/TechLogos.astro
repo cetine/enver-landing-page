@@ -1,0 +1,38 @@
+---
+// Build-time monochrome tech logo strip. Icons imported from simple-icons at
+// build time — zero client JS. OpenAI and Amazon Web Services are not shipped by
+// simple-icons (brand-policy removals), so they are skipped.
+import * as icons from 'simple-icons';
+
+type SimpleIcon = { title: string; path: string };
+const selection: { name: string; key: string }[] = [
+  { name: 'OpenAI', key: 'siOpenai' },
+  { name: 'Anthropic', key: 'siAnthropic' },
+  { name: 'LangChain', key: 'siLangchain' },
+  { name: 'Hugging Face', key: 'siHuggingface' },
+  { name: 'Databricks', key: 'siDatabricks' },
+  { name: 'Amazon Web Services', key: 'siAmazonwebservices' },
+  { name: 'Python', key: 'siPython' },
+  { name: 'TypeScript', key: 'siTypescript' },
+  { name: 'PostgreSQL', key: 'siPostgresql' },
+  { name: 'Docker', key: 'siDocker' },
+];
+
+const registry = icons as unknown as Record<string, SimpleIcon | undefined>;
+const logos = selection
+  .map((s) => ({ name: s.name, icon: registry[s.key] }))
+  .filter((l): l is { name: string; icon: SimpleIcon } => Boolean(l.icon));
+---
+<div class="opacity-70">
+  <p class="font-mono text-[11px] tracking-[0.18em] uppercase text-muted">TOOLING · SELECTION</p>
+  <div class="mt-5 flex flex-wrap items-center gap-8">
+    {logos.map(({ name, icon }) => (
+      <span class="text-muted transition-colors hover:text-fg" title={name}>
+        <svg role="img" aria-label={name} viewBox="0 0 24 24" width="24" height="24" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
+          <title>{name}</title>
+          <path d={icon.path} />
+        </svg>
+      </span>
+    ))}
+  </div>
+</div>

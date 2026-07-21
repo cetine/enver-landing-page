@@ -1,0 +1,21 @@
+---
+import { t, localizePath, type Locale } from '../i18n/routes';
+import { profile } from '../data/profile';
+interface Props { locale: Locale }
+const { locale } = Astro.props;
+const tr = t(locale);
+const year = new Date().getFullYear();
+---
+<footer class="border-t border-line" data-pagefind-ignore>
+  <div class="mx-auto flex max-w-5xl flex-wrap items-center justify-between gap-3 px-5 py-8 text-[13px] text-muted">
+    <span>© {year} {profile.name}</span>
+    <div class="flex flex-wrap gap-4">
+      <a href={`mailto:${profile.email}`} class="hover:text-fg">Mail</a>
+      <a href={profile.linkedin} class="hover:text-fg" rel="me noopener">LinkedIn</a>
+      <a href={profile.github} class="hover:text-fg" rel="me noopener">GitHub</a>
+      <a href={locale === 'de' ? '/de/rss.xml' : '/rss.xml'} class="hover:text-fg">RSS</a>
+      <a href={localizePath('/impressum', locale)} class="hover:text-fg">{tr('footer.imprint')}</a>
+      <a href={localizePath('/datenschutz', locale)} class="hover:text-fg">{tr('footer.privacy')}</a>
+    </div>
+  </div>
+</footer>

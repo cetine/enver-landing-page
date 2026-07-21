@@ -1,0 +1,65 @@
+---
+import '@fontsource/ibm-plex-sans/400.css';
+import '@fontsource/ibm-plex-sans/500.css';
+import '@fontsource/ibm-plex-sans/600.css';
+import '@fontsource/ibm-plex-serif/300.css';
+import '@fontsource/ibm-plex-serif/300-italic.css';
+import '@fontsource/ibm-plex-mono/400.css';
+import '@fontsource/ibm-plex-mono/500.css';
+import '../styles/global.css';
+import Nav from '../components/Nav.astro';
+import Footer from '../components/Footer.astro';
+import SearchPalette from '../components/SearchPalette';
+import { pageTitle, websiteJsonLd } from '../lib/seo';
+import { alternatePath, getLocaleFromPath, t, type Locale } from '../i18n/routes';
+
+interface Props { title?: string; description: string; jsonLd?: object[]; noindex?: boolean; ogType?: 'website' | 'article' }
+const { title, description, jsonLd = [], noindex = false, ogType = 'website' } = Astro.props;
+const pathname = Astro.url.pathname.replace(/\/$/, '') || '/';
+const locale: Locale = getLocaleFromPath(pathname);
+const tr = t(locale);
+const site = 'https://envercetin.de';
+const canonical = `${site}${pathname === '/' ? '' : pathname}`;
+const alt = alternatePath(pathname);
+const enHref = locale === 'en' ? canonical : `${site}${alt === '/' ? '' : alt}`;
+const deHref = locale === 'de' ? canonical : `${site}${alt}`;
+const fullTitle = pageTitle(title);
+const allJsonLd = [websiteJsonLd(), ...jsonLd];
+---
+<html lang={locale} data-theme="light">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>{fullTitle}</title>
+    <meta name="description" content={description} />
+    {noindex && <meta name="robots" content="noindex" />}
+    <link rel="canonical" href={canonical} />
+    <link rel="alternate" hreflang="en" href={enHref} />
+    <link rel="alternate" hreflang="de" href={deHref} />
+    <link rel="alternate" hreflang="x-default" href={enHref} />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
+    <link rel="alternate" type="application/rss+xml" href={locale === 'de' ? '/de/rss.xml' : '/rss.xml'} />
+    <meta property="og:title" content={fullTitle} />
+    <meta property="og:description" content={description} />
+    <meta property="og:url" content={canonical} />
+    <meta property="og:type" content={ogType} />
+    <meta property="og:image" content={`${site}/og-default.png`} />
+    <meta name="twitter:card" content="summary_large_image" />
+    <script is:inline>
+      let saved = null;
+      try { saved = localStorage.getItem('theme'); } catch (e) { /* storage blocked: fall back to media query */ }
+      const preferred = saved ?? (matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
+      document.documentElement.dataset.theme = preferred;
+    </script>
+    {allJsonLd.map((o) => <script type="application/ld+json" set:html={JSON.stringify(o).replace(/</g, '\\u003c')} />)}
+  </head>
+  <body class="min-h-screen bg-bg font-sans text-fg antialiased">
+    <a href="#main" data-pagefind-ignore class="sr-only focus:not-sr-only focus:absolute focus:left-4 focus:top-4 focus:z-50 focus:bg-bg focus:p-2">{tr('chrome.skip')}</a>
+    <Nav locale={locale} pathname={pathname} />
+    <main id="main" tabindex="-1" class="mx-auto max-w-5xl px-5"><slot /></main>
+    <Footer locale={locale} />
+    <SearchPalette client:idle locale={locale} />
+    <script defer src="/_vercel/insights/script.js"></script>
+  </body>
+</html>

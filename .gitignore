@@ -9,9 +9,14 @@ lerna-debug.log*
 
 node_modules
 dist
+.astro
 .env
 dist-ssr
 *.local
+
+# Playwright
+test-results
+playwright-report
 
 # Editor directories and files
 .vscode/*
@@ -24,3 +29,4 @@ dist-ssr
 *.sln
 *.sw?
 .superpowers/
+.vercel

@@ -1,0 +1,43 @@
+---
+// Theme-adaptive industry plate. Inlines the raw SVG (all colours are --plate-*
+// CSS variables resolved by global.css) so ONE file renders in both themes and
+// stays crisp at any size — no <img>, no <picture>, no second DOM variant.
+//
+// `animate` picks the motion tier the wrapper advertises via data-motion:
+// 'auto' (default) = idle tier always on + a livelier hover tier; 'none' = fully
+// static. global.css keys the two tiers off [data-motion='auto'] (and honours
+// prefers-reduced-motion). Main pages use the default; nothing needs 'none'.
+import { workArt } from '../data/workArt';
+import { getLocaleFromPath, type Locale } from '../i18n/routes';
+
+// Raw SVG sources — statically imported so Vite inlines them at build time.
+import bfsi from '../assets/work/plate-01.svg?raw';
+import automotive from '../assets/work/plate-02.svg?raw';
+import logistics from '../assets/work/plate-03.svg?raw';
+import construction from '../assets/work/plate-04.svg?raw';
+import strategic from '../assets/work/plate-05.svg?raw';
+
+const RAW: Record<string, string> = {
+  BFSI: bfsi,
+  'Automotive & Manufacturing': automotive,
+  'Logistics & Supply Chain': logistics,
+  'EPCM & Construction': construction,
+  'Strategic AI & Enterprise': strategic,
+};
+
+interface Props {
+  industry: string;
+  class?: string;
+  animate?: 'auto' | 'none';
+}
+
+const { industry, class: klass = '', animate = 'auto' } = Astro.props;
+
+const svg = RAW[industry];
+const art = workArt[industry];
+if (!svg || !art) throw new Error(`PlateSvg: no work art for industry "${industry}"`);
+
+const locale: Locale = getLocaleFromPath(Astro.url.pathname.replace(/\/$/, '') || '/');
+const alt = art.alt[locale];
+---
+<div class={`plate ${klass}`} data-motion={animate} role="img" aria-label={alt} set:html={svg}></div>

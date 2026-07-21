@@ -1,0 +1,31 @@
+---
+// Internal, unlinked preview of the plate motion system (noindex, kept out of
+// the sitemap and search). One plate per industry, running the exact system the
+// main pages ship: a calm idle tier that is always on, plus a livelier hover
+// tier. Move the mouse over a plate to feel the hover layer; toggle the theme in
+// the nav. Mobile/no-hover shows the idle tier only.
+import Base from '../../layouts/Base.astro';
+import PlateSvg from '../../components/PlateSvg.astro';
+import { workArt } from '../../data/workArt';
+
+const industries = Object.keys(workArt);
+---
+<Base title="Plate motion" description="Internal preview of the industry-plate motion system." noindex>
+  <div data-pagefind-ignore>
+    <header class="py-14">
+      <h1 class="font-serif text-4xl font-light">Plate motion</h1>
+      <p class="mt-3 max-w-[46em] text-[14px] text-muted">
+        Interne Vorschau: Zwei-Stufen-System. IDLE dauerhaft (ruhig) · HOVER Maus drüber (lebendiger). Theme oben umschalten.
+      </p>
+    </header>
+    {industries.map((industry) => (
+      <section class="border-t border-line py-10">
+        <h2 class="font-mono text-[12px] tracking-[0.18em] uppercase text-muted">{industry}</h2>
+        <p class="mt-2 font-mono text-[11px] tracking-[0.15em] uppercase text-muted">IDLE dauerhaft · HOVER Maus drüber</p>
+        <div class="mt-4 max-w-xl">
+          <PlateSvg industry={industry} class="w-full overflow-hidden rounded-lg" />
+        </div>
+      </section>
+    ))}
+  </div>
+</Base>

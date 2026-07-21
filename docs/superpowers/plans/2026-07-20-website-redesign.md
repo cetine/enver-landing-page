@@ -493,7 +493,7 @@ git add -A && git commit -m "feat: i18n route helpers and ui strings with tests"
 - Reference (read-only source): `legacy/ProjectsSection.tsx`, `legacy/VenturesSection.tsx`, `legacy/profile.ts`
 
 **Interfaces:**
-- Produces: collections `writing` (empty for now, schema ready) and `work`; `ventures.yaml` shape `[{ id, url, status, en: {name, tagline, story}, de: {...} }]`; `profile` export with `name, role: {en, de}, location: {en, de}, claim: [string, string], linkedin, github, email, expertise: {en: Pillar[], de: Pillar[]}` where `Pillar = { title: string, items: string[] }`.
+- Produces: collections `writing` (empty for now, schema ready) and `work`; `ventures.yaml` shape `[{ id, url, status, en: {name, tagline, story}, de: {...} }]`; `profile` export with `name, role: {en, de}, claim: [string, string], linkedin, github, email, expertise: {en: Pillar[], de: Pillar[]}` where `Pillar = { title: string, items: string[] }`. (No separate `location` field — the role string carries `· Munich`/`· München`.)
 
 - [ ] **Step 1: Write `src/content.config.ts`**
 
@@ -666,7 +666,16 @@ export const profile = {
 export { careerHighlights, volunteerRoles } from '../../legacy/profile';
 ```
 
-- [ ] **Step 6: Verify schemas via build**
+- [ ] **Step 6: Restrict type-checking of legacy files**
+
+In `tsconfig.json`, replace the include entry `"legacy/**/*"` with `"legacy/profile.ts"` — the parked `.tsx` files import deleted dependencies (framer-motion, lucide-react, removed sibling modules) and break `npm run check`; only `legacy/profile.ts` is consumed (re-exported by `src/data/profile.ts`) and must stay type-checked.
+
+```bash
+npm run check
+```
+Expected: 0 errors.
+
+- [ ] **Step 7: Verify schemas via build**
 
 ```bash
 mkdir -p src/content/writing/en src/content/writing/de
@@ -674,7 +683,7 @@ npm run build
 ```
 Expected: build succeeds; no zod schema errors. (Writing collection empty is fine.)
 
-- [ ] **Step 7: Commit**
+- [ ] **Step 8: Commit**
 
 ```bash
 git add -A && git commit -m "feat: content collections with 6 curated cases (en/de), ventures, profile"
@@ -1948,7 +1957,9 @@ German versions under /de/.
 
 - [ ] **Step 4: Verify + commit** — `npm run build && ls dist/rss.xml dist/de/rss.xml dist/sitemap-index.xml`; `git commit -am "feat: rss feeds, robots, llms.txt"`
 
----### Task 17: Playwright verification suite
+---
+
+### Task 17: Playwright verification suite
 
 **Files:**
 - Create: `playwright.config.ts`, `tests/e2e/site.spec.ts`

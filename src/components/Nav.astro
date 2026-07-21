@@ -1,0 +1,59 @@
+---
+import Monogram from './Monogram.astro';
+import { t, localizePath, alternatePath, type Locale } from '../i18n/routes';
+interface Props { locale: Locale; pathname: string }
+const { locale, pathname } = Astro.props;
+const tr = t(locale);
+const links = [
+  { href: localizePath('/work', locale), label: tr('nav.work') },
+  { href: localizePath('/writing', locale), label: tr('nav.writing') },
+  { href: localizePath('/ventures', locale), label: tr('nav.ventures') },
+  { href: localizePath('/about', locale), label: tr('nav.about') },
+  { href: localizePath('/contact', locale), label: tr('nav.contact') },
+];
+const isActive = (href: string) => pathname === href || pathname.startsWith(`${href}/`);
+---
+<header class="sticky top-0 z-40 border-b border-line bg-bg/80 backdrop-blur" data-pagefind-ignore>
+  <nav class="mx-auto flex max-w-5xl items-center justify-between gap-4 px-5 py-3">
+    <a href={localizePath('/', locale)} class="flex items-center gap-2.5 text-fg">
+      <Monogram size={26} />
+      <span class="text-[13px] font-semibold tracking-[0.22em]">ENVER&nbsp;CETIN</span>
+    </a>
+    <div class="hidden items-center gap-5 md:flex">
+      {links.map((l) => (
+        <a href={l.href} class:list={['text-[13px] tracking-wide', isActive(l.href) ? 'text-fg' : 'text-muted hover:text-fg']}>{l.label}</a>
+      ))}
+      <button id="open-search" class="flex items-center gap-1.5 text-[13px] text-muted hover:text-fg" aria-label={tr('nav.search')}>
+        {tr('nav.search')}
+        <kbd class="rounded border border-line px-1.5 py-0.5 font-mono text-[10px]">⌘K</kbd>
+      </button>
+      <a href={alternatePath(pathname)} class="font-mono text-[11px] text-muted hover:text-fg" rel="alternate">{locale === 'en' ? 'DE' : 'EN'}</a>
+      <button id="theme-toggle" class="text-muted hover:text-fg" aria-label={tr('chrome.theme')}>◐</button>
+    </div>
+    <div class="flex items-center gap-4 md:hidden">
+      <button id="open-search-mobile" class="text-muted" aria-label={tr('nav.search')}>⌕</button>
+      <a href={alternatePath(pathname)} class="font-mono text-[11px] text-muted" rel="alternate">{locale === 'en' ? 'DE' : 'EN'}</a>
+      <button id="menu-toggle" class="text-fg" aria-expanded="false" aria-controls="mobile-menu" aria-label={tr('chrome.menu')}>☰</button>
+    </div>
+  </nav>
+  <div id="mobile-menu" class="hidden border-t border-line px-5 py-3 md:hidden">
+    {links.map((l) => <a href={l.href} class="block py-2 text-sm text-fg">{l.label}</a>)}
+    <button id="theme-toggle-mobile" class="py-2 text-sm text-muted">{tr('chrome.themeToggle')}</button>
+  </div>
+</header>
+<script>
+  const toggle = () => {
+    const html = document.documentElement;
+    const next = html.dataset.theme === 'dark' ? 'light' : 'dark';
+    html.dataset.theme = next;
+    try { localStorage.setItem('theme', next); } catch { /* storage blocked — theme still toggles for this session */ }
+  };
+  document.getElementById('theme-toggle')?.addEventListener('click', toggle);
+  document.getElementById('theme-toggle-mobile')?.addEventListener('click', toggle);
+  const menu = document.getElementById('mobile-menu');
+  const btn = document.getElementById('menu-toggle');
+  btn?.addEventListener('click', () => {
+    const open = menu?.classList.toggle('hidden') === false;
+    btn.setAttribute('aria-expanded', String(open));
+  });
+</script>

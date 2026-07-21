@@ -1,0 +1,27 @@
+---
+import { getCollection } from 'astro:content';
+import Base from '../../layouts/Base.astro';
+import WritingRow from '../WritingRow.astro';
+import { type Locale } from '../../i18n/routes';
+import { filterLocale, groupByMonth, type WritingMeta } from '../../lib/writing';
+
+interface Props { locale: Locale }
+const { locale } = Astro.props;
+const entries = filterLocale(await getCollection('writing', ({ data }) => !data.draft), locale);
+const items: WritingMeta[] = entries.map((e) => ({ slug: e.id.split('/')[1], locale, ...e.data }));
+const { grouped, groups } = groupByMonth(items, locale);
+const title = locale === 'de' ? 'Artikel' : 'Writing';
+const description = locale === 'de'
+  ? 'Artikel und Publikationen von Enver Cetin zu Enterprise AI, agentischen Systemen und AI-Adoption.'
+  : 'Articles and publications by Enver Cetin on enterprise AI, agentic systems and AI adoption.';
+---
+<Base title={title} description={description}>
+  <header class="py-14"><h1 class="font-serif text-4xl font-light">{title}</h1></header>
+  {items.length === 0 && <p class="pb-16 text-muted">{locale === 'de' ? 'Bald.' : 'Soon.'}</p>}
+  {items.length > 0 && groups.map((g) => (
+    <section class="border-t border-line py-8 sm:grid sm:grid-cols-[160px_1fr] sm:gap-6">
+      <h2 class="font-mono text-[12px] uppercase tracking-[0.18em] text-muted">{grouped ? g.label : ''}</h2>
+      <div class="divide-y divide-line">{g.items.map((w) => <WritingRow item={w} locale={locale} />)}</div>
+    </section>
+  ))}
+</Base>

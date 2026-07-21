@@ -1,0 +1,197 @@
+@import 'tailwindcss';
+
+@custom-variant dark (&:where([data-theme='dark'], [data-theme='dark'] *));
+
+:root {
+  --bg: #fafafa;
+  --fg: #16181d;
+  --muted: #5f6572;
+  --line: rgba(22, 24, 29, 0.14);
+  --accent: #0e7c5b;
+  --accent-soft: rgba(14, 124, 91, 0.1);
+  /* Industry plates (PlateSvg.astro) — one inline SVG, colours carried by these
+     variables so a single file renders in both themes. */
+  --plate-bg: var(--bg);
+  --plate-stroke: #5f6572;
+  --plate-strong: #3d434e;
+  --plate-grid: rgba(22, 24, 29, 0.05);
+  --plate-line: rgba(22, 24, 29, 0.25);
+  --plate-muted: rgba(22, 24, 29, 0.4);
+  --plate-accent: var(--accent);
+}
+[data-theme='dark'] {
+  --bg: #0a0a0a;
+  --fg: #ececec;
+  --muted: #9aa1ad;
+  --line: rgba(236, 236, 236, 0.16);
+  --accent: #2fbd8f;
+  --accent-soft: rgba(47, 189, 143, 0.12);
+  /* Brighter plate strokes in dark — the old raster plates read too dim. */
+  --plate-bg: var(--bg);
+  --plate-stroke: #c2c8d2;
+  --plate-strong: #e4e7ec;
+  --plate-grid: rgba(236, 236, 236, 0.08);
+  --plate-line: rgba(236, 236, 236, 0.3);
+  --plate-muted: rgba(236, 236, 236, 0.45);
+  --plate-accent: var(--accent);
+}
+
+@theme inline {
+  --color-bg: var(--bg);
+  --color-fg: var(--fg);
+  --color-muted: var(--muted);
+  --color-line: var(--line);
+  --color-accent: var(--accent);
+  --color-accent-soft: var(--accent-soft);
+  --font-sans: 'IBM Plex Sans', ui-sans-serif, system-ui, sans-serif;
+  --font-serif: 'IBM Plex Serif', ui-serif, Georgia, serif;
+  --font-mono: 'IBM Plex Mono', ui-monospace, 'SF Mono', monospace;
+}
+
+html {
+  background: var(--bg);
+  color: var(--fg);
+  font-family: var(--font-sans);
+  scroll-behavior: smooth;
+}
+@media (prefers-reduced-motion: reduce) {
+  html { scroll-behavior: auto; }
+  *, *::before, *::after { animation: none !important; transition: none !important; }
+}
+::selection { background: var(--accent-soft); }
+
+/* Theme-adaptive inline plates (PlateSvg.astro): a single SVG whose colours are
+   --plate-* variables, so one element renders correctly in both themes with no
+   second DOM variant and no flash. Scales fluidly from its 16:9 viewBox. */
+.plate { display: block; }
+.plate > svg { display: block; width: 100%; height: auto; }
+
+/* -------------------------------------------------------------------------
+   Plate motion — two tiers. TIER 1 (idle) is always running and calm: one
+   emerald element per plate. TIER 2 (hover) adds energetic PARALLEL layers by
+   flipping paused hover animations to running on :hover — the idle layers are
+   never re-declared/removed, so they don't restart (no jump), and running
+   durations are never changed. Hover layers that share an element+property with
+   an idle layer use animation-composition:add and are identity at 0%, so while
+   paused they add nothing; secondary layers sit on elements that have no idle
+   layer and are staggered with POSITIVE delays (natural at rest, sequential on
+   hover). Transforms/opacity/stroke-dashoffset only. Mobile/no-hover gets the
+   idle tier only. The universal prefers-reduced-motion kill-rule disables all.
+   ------------------------------------------------------------------------- */
+/* Tier 1 — idle keyframes (base layers). */
+@keyframes pd-flow { to { stroke-dashoffset: -360; } }
+@keyframes pd-drift { to { transform: translateX(-192px); } }
+@keyframes pd-lift { 0% { transform: translateY(-114px); } 100% { transform: translateY(114px); } }
+@keyframes pd-orbit { 0% { transform: rotate(-18deg); } 100% { transform: rotate(18deg); } }
+/* Tier 2 — hover boost keyframes (identity at 0%, composited additively). */
+@keyframes ph-flow { from { stroke-dashoffset: 0; } to { stroke-dashoffset: -360; } }
+@keyframes ph-drift { from { transform: translateX(0); } to { transform: translateX(-192px); } }
+@keyframes ph-lift { 0%, 100% { transform: translateY(0); } 25% { transform: translateY(-130px); } 75% { transform: translateY(130px); } }
+@keyframes ph-orbit { 0%, 100% { transform: rotate(0); } 25% { transform: rotate(-14deg); } 75% { transform: rotate(14deg); } }
+/* Tier 2 — hover secondary keyframes (natural value at 0%, on idle-free elements). */
+@keyframes ph-ping { 0%, 100% { transform: scale(1); opacity: 1; } 50% { transform: scale(1.55); opacity: 0.6; } }
+@keyframes ph-shimmer { 0%, 100% { opacity: 1; } 50% { opacity: 0.4; } }
+@keyframes ph-blink { 0%, 100% { opacity: 1; } 50% { opacity: 0.12; } }
+/* Automotive station highlight — an overlay is lit for its ~1/6 slot then dark. */
+@keyframes station-cycle { 0% { opacity: 0; } 3% { opacity: 1; } 13% { opacity: 1; } 16% { opacity: 0; } 100% { opacity: 0; } }
+
+/* ---- BFSI: idle accent flow · hover fast pulse + emerald ping + gray shimmer */
+[data-motion='auto'] .p-accent-path {
+  stroke-dasharray: 22 14;
+  animation: pd-flow 6s linear infinite, ph-flow 3s linear infinite paused;
+  animation-composition: replace, add;
+}
+[data-motion='auto']:hover .p-accent-path { animation-play-state: running, running; }
+[data-motion='auto'] .p-accent-node { transform-box: fill-box; transform-origin: center; animation: ph-ping 1.6s ease-in-out infinite paused; }
+[data-motion='auto'] .p-accent-node:nth-of-type(2) { animation-delay: 0.4s; }
+[data-motion='auto']:hover .p-accent-node { animation-play-state: running; }
+[data-motion='auto'] .p-nodes circle { animation: ph-shimmer 2.6s ease-in-out infinite paused; }
+[data-motion='auto'] .p-nodes circle:nth-of-type(3n+2) { animation-delay: 0.25s; }
+[data-motion='auto'] .p-nodes circle:nth-of-type(3n) { animation-delay: 0.5s; }
+[data-motion='auto']:hover .p-nodes circle { animation-play-state: running; }
+
+/* ---- Automotive: idle conveyor drift (2-cell, visible) + emerald jumping
+   station→station in sequence · hover = faster conveyor + faster station cycle.
+   The station cycle staggers one keyframe across the six overlays; the highlight
+   sweeps left→right endlessly. Hover only re-times it (name unchanged → the
+   sequence stays coherent, no scramble), and the conveyor boost is the usual
+   paused→running additive layer. Conveyor drift itself is unchanged. */
+[data-motion='auto'] .p-ticks {
+  animation: pd-drift 5s linear infinite, ph-drift 2.5s linear infinite paused;
+  animation-composition: replace, add;
+}
+[data-motion='auto']:hover .p-ticks { animation-play-state: running, running; }
+[data-motion='auto'] .p-station-hl { animation: station-cycle 7.2s linear infinite; }
+[data-motion='auto'] .p-station-hl:nth-of-type(1) { animation-delay: 0s; }
+[data-motion='auto'] .p-station-hl:nth-of-type(2) { animation-delay: 1.2s; }
+[data-motion='auto'] .p-station-hl:nth-of-type(3) { animation-delay: 2.4s; }
+[data-motion='auto'] .p-station-hl:nth-of-type(4) { animation-delay: 3.6s; }
+[data-motion='auto'] .p-station-hl:nth-of-type(5) { animation-delay: 4.8s; }
+[data-motion='auto'] .p-station-hl:nth-of-type(6) { animation-delay: 6s; }
+[data-motion='auto']:hover .p-station-hl { animation-duration: 2.4s; }
+[data-motion='auto']:hover .p-station-hl:nth-of-type(1) { animation-delay: 0s; }
+[data-motion='auto']:hover .p-station-hl:nth-of-type(2) { animation-delay: 0.4s; }
+[data-motion='auto']:hover .p-station-hl:nth-of-type(3) { animation-delay: 0.8s; }
+[data-motion='auto']:hover .p-station-hl:nth-of-type(4) { animation-delay: 1.2s; }
+[data-motion='auto']:hover .p-station-hl:nth-of-type(5) { animation-delay: 1.6s; }
+[data-motion='auto']:hover .p-station-hl:nth-of-type(6) { animation-delay: 2s; }
+/* Reduced-motion: no sweep — keep one station lit so the plate retains its accent. */
+@media (prefers-reduced-motion: reduce) {
+  .p-station-hl:nth-of-type(3) { opacity: 1; }
+}
+
+/* ---- Logistics: idle route flow · hover faster flow + depots blinking in sequence */
+[data-motion='auto'] .p-route {
+  stroke-dasharray: 20 16;
+  animation: pd-flow 7s linear infinite, ph-flow 3.5s linear infinite paused;
+  animation-composition: replace, add;
+}
+[data-motion='auto']:hover .p-route { animation-play-state: running, running; }
+[data-motion='auto'] .p-depot { animation: ph-blink 1.4s ease-in-out infinite paused; }
+[data-motion='auto'] .p-depot:nth-of-type(2) { animation-delay: 0.2s; }
+[data-motion='auto'] .p-depot:nth-of-type(3) { animation-delay: 0.4s; }
+[data-motion='auto'] .p-depot:nth-of-type(4) { animation-delay: 0.6s; }
+[data-motion='auto']:hover .p-depot { animation-play-state: running; }
+
+/* ---- Construction: idle plane lift · hover larger storey range + dimension shimmer */
+[data-motion='auto'] .p-plane {
+  animation: pd-lift 6s ease-in-out infinite alternate, ph-lift 4s ease-in-out infinite paused;
+  animation-composition: replace, add;
+}
+[data-motion='auto']:hover .p-plane { animation-play-state: running, running; }
+[data-motion='auto'] .p-dim-ticks line { animation: ph-shimmer 2.4s ease-in-out infinite paused; }
+[data-motion='auto'] .p-dim-ticks line:nth-of-type(2n) { animation-delay: 0.3s; }
+[data-motion='auto'] .p-dim-ticks line:nth-of-type(3n) { animation-delay: 0.6s; }
+[data-motion='auto']:hover .p-dim-ticks line { animation-play-state: running; }
+
+/* ---- Strategic: idle orbit · hover wider swing + intersection nodes ping in sequence */
+[data-motion='auto'] .p-arc, [data-motion='auto'] .p-orbit-node {
+  transform-box: view-box; transform-origin: 1920px 1060px;
+  animation: pd-orbit 7s ease-in-out infinite alternate, ph-orbit 4.5s ease-in-out infinite paused;
+  animation-composition: replace, add;
+}
+[data-motion='auto']:hover .p-arc, [data-motion='auto']:hover .p-orbit-node { animation-play-state: running, running; }
+[data-motion='auto'] .p-ring-nodes circle { transform-box: fill-box; transform-origin: center; animation: ph-ping 1.8s ease-in-out infinite paused; }
+[data-motion='auto'] .p-ring-nodes circle:nth-of-type(4n+2) { animation-delay: 0.2s; }
+[data-motion='auto'] .p-ring-nodes circle:nth-of-type(4n+3) { animation-delay: 0.4s; }
+[data-motion='auto'] .p-ring-nodes circle:nth-of-type(4n) { animation-delay: 0.6s; }
+[data-motion='auto']:hover .p-ring-nodes circle { animation-play-state: running; }
+
+/* Prose column for posts/cases */
+.prose-col { max-width: 40em; }
+/* /work case bodies use the wider column afforded by the two-column layout */
+.prose-col--wide { max-width: 52em; }
+.prose-col h2 { font-family: var(--font-serif); font-weight: 300; font-size: 1.6rem; margin: 2.2rem 0 0.8rem; }
+.prose-col h3 { font-weight: 600; font-size: 1.1rem; margin: 1.8rem 0 0.6rem; }
+/* /work case-body sections render as h4 (demoted from h2 for a valid outline)
+   but must look identical to the serif h2 used elsewhere in the prose column. */
+.prose-col h4 { font-family: var(--font-serif); font-weight: 300; font-size: 1.6rem; margin: 2.2rem 0 0.8rem; }
+/* Justified body with automatic hyphenation (needs the page's lang attr, which
+   Base sets per locale — DE cases hyphenate accordingly). */
+.prose-col p { line-height: 1.7; margin: 0 0 1.1rem; text-align: justify; hyphens: auto; }
+.prose-col a { text-decoration: underline; text-underline-offset: 3px; text-decoration-color: var(--accent); }
+.prose-col ul, .prose-col ol { line-height: 1.7; margin: 0 0 1.1rem 1.2rem; }
+.prose-col li { margin-bottom: 0.35rem; }
+.prose-col code { font-family: var(--font-mono); font-size: 0.88em; background: var(--accent-soft); padding: 0.1em 0.35em; border-radius: 4px; }
+.prose-col pre { overflow-x: auto; border: 1px solid var(--line); border-radius: 8px; padding: 1rem; margin: 0 0 1.1rem; }
+.prose-col pre code { background: none; padding: 0; }

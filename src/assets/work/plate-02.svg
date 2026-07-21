@@ -1,0 +1,127 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 3840 2160" preserveAspectRatio="xMidYMid meet" role="presentation" aria-hidden="true">
+<rect width="3840" height="2160" fill="var(--plate-bg)"/>
+<path d="M0 0V2160M96 0V2160M192 0V2160M288 0V2160M384 0V2160M480 0V2160M576 0V2160M672 0V2160M768 0V2160M864 0V2160M960 0V2160M1056 0V2160M1152 0V2160M1248 0V2160M1344 0V2160M1440 0V2160M1536 0V2160M1632 0V2160M1728 0V2160M1824 0V2160M1920 0V2160M2016 0V2160M2112 0V2160M2208 0V2160M2304 0V2160M2400 0V2160M2496 0V2160M2592 0V2160M2688 0V2160M2784 0V2160M2880 0V2160M2976 0V2160M3072 0V2160M3168 0V2160M3264 0V2160M3360 0V2160M3456 0V2160M3552 0V2160M3648 0V2160M3744 0V2160M3840 0V2160M0 0H3840M0 96H3840M0 192H3840M0 288H3840M0 384H3840M0 480H3840M0 576H3840M0 672H3840M0 768H3840M0 864H3840M0 960H3840M0 1056H3840M0 1152H3840M0 1248H3840M0 1344H3840M0 1440H3840M0 1536H3840M0 1632H3840M0 1728H3840M0 1824H3840M0 1920H3840M0 2016H3840M0 2112H3840" stroke="var(--plate-grid)" stroke-width="1" fill="none"/>
+<g class="p-motif">
+<line x1="260" y1="1180" x2="3580" y2="1180" stroke="var(--plate-stroke)" stroke-width="3" stroke-opacity="0.65" stroke-linecap="round"/>
+<line x1="260" y1="1204" x2="3580" y2="1204" stroke="var(--plate-stroke)" stroke-width="2" stroke-opacity="0.55" stroke-linecap="round"/>
+<g class="p-ticks">
+<line x1="0" y1="1180" x2="0" y2="1204" stroke="var(--plate-stroke)" stroke-width="2" stroke-opacity="0.6" stroke-linecap="round"/>
+<line x1="96" y1="1180" x2="96" y2="1204" stroke="var(--plate-stroke)" stroke-width="2" stroke-opacity="0.6" stroke-linecap="round"/>
+<line x1="192" y1="1180" x2="192" y2="1204" stroke="var(--plate-stroke)" stroke-width="2" stroke-opacity="0.6" stroke-linecap="round"/>
+<line x1="288" y1="1180" x2="288" y2="1204" stroke="var(--plate-stroke)" stroke-width="2" stroke-opacity="0.6" stroke-linecap="round"/>
+<line x1="384" y1="1180" x2="384" y2="1204" stroke="var(--plate-stroke)" stroke-width="2" stroke-opacity="0.6" stroke-linecap="round"/>
+<line x1="480" y1="1180" x2="480" y2="1204" stroke="var(--plate-stroke)" stroke-width="2" stroke-opacity="0.6" stroke-linecap="round"/>
+<line x1="576" y1="1180" x2="576" y2="1204" stroke="var(--plate-stroke)" stroke-width="2" stroke-opacity="0.6" stroke-linecap="round"/>
+<line x1="672" y1="1180" x2="672" y2="1204" stroke="var(--plate-stroke)" stroke-width="2" stroke-opacity="0.6" stroke-linecap="round"/>
+<line x1="768" y1="1180" x2="768" y2="1204" stroke="var(--plate-stroke)" stroke-width="2" stroke-opacity="0.6" stroke-linecap="round"/>
+<line x1="864" y1="1180" x2="864" y2="1204" stroke="var(--plate-stroke)" stroke-width="2" stroke-opacity="0.6" stroke-linecap="round"/>
+<line x1="960" y1="1180" x2="960" y2="1204" stroke="var(--plate-stroke)" stroke-width="2" stroke-opacity="0.6" stroke-linecap="round"/>
+<line x1="1056" y1="1180" x2="1056" y2="1204" stroke="var(--plate-stroke)" stroke-width="2" stroke-opacity="0.6" stroke-linecap="round"/>
+<line x1="1152" y1="1180" x2="1152" y2="1204" stroke="var(--plate-stroke)" stroke-width="2" stroke-opacity="0.6" stroke-linecap="round"/>
+<line x1="1248" y1="1180" x2="1248" y2="1204" stroke="var(--plate-stroke)" stroke-width="2" stroke-opacity="0.6" stroke-linecap="round"/>
+<line x1="1344" y1="1180" x2="1344" y2="1204" stroke="var(--plate-stroke)" stroke-width="2" stroke-opacity="0.6" stroke-linecap="round"/>
+<line x1="1440" y1="1180" x2="1440" y2="1204" stroke="var(--plate-stroke)" stroke-width="2" stroke-opacity="0.6" stroke-linecap="round"/>
+<line x1="1536" y1="1180" x2="1536" y2="1204" stroke="var(--plate-stroke)" stroke-width="2" stroke-opacity="0.6" stroke-linecap="round"/>
+<line x1="1632" y1="1180" x2="1632" y2="1204" stroke="var(--plate-stroke)" stroke-width="2" stroke-opacity="0.6" stroke-linecap="round"/>
+<line x1="1728" y1="1180" x2="1728" y2="1204" stroke="var(--plate-stroke)" stroke-width="2" stroke-opacity="0.6" stroke-linecap="round"/>
+<line x1="1824" y1="1180" x2="1824" y2="1204" stroke="var(--plate-stroke)" stroke-width="2" stroke-opacity="0.6" stroke-linecap="round"/>
+<line x1="1920" y1="1180" x2="1920" y2="1204" stroke="var(--plate-stroke)" stroke-width="2" stroke-opacity="0.6" stroke-linecap="round"/>
+<line x1="2016" y1="1180" x2="2016" y2="1204" stroke="var(--plate-stroke)" stroke-width="2" stroke-opacity="0.6" stroke-linecap="round"/>
+<line x1="2112" y1="1180" x2="2112" y2="1204" stroke="var(--plate-stroke)" stroke-width="2" stroke-opacity="0.6" stroke-linecap="round"/>
+<line x1="2208" y1="1180" x2="2208" y2="1204" stroke="var(--plate-stroke)" stroke-width="2" stroke-opacity="0.6" stroke-linecap="round"/>
+<line x1="2304" y1="1180" x2="2304" y2="1204" stroke="var(--plate-stroke)" stroke-width="2" stroke-opacity="0.6" stroke-linecap="round"/>
+<line x1="2400" y1="1180" x2="2400" y2="1204" stroke="var(--plate-stroke)" stroke-width="2" stroke-opacity="0.6" stroke-linecap="round"/>
+<line x1="2496" y1="1180" x2="2496" y2="1204" stroke="var(--plate-stroke)" stroke-width="2" stroke-opacity="0.6" stroke-linecap="round"/>
+<line x1="2592" y1="1180" x2="2592" y2="1204" stroke="var(--plate-stroke)" stroke-width="2" stroke-opacity="0.6" stroke-linecap="round"/>
+<line x1="2688" y1="1180" x2="2688" y2="1204" stroke="var(--plate-stroke)" stroke-width="2" stroke-opacity="0.6" stroke-linecap="round"/>
+<line x1="2784" y1="1180" x2="2784" y2="1204" stroke="var(--plate-stroke)" stroke-width="2" stroke-opacity="0.6" stroke-linecap="round"/>
+<line x1="2880" y1="1180" x2="2880" y2="1204" stroke="var(--plate-stroke)" stroke-width="2" stroke-opacity="0.6" stroke-linecap="round"/>
+<line x1="2976" y1="1180" x2="2976" y2="1204" stroke="var(--plate-stroke)" stroke-width="2" stroke-opacity="0.6" stroke-linecap="round"/>
+<line x1="3072" y1="1180" x2="3072" y2="1204" stroke="var(--plate-stroke)" stroke-width="2" stroke-opacity="0.6" stroke-linecap="round"/>
+<line x1="3168" y1="1180" x2="3168" y2="1204" stroke="var(--plate-stroke)" stroke-width="2" stroke-opacity="0.6" stroke-linecap="round"/>
+<line x1="3264" y1="1180" x2="3264" y2="1204" stroke="var(--plate-stroke)" stroke-width="2" stroke-opacity="0.6" stroke-linecap="round"/>
+<line x1="3360" y1="1180" x2="3360" y2="1204" stroke="var(--plate-stroke)" stroke-width="2" stroke-opacity="0.6" stroke-linecap="round"/>
+<line x1="3456" y1="1180" x2="3456" y2="1204" stroke="var(--plate-stroke)" stroke-width="2" stroke-opacity="0.6" stroke-linecap="round"/>
+<line x1="3552" y1="1180" x2="3552" y2="1204" stroke="var(--plate-stroke)" stroke-width="2" stroke-opacity="0.6" stroke-linecap="round"/>
+<line x1="3648" y1="1180" x2="3648" y2="1204" stroke="var(--plate-stroke)" stroke-width="2" stroke-opacity="0.6" stroke-linecap="round"/>
+<line x1="3744" y1="1180" x2="3744" y2="1204" stroke="var(--plate-stroke)" stroke-width="2" stroke-opacity="0.6" stroke-linecap="round"/>
+</g>
+<polygon points="520,1180 312.15,1300 312.15,960 520,840" fill="var(--plate-bg)" stroke="var(--plate-stroke)" stroke-width="3" stroke-opacity="0.72" stroke-linejoin="round"/>
+<polygon points="520,1180 727.85,1300 727.85,960 520,840" fill="var(--plate-bg)" stroke="var(--plate-stroke)" stroke-width="3" stroke-opacity="0.72" stroke-linejoin="round"/>
+<polygon points="520,840 727.85,960 520,1080 312.15,960" fill="var(--plate-bg)" stroke="var(--plate-stroke)" stroke-width="3" stroke-opacity="0.72" stroke-linejoin="round"/>
+<circle cx="623.92" cy="1049.6" r="40" fill="none" stroke="var(--plate-stroke)" stroke-width="2" stroke-opacity="0.648"/>
+<line x1="569.88" y1="1106.8" x2="677.96" y2="1169.2" stroke="var(--plate-stroke)" stroke-width="2" stroke-opacity="0.612" stroke-linecap="round"/>
+<polygon points="1080,1180 872.15,1300 872.15,960 1080,840" fill="var(--plate-bg)" stroke="var(--plate-stroke)" stroke-width="3" stroke-opacity="0.72" stroke-linejoin="round"/>
+<polygon points="1080,1180 1287.85,1300 1287.85,960 1080,840" fill="var(--plate-bg)" stroke="var(--plate-stroke)" stroke-width="3" stroke-opacity="0.72" stroke-linejoin="round"/>
+<polygon points="1080,840 1287.85,960 1080,1080 872.15,960" fill="var(--plate-bg)" stroke="var(--plate-stroke)" stroke-width="3" stroke-opacity="0.72" stroke-linejoin="round"/>
+<circle cx="1183.92" cy="1049.6" r="40" fill="none" stroke="var(--plate-stroke)" stroke-width="2" stroke-opacity="0.648"/>
+<line x1="1129.88" y1="1106.8" x2="1237.96" y2="1169.2" stroke="var(--plate-stroke)" stroke-width="2" stroke-opacity="0.612" stroke-linecap="round"/>
+<polygon points="1640,1180 1432.15,1300 1432.15,960 1640,840" fill="var(--plate-bg)" stroke="var(--plate-stroke)" stroke-width="3" stroke-opacity="0.72" stroke-linejoin="round"/>
+<polygon points="1640,1180 1847.85,1300 1847.85,960 1640,840" fill="var(--plate-bg)" stroke="var(--plate-stroke)" stroke-width="3" stroke-opacity="0.72" stroke-linejoin="round"/>
+<polygon points="1640,840 1847.85,960 1640,1080 1432.15,960" fill="var(--plate-bg)" stroke="var(--plate-stroke)" stroke-width="3" stroke-opacity="0.72" stroke-linejoin="round"/>
+<circle cx="1743.92" cy="1049.6" r="40" fill="none" stroke="var(--plate-stroke)" stroke-width="2" stroke-opacity="0.648"/>
+<line x1="1689.88" y1="1106.8" x2="1797.96" y2="1169.2" stroke="var(--plate-stroke)" stroke-width="2" stroke-opacity="0.612" stroke-linecap="round"/>
+<polygon points="2200,1180 1992.15,1300 1992.15,960 2200,840" fill="var(--plate-bg)" stroke="var(--plate-stroke)" stroke-width="3" stroke-opacity="0.72" stroke-linejoin="round"/>
+<polygon points="2200,1180 2407.85,1300 2407.85,960 2200,840" fill="var(--plate-bg)" stroke="var(--plate-stroke)" stroke-width="3" stroke-opacity="0.72" stroke-linejoin="round"/>
+<polygon points="2200,840 2407.85,960 2200,1080 1992.15,960" fill="var(--plate-bg)" stroke="var(--plate-stroke)" stroke-width="3" stroke-opacity="0.72" stroke-linejoin="round"/>
+<circle cx="2303.92" cy="1049.6" r="40" fill="none" stroke="var(--plate-stroke)" stroke-width="2" stroke-opacity="0.648"/>
+<line x1="2249.88" y1="1106.8" x2="2357.96" y2="1169.2" stroke="var(--plate-stroke)" stroke-width="2" stroke-opacity="0.612" stroke-linecap="round"/>
+<polygon points="2760,1180 2552.15,1300 2552.15,960 2760,840" fill="var(--plate-bg)" stroke="var(--plate-stroke)" stroke-width="3" stroke-opacity="0.72" stroke-linejoin="round"/>
+<polygon points="2760,1180 2967.85,1300 2967.85,960 2760,840" fill="var(--plate-bg)" stroke="var(--plate-stroke)" stroke-width="3" stroke-opacity="0.72" stroke-linejoin="round"/>
+<polygon points="2760,840 2967.85,960 2760,1080 2552.15,960" fill="var(--plate-bg)" stroke="var(--plate-stroke)" stroke-width="3" stroke-opacity="0.72" stroke-linejoin="round"/>
+<circle cx="2863.92" cy="1049.6" r="40" fill="none" stroke="var(--plate-stroke)" stroke-width="2" stroke-opacity="0.648"/>
+<line x1="2809.88" y1="1106.8" x2="2917.96" y2="1169.2" stroke="var(--plate-stroke)" stroke-width="2" stroke-opacity="0.612" stroke-linecap="round"/>
+<polygon points="3320,1180 3112.15,1300 3112.15,960 3320,840" fill="var(--plate-bg)" stroke="var(--plate-stroke)" stroke-width="3" stroke-opacity="0.72" stroke-linejoin="round"/>
+<polygon points="3320,1180 3527.85,1300 3527.85,960 3320,840" fill="var(--plate-bg)" stroke="var(--plate-stroke)" stroke-width="3" stroke-opacity="0.72" stroke-linejoin="round"/>
+<polygon points="3320,840 3527.85,960 3320,1080 3112.15,960" fill="var(--plate-bg)" stroke="var(--plate-stroke)" stroke-width="3" stroke-opacity="0.72" stroke-linejoin="round"/>
+<circle cx="3423.92" cy="1049.6" r="40" fill="none" stroke="var(--plate-stroke)" stroke-width="2" stroke-opacity="0.648"/>
+<line x1="3369.88" y1="1106.8" x2="3477.96" y2="1169.2" stroke="var(--plate-stroke)" stroke-width="2" stroke-opacity="0.612" stroke-linecap="round"/>
+<g class="p-stations-hl">
+<g class="p-station-hl" opacity="0">
+<polygon points="520,1180 312.15,1300 312.15,960 520,840" fill="var(--plate-bg)" stroke="var(--plate-accent)" stroke-width="6" stroke-linejoin="round"/>
+<polygon points="520,1180 727.85,1300 727.85,960 520,840" fill="var(--plate-bg)" stroke="var(--plate-accent)" stroke-width="6" stroke-linejoin="round"/>
+<polygon points="520,840 727.85,960 520,1080 312.15,960" fill="var(--plate-bg)" stroke="var(--plate-accent)" stroke-width="6" stroke-linejoin="round"/>
+<circle cx="623.92" cy="1049.6" r="40" fill="none" stroke="var(--plate-accent)" stroke-width="3" stroke-opacity="0.9"/>
+<line x1="569.88" y1="1106.8" x2="677.96" y2="1169.2" stroke="var(--plate-accent)" stroke-width="3" stroke-opacity="0.85" stroke-linecap="round"/>
+</g>
+<g class="p-station-hl" opacity="0">
+<polygon points="1080,1180 872.15,1300 872.15,960 1080,840" fill="var(--plate-bg)" stroke="var(--plate-accent)" stroke-width="6" stroke-linejoin="round"/>
+<polygon points="1080,1180 1287.85,1300 1287.85,960 1080,840" fill="var(--plate-bg)" stroke="var(--plate-accent)" stroke-width="6" stroke-linejoin="round"/>
+<polygon points="1080,840 1287.85,960 1080,1080 872.15,960" fill="var(--plate-bg)" stroke="var(--plate-accent)" stroke-width="6" stroke-linejoin="round"/>
+<circle cx="1183.92" cy="1049.6" r="40" fill="none" stroke="var(--plate-accent)" stroke-width="3" stroke-opacity="0.9"/>
+<line x1="1129.88" y1="1106.8" x2="1237.96" y2="1169.2" stroke="var(--plate-accent)" stroke-width="3" stroke-opacity="0.85" stroke-linecap="round"/>
+</g>
+<g class="p-station-hl" opacity="0">
+<polygon points="1640,1180 1432.15,1300 1432.15,960 1640,840" fill="var(--plate-bg)" stroke="var(--plate-accent)" stroke-width="6" stroke-linejoin="round"/>
+<polygon points="1640,1180 1847.85,1300 1847.85,960 1640,840" fill="var(--plate-bg)" stroke="var(--plate-accent)" stroke-width="6" stroke-linejoin="round"/>
+<polygon points="1640,840 1847.85,960 1640,1080 1432.15,960" fill="var(--plate-bg)" stroke="var(--plate-accent)" stroke-width="6" stroke-linejoin="round"/>
+<circle cx="1743.92" cy="1049.6" r="40" fill="none" stroke="var(--plate-accent)" stroke-width="3" stroke-opacity="0.9"/>
+<line x1="1689.88" y1="1106.8" x2="1797.96" y2="1169.2" stroke="var(--plate-accent)" stroke-width="3" stroke-opacity="0.85" stroke-linecap="round"/>
+</g>
+<g class="p-station-hl" opacity="0">
+<polygon points="2200,1180 1992.15,1300 1992.15,960 2200,840" fill="var(--plate-bg)" stroke="var(--plate-accent)" stroke-width="6" stroke-linejoin="round"/>
+<polygon points="2200,1180 2407.85,1300 2407.85,960 2200,840" fill="var(--plate-bg)" stroke="var(--plate-accent)" stroke-width="6" stroke-linejoin="round"/>
+<polygon points="2200,840 2407.85,960 2200,1080 1992.15,960" fill="var(--plate-bg)" stroke="var(--plate-accent)" stroke-width="6" stroke-linejoin="round"/>
+<circle cx="2303.92" cy="1049.6" r="40" fill="none" stroke="var(--plate-accent)" stroke-width="3" stroke-opacity="0.9"/>
+<line x1="2249.88" y1="1106.8" x2="2357.96" y2="1169.2" stroke="var(--plate-accent)" stroke-width="3" stroke-opacity="0.85" stroke-linecap="round"/>
+</g>
+<g class="p-station-hl" opacity="0">
+<polygon points="2760,1180 2552.15,1300 2552.15,960 2760,840" fill="var(--plate-bg)" stroke="var(--plate-accent)" stroke-width="6" stroke-linejoin="round"/>
+<polygon points="2760,1180 2967.85,1300 2967.85,960 2760,840" fill="var(--plate-bg)" stroke="var(--plate-accent)" stroke-width="6" stroke-linejoin="round"/>
+<polygon points="2760,840 2967.85,960 2760,1080 2552.15,960" fill="var(--plate-bg)" stroke="var(--plate-accent)" stroke-width="6" stroke-linejoin="round"/>
+<circle cx="2863.92" cy="1049.6" r="40" fill="none" stroke="var(--plate-accent)" stroke-width="3" stroke-opacity="0.9"/>
+<line x1="2809.88" y1="1106.8" x2="2917.96" y2="1169.2" stroke="var(--plate-accent)" stroke-width="3" stroke-opacity="0.85" stroke-linecap="round"/>
+</g>
+<g class="p-station-hl" opacity="0">
+<polygon points="3320,1180 3112.15,1300 3112.15,960 3320,840" fill="var(--plate-bg)" stroke="var(--plate-accent)" stroke-width="6" stroke-linejoin="round"/>
+<polygon points="3320,1180 3527.85,1300 3527.85,960 3320,840" fill="var(--plate-bg)" stroke="var(--plate-accent)" stroke-width="6" stroke-linejoin="round"/>
+<polygon points="3320,840 3527.85,960 3320,1080 3112.15,960" fill="var(--plate-bg)" stroke="var(--plate-accent)" stroke-width="6" stroke-linejoin="round"/>
+<circle cx="3423.92" cy="1049.6" r="40" fill="none" stroke="var(--plate-accent)" stroke-width="3" stroke-opacity="0.9"/>
+<line x1="3369.88" y1="1106.8" x2="3477.96" y2="1169.2" stroke="var(--plate-accent)" stroke-width="3" stroke-opacity="0.85" stroke-linecap="round"/>
+</g>
+</g>
+</g>
+<rect x="2400" y="1800" width="1200" height="120" fill="var(--plate-bg)" stroke="var(--plate-line)" stroke-width="1"/>
+<text x="2440" y="1858" font-family="'Courier New', Courier, monospace" font-size="40" letter-spacing="8" fill="var(--plate-accent)">PLATE 02 · AUTOMOTIVE &amp; MANUFACTURING</text>
+<text x="2440" y="1898" font-family="'Courier New', Courier, monospace" font-size="26" letter-spacing="6" fill="var(--plate-muted)">ENVER CETIN · WORK</text>
+</svg>
