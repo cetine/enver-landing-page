@@ -3,7 +3,7 @@ export type Pillar = { title: string; items: string[] };
 export const profile = {
   name: 'Enver Cetin',
   claim: ['I build AI that actually works.', 'Not in labs. Not in theory.'],
-  role: { en: 'Director AI, Ciklum · Munich', de: 'Director AI, Ciklum · München' },
+  role: { en: 'Director AI, Ciklum · Munich · Working globally', de: 'Director AI, Ciklum · München · Global tätig' },
   email: 'mail@envercetin.de', // verify with Enver before launch
   linkedin: 'https://www.linkedin.com/in/enver-cetin',
   github: 'https://github.com/cetine',
@@ -22,6 +22,32 @@ export const profile = {
       { title: 'Angewandte Automatisierung', items: ['Computer Vision in der Produktion', 'Prozessautomatisierung im großen Maßstab', 'Von RPA zu agentischen Systemen'] },
       { title: 'Branchen', items: ['Banken & Finanzdienstleister', 'Fertigung & Logistik', 'Energie, Bau, Immobilien'] },
     ],
+  },
+  engagement: {
+    en: {
+      networks: [
+        'Atlantik-Brücke — alumni, New Bridge Program',
+        'Deutsch-Britische Gesellschaft — Young Königswinter alumni',
+        'CSU — digital affairs lead (Bavaria)',
+      ],
+      teaching: [
+        'AI trainings & executive education for leadership teams',
+        'Lecturer for AI & automation at Bots and People',
+        'Workshops and keynotes on agentic AI adoption',
+      ],
+    },
+    de: {
+      networks: [
+        'Atlantik-Brücke — Alumnus, New Bridge Program',
+        'Deutsch-Britische Gesellschaft — Young-Königswinter-Alumnus',
+        'CSU — Digitalbeauftragter (Bayern)',
+      ],
+      teaching: [
+        'AI-Trainings & Executive Education für Führungsteams',
+        'Lecturer für AI & Automatisierung bei Bots and People',
+        'Workshops und Keynotes zu Agentic-AI-Adoption',
+      ],
+    },
   },
 } as const;
 
