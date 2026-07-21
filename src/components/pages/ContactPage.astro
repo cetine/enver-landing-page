@@ -7,9 +7,6 @@ const { locale } = Astro.props;
 const tr = t(locale);
 const key = import.meta.env.PUBLIC_WEB3FORMS_KEY;
 if (!key) throw new Error('PUBLIC_WEB3FORMS_KEY not set — configure it in .env / Vercel env vars');
-const intents = locale === 'de'
-  ? [{ id: 'speaking', label: 'Speaking / Workshop' }, { id: 'advisory', label: 'Advisory / Sparring' }, { id: 'enterprise', label: 'Enterprise-Projekt' }, { id: 'other', label: 'Sonstiges' }]
-  : [{ id: 'speaking', label: 'Speaking / workshop' }, { id: 'advisory', label: 'Advisory / sparring' }, { id: 'enterprise', label: 'Enterprise project' }, { id: 'other', label: 'Other' }];
 const title = tr('contact.title');
 const description = locale === 'de'
   ? 'Kontakt zu Enver Cetin — Speaking-Anfragen, Advisory, Enterprise-AI-Projekte.'
@@ -31,15 +28,7 @@ const description = locale === 'de'
   <form id="contact-form" action="https://api.web3forms.com/submit" method="POST" class="max-w-[42em] border-t border-line py-10" novalidate>
     <input type="hidden" name="access_key" value={key} />
     <input type="checkbox" name="botcheck" class="hidden" style="display:none" tabindex="-1" aria-hidden="true" />
-    <fieldset class="flex flex-wrap gap-2">
-      <legend class="mb-2 font-mono text-[11px] uppercase tracking-[0.15em] text-muted">{locale === 'de' ? 'Worum geht es?' : 'What is it about?'}</legend>
-      {intents.map((i, idx) => (
-        <label class="cursor-pointer rounded-full border border-line px-3 py-1 text-[13px] has-checked:border-accent has-checked:text-accent">
-          <input type="radio" name="intent" value={i.id} checked={idx === 3} class="sr-only" />{i.label}
-        </label>
-      ))}
-    </fieldset>
-    <div class="mt-6 grid gap-4 sm:grid-cols-2">
+    <div class="grid gap-4 sm:grid-cols-2">
       <label class="block text-[13px]">Name
         <input name="name" type="text" required class="mt-1 w-full rounded border border-line bg-transparent px-3 py-2 text-[14px] focus:border-accent focus:outline-none" />
       </label>
@@ -61,12 +50,6 @@ const description = locale === 'de'
   const form = document.getElementById('contact-form') as HTMLFormElement | null;
   const status = document.getElementById('form-status')!;
   const de = document.documentElement.lang === 'de';
-  // Preselect intent from ?intent= (whitelisted before any DOM use to avoid selector injection)
-  const allowed = ['speaking', 'advisory', 'enterprise', 'other'];
-  const intent = new URLSearchParams(location.search).get('intent');
-  if (intent && allowed.includes(intent)) {
-    form?.querySelector<HTMLInputElement>(`input[name="intent"][value="${intent}"]`)?.click();
-  }
   const submitBtn = form?.querySelector<HTMLButtonElement>('button[type="submit"]');
   form?.addEventListener('submit', async (ev) => {
     ev.preventDefault();
@@ -78,7 +61,7 @@ const description = locale === 'de'
       status.className = 'mt-3 text-[13px] text-accent';
       return;
     }
-    fd.set('subject', `envercetin.de contact — ${fd.get('intent')}`);
+    fd.set('subject', 'envercetin.de contact');
     if (submitBtn) submitBtn.disabled = true;
     status.textContent = de ? 'Senden…' : 'Sending…';
     status.className = 'mt-3 text-[13px] text-muted';
