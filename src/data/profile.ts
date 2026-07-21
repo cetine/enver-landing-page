@@ -51,7 +51,14 @@ export const profile = {
   },
 } as const;
 
-// Career timeline: ported 1:1 from legacy/profile.ts careerHighlights,
-// with the Ciklum entry split into "Director | AI (…– Present)" and the
-// prior "Senior Manager | AI" period — exact dates to be confirmed by Enver.
-export { careerHighlights, volunteerRoles } from '../../legacy/profile';
+// Career as a dateless station list (no periods, no summaries). Roles are kept
+// per-locale for flexibility even where EN and DE currently match.
+export type CareerStation = { company: string; role: { en: string; de: string } };
+export const careerStations: CareerStation[] = [
+  { company: 'Ciklum', role: { en: 'Senior Manager AI, today Director AI', de: 'Senior Manager AI, heute Director AI' } },
+  { company: 'Bots and People', role: { en: 'Lecturer & Coach, AI & Automation', de: 'Lecturer & Coach, AI & Automatisierung' } },
+  { company: 'Andreas Schmid Group', role: { en: 'Head of Process & Digital Excellence', de: 'Head of Process & Digital Excellence' } },
+  { company: 'Wacker Chemie', role: { en: 'Robotic Process Automation Lead', de: 'Robotic Process Automation Lead' } },
+];
+
+export { volunteerRoles } from '../../legacy/profile';
