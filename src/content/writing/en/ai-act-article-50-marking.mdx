@@ -1,0 +1,139 @@
+---
+title: 'AI Act Art. 50(2): The Mark That Survives Is the One You Cannot Read'
+date: 2026-08-12
+description: Pushing a C2PA-signed, watermarked image through eight stages of an ordinary enterprise pipeline, and reading what the AI Act, the Digital Omnibus and the Commission's Code of Practice actually require.
+tags: [AI Act, C2PA, Watermarking, Provenance]
+type: post
+---
+
+import MarkSurvivalDiagram from '../../../components/MarkSurvivalDiagram.astro';
+
+<aside class="tldr">
+<p class="tldr-label">TL;DR</p>
+<ul>
+<li>The Omnibus did not defuse 2 August 2026. It moved Annex III high-risk to <strong>2 December 2027</strong> and left Article 50 alone — bar a four-month runway for systems already on the market.</li>
+<li>Across eight points in one pipeline, the C2PA manifest died at every stage that touched a pixel — and <code>c2patool</code> then says the same for a stripped file as for one never marked: <code>No claim found</code>.</li>
+<li>The watermark did better than my argument wanted: 12/12 exact recovery through JPEG q85, Word's PDF export and the clipboard. It died at the first change of geometry, including a screenshot on a 2× display.</li>
+<li>So the durable layer is the unreadable one: detection is per-vendor and gated.</li>
+</ul>
+</aside>
+
+Most compliance briefings I have sat through this summer said some version of *the Omnibus bought us time*. For high-risk systems it did. For the obligation that reaches an ordinary enterprise it did not.
+
+**Article 50 has applied since 2 August 2026, and the Omnibus left it exactly where it was.** The correction is not about the date, though. It is about what marking buys once a file leaves the generator. So I marked an image exactly as the Commission's Code of Practice tells providers to, pushed it through a normal document pipeline, and measured at eight points.
+
+The two layers do not fail together, and what is left is not one working answer: the legible layer dies immediately, and the durable layer is one nobody outside the vendor can read.
+
+## What actually binds today
+
+[Regulation (EU) 2026/1744](http://data.europa.eu/eli/reg/2026/1744/oj) — the Digital Omnibus on AI — has been in force since 27 July, three days before the AI Act's general application date. It replaced Article 113's point (c): Annex III high-risk duties now apply from **2 December 2027**, Annex I from 2 August 2028.
+
+It touched Article 50 exactly once, at paragraph 7 (codes of practice). **Article 50(2) is textually unchanged**, Article 113's "It shall apply from 2 August 2026" carries no amendment marker, and Article 50 sits in Chapter IV, which appears in none of the derogations.
+
+The one relief is new **Article 111(4)**: providers of generative systems "placed on the market before 2 August 2026 shall take the necessary steps in order to comply with Article 50(2) by 2 December 2026." Recital 38 calls it four months; the Commission had proposed six.
+
+The duty is outputs "marked in a machine-readable format and detectable as artificially generated or manipulated", by solutions "**effective, interoperable, robust and reliable** as far as this is technically feasible". Breach carries up to EUR 15 000 000 or 3 % of worldwide turnover.
+
+50(2) binds *providers*; most enterprises are deployers, under 50(4). But a deployer who discloses by pointing at the provider's mark inherits everything measured below.
+
+## The regulator already conceded the hard part
+
+The [Code of Practice on Transparency of AI-generated Content](https://digital-strategy.ec.europa.eu/en/policies/code-practice-ai-generated-content) was published on 10 June 2026 and assessed adequate by Commission Opinion C(2026) 4839 final. Adherence is voluntary; the Article 50 obligations are not.
+
+Its Section 1 recital (b) is the concession: "in most cases, in particular for content that can be disseminated online, **no single marking technique suffices** to meet the four requirements in Article 50(2)". Measure 1.1 therefore requires *at least two layers* — signed metadata and an imperceptible watermark.
+
+Measure 3.3 lists what they must survive, and it reads like a description of an office: "(re)compression, screenshot / screencasting … change of file format", then "cropping, up/downscaling, rotation".
+
+That is the test. So I ran it against real tools.
+
+## The rig
+
+The asset is a 1024×1024 PNG carrying both layers: a 32-bit `dwtDctSvd` watermark from [`invisible-watermark`](https://github.com/ShieldMnt/invisible-watermark) 0.2.0, and a `c2patool` 0.27.11 manifest declaring `c2pa.created` with `digitalSourceType: trainedAlgorithmicMedia`. That manifest is 87 406 bytes — 9.15 % of the file.
+
+Headless Chromium 149 renders and screenshots; macOS `NSPasteboard` does the copy–paste, writing the `NSImage` as an app's Copy does; **Microsoft Word 16.112** exports the PDF itself.
+
+<figure>
+<MarkSurvivalDiagram />
+<figcaption>"Alive" is the strict test: exact recovery of all 32 payload bits, and a manifest a validator will parse. A stronger watermark survives further; no container survives better.</figcaption>
+</figure>
+
+| stage | C2PA | watermark |
+| --- | --- | --- |
+| origin | Valid | 32/32 |
+| in a `.docx` | Valid | 32/32 |
+| screenshot, 1:1 | no manifest | 32/32 |
+| JPEG q85 · q60 | no manifest | 32/32 |
+| Word → PDF | no manifest | 32/32 |
+| clipboard paste | no manifest | 32/32 |
+| resize 50 % | no manifest | 18/32 |
+| screenshot, 2× | no manifest | 18/32 |
+
+Twelve independent payloads confirm it is not one lucky seed. Untouched and JPEG q85: **12/12 exact**. Resize to 50 %, upscale 2×, downscale to 640 px: **0/12 exact**, mean 16.7, 16.9 and 16.1 bits against a null of 16.2 — an unwatermarked image scored with random payloads. Chance.
+
+## The result that does not flatter the argument
+
+The watermark held up better than I expected. If your pipeline only ever recompresses, the two-layer design works. Nor is watermarking a lost cause: Google DeepMind's [SynthID-Image report](https://arxiv.org/abs/2510.09263) claims a 99.98 % true-positive rate at 0.1 % false-positive across thirty common transformations.
+
+But look at which stages killed it. Every one was a change of geometry, and every one is a default. A CMS resizes. A Retina screenshot is a 2× resample — so the case labelled "screenshot" in most compliance decks is the case that does not survive.
+
+## The asymmetry nobody prices in
+
+The C2PA manifest is the only part of this a third party can read and act on: signed, naming the generator, saying `trainedAlgorithmicMedia`. It died at every stage that touched a pixel — and it dies **silently**. Run `c2patool` on the resized copy, then on an image never marked at all:
+
+```
+$ c2patool s2_resize50.png
+Error: No claim found
+$ c2patool base.png
+Error: No claim found
+```
+
+Byte-identical verdicts. Absence of a mark is evidence of nothing.
+
+The designed answer is a recovered manifest — soft bindings plus a repository. So I signed to a sidecar `.c2pa` and re-attached it to each transformed copy.
+
+```
+validation_state: Invalid
+  assertion.dataHash.mismatch — asset hash error, name: jumbf manifest,
+    error: hash verification( Hashes do not match )
+```
+
+The spec is candid about why. Clause 9.1 defines a hard binding as matching "only this asset and no other, **not even other assets derived from it or renditions produced from it**", and clause 15.12.1.3.3 glosses the resulting code as "Data hash does not match, **indicating tampering**". A resize is not tampering; the validator has no vocabulary for that. And the Security Considerations concede the rest: C2PA "does not offer any protection against the complete removal of C2PA manifests from assets".
+
+## What enterprises actually run
+
+OpenAI says it in its own words: "metadata is not foolproof. It can be stripped, lost through uploads and downloads, or broken by transformations like file format changes, resizing, or screenshots."
+
+The gap widens with open weights. Black Forest Labs applies signed C2PA on the FLUX.2 Pro API; on the open-weight `FLUX.2 [dev]` path, `scripts/cli.py` ships with `# x = embed_watermark(x)` commented out, and `watermark.py` carries a **hardcoded, publicly published 48-bit constant** using `dwtDct`. Running that configuration, I could not recover the payload even from an untouched PNG: 26.9 bits of 48 against a 25.1-bit control, one exact recovery in twenty-four trials. The library's README agrees — it "cannot guarantee to decode the original watermarks 100% accurately even though we don't apply any attack."
+
+Stability AI reports that "content provenance has not been implemented during the content generation process for our openly released models". Anthropic marks nothing, and says it is "preparing for compliance".
+
+And checking the layer that does survive is per-vendor. OpenAI opened a verification API on 31 July 2026; Google's [SynthID Detector](https://deepmind.google/science/synthid/) is still waitlist-gated to journalists and researchers.
+
+## What I would build
+
+1. **Diarise 2 December 2026.** If you ship a generative feature, Article 111(4) is your date. If you deploy one, your duty is 50(4) — and you cannot discharge it by pointing at a mark your own CMS removes.
+2. **Measure your own pipeline before you write the DPIA sentence.** Eight points, three probes, an afternoon — and every stage that resizes ends a watermark claim.
+3. **Never read "no manifest" as "not AI".** Keep provenance in your own system of record, where a resize cannot reach.
+
+## Bottom line
+
+Article 50(2) asks for marking that is effective, interoperable, robust and reliable, and the Code of Practice concedes no single technique gets there. But the two it requires are not redundant: they are a legible layer that ordinary work destroys, and a durable layer that is a per-vendor secret behind a gated detector.
+
+Mark your outputs — I would. Just do not tell a regulator the file is detectable once it has been through a document.
+
+The obligation was never going to be discharged at the point of generation.
+
+---
+
+## Sources
+
+- [AI Act, consolidated](http://data.europa.eu/eli/reg/2024/1689/2026-07-27) — Art. 50(2), 50(4), 99(4), 111(4), 113.
+- [Regulation (EU) 2026/1744](http://data.europa.eu/eli/reg/2026/1744/oj), OJ L, 24.7.2026 — Art. 1(20), 1(39)(b), 1(40); recital 38.
+- [Code of Practice on Transparency of AI-generated Content](https://digital-strategy.ec.europa.eu/en/policies/code-practice-ai-generated-content), 10 June 2026 — recital (b), Measures 1.1, 3.3; and Commission Opinion C(2026) 4839 final.
+- [C2PA Specification 2.4](https://spec.c2pa.org/specifications/specifications/2.4/specs/C2PA_Specification.html) — cl. 9.1, 15.5.5, 15.12.1.3.3; its [Security Considerations](https://spec.c2pa.org/specifications/specifications/2.4/security/Security_Considerations.html) cl. 2.3, 4.3.1.1.
+- [`c2patool`](https://github.com/contentauth/c2pa-rs) 0.27.11, [`invisible-watermark`](https://github.com/ShieldMnt/invisible-watermark) 0.2.0.
+- [OpenAI, provenance signals](https://help.openai.com/en/articles/8912793-c2pa-in-chatgpt-images); [Advancing content provenance](https://openai.com/index/advancing-content-provenance/).
+- [FLUX.2 `watermark.py`](https://github.com/black-forest-labs/flux2/blob/main/src/flux2/watermark.py); [Stability AI](https://stability.ai/news-updates/stability-ais-annual-integrity-transparency-report); [Anthropic](https://www.anthropic.com/transparency/voluntary-commitments).
+- Gowal et al., [*SynthID-Image*](https://arxiv.org/abs/2510.09263) (2025) — the figure that cuts against this piece.
+
+<p class="text-[13px] text-muted">Measured 12 August 2026 with <code>c2patool 0.27.11</code>, <code>invisible-watermark 0.2.0</code>, <code>exiftool 13.55</code>, Chromium 149.0.7827.55 and Word 16.112. Law stated as at that date; it will age. Engineering write-up, not legal advice.</p>

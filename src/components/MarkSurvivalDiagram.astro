@@ -1,0 +1,131 @@
+---
+// Two lifelines through one pipeline, drawn as one figure.
+//
+// The single idea is that the two marks Article 50(2) can be satisfied with do
+// not die at the same place, and both die before the pipeline ends: the signed
+// manifest goes at the first stage that touches pixels, the watermark survives
+// compression and dies at the first stage that changes geometry. Everything
+// else — file sizes, bit counts, validator codes — lives in the table in the
+// body, because putting it here would bury the shape.
+//
+// Laid out as a tall single column for the same reason as PiiFlowDiagram: the
+// prose column is 40em, and a landscape version would push labels under 9px.
+//
+// Rendered as inline SVG so it inherits the page's theme variables rather than
+// shipping two raster files.
+import { roughLine, roughPolyline } from '../lib/rough';
+
+// Rows are the pipeline, top to bottom. `manifest` and `watermark` record what
+// was actually observed in the run, and drive where each lifeline stops.
+const rows: { label: string; manifest: boolean; watermark: boolean }[] = [
+  { label: 'generator output (PNG)', manifest: true, watermark: true },
+  { label: 'placed in a .docx', manifest: true, watermark: true },
+  { label: 'screenshot, 1:1', manifest: false, watermark: true },
+  { label: 'JPEG re-encode, q85', manifest: false, watermark: true },
+  { label: 'Word → PDF export', manifest: false, watermark: true },
+  { label: 'copy–paste (clipboard)', manifest: false, watermark: true },
+  { label: 'resize to 50%', manifest: false, watermark: false },
+  { label: 'screenshot on a 2× display', manifest: false, watermark: false },
+];
+
+const Y0 = 92;
+const STEP = 50;
+const yOf = (i: number): number => Y0 + i * STEP;
+const BOTTOM = yOf(rows.length - 1) + 34;
+
+const LANES = [
+  { x: 300, head: 'C2PA manifest', start: 'Valid', end: 'no manifest', key: 'manifest' as const, seed: 301 },
+  { x: 470, head: 'watermark', start: '32/32 bits', end: 'chance level', key: 'watermark' as const, seed: 402 },
+];
+
+/** Index of the last row where the mark was still recoverable. */
+function lastAlive(key: 'manifest' | 'watermark'): number {
+  let last = -1;
+  rows.forEach((r, i) => { if (r[key]) last = i; });
+  return last;
+}
+
+const lanes = LANES.map((lane) => {
+  const last = lastAlive(lane.key);
+  const deathY = yOf(last) + STEP / 2;
+  return {
+    ...lane,
+    deathY,
+    alive: roughPolyline([[lane.x, Y0 - 22], [lane.x, deathY - 11]], { seed: lane.seed, roughness: 0.6 }),
+    // The break is drawn as a cross rather than a gap: a gap reads as "not
+    // measured", and every one of these was measured.
+    breakA: roughLine(lane.x - 9, deathY - 9, lane.x + 9, deathY + 9, { seed: lane.seed + 1, roughness: 0.7 }),
+    breakB: roughLine(lane.x - 9, deathY + 9, lane.x + 9, deathY - 9, { seed: lane.seed + 2, roughness: 0.7 }),
+    dead: roughPolyline([[lane.x, deathY + 12], [lane.x, BOTTOM]], { seed: lane.seed + 3, roughness: 0.5 }),
+    ticks: rows.map((r, i) => (r[lane.key]
+      ? roughLine(lane.x - 7, yOf(i), lane.x + 7, yOf(i), { seed: lane.seed + 10 + i, roughness: 0.5 })
+      : null)),
+  };
+});
+
+const guides = rows.map((_, i) => roughLine(18, yOf(i) + 13, 522, yOf(i) + 13, { seed: 700 + i, roughness: 0.5, bowing: 0.3 }));
+
+const desc =
+  'A pipeline runs down the left as eight stages: generator output as PNG, placed in a Word document, ' +
+  'screenshot at one-to-one, JPEG re-encode at quality 85, Word PDF export, copy and paste through the ' +
+  'clipboard, resize to 50 per cent, and screenshot on a two-times display. Two vertical lifelines run ' +
+  'alongside them. The C2PA manifest lifeline starts valid, is still present after the file is placed in ' +
+  'a Word document, and is then cut short: it is gone from the screenshot stage onward, and every later ' +
+  'stage reports no manifest at all. The watermark lifeline runs much further — it survives the ' +
+  'screenshot, the JPEG re-encode, the Word PDF export and the clipboard round trip — and is cut short at ' +
+  'the resize, after which recovery falls to chance level. Both lifelines end before the pipeline does.';
+---
+<div class="diagram-scroll">
+  <svg viewBox="0 0 580 500" role="img" aria-labelledby="mark-survival-title mark-survival-desc" class="diagram">
+    <title id="mark-survival-title">Where each Article 50(2) mark stops being recoverable</title>
+    <desc id="mark-survival-desc">{desc}</desc>
+
+    <text x="18" y="34" class="d-head">Pipeline stage</text>
+    {lanes.map((l) => <text x={l.x} y={34} class="d-head d-mid">{l.head}</text>)}
+    {lanes.map((l) => <text x={l.x} y={Y0 - 32} class="d-state d-mid">{l.start}</text>)}
+
+    {guides.map((d) => <path d={d} class="guide" />)}
+
+    {lanes.map((l) => (
+      <g>
+        <path d={l.dead} class="lane-dead" />
+        <path d={l.alive} class="lane-alive" />
+        {l.ticks.map((t) => (t ? <path d={t} class="lane-tick" /> : null))}
+        <g class="lane-break">
+          <path d={l.breakA} />
+          <path d={l.breakB} />
+        </g>
+        <text x={l.x} y={BOTTOM + 20} class="d-state d-dead d-mid">{l.end}</text>
+      </g>
+    ))}
+
+    {rows.map((r, i) => <text x={18} y={yOf(i) + 5} class="d-stage">{r.label}</text>)}
+  </svg>
+</div>
+
+<style>
+  /* Same rule as the PII figure: below ~560px the labels would shrink into
+     illegibility, so the figure scrolls rather than scaling with the viewport. */
+  .diagram-scroll { overflow-x: auto; margin: 2rem 0 0.75rem; }
+  .diagram { display: block; width: 100%; min-width: 540px; height: auto; }
+
+  .guide { fill: none; stroke: var(--line); stroke-width: 1; }
+
+  .lane-alive { fill: none; stroke: var(--accent); stroke-width: 3.4; stroke-linecap: round; }
+  .lane-tick { fill: none; stroke: var(--accent); stroke-width: 1.6; stroke-linecap: round; }
+  .lane-dead {
+    fill: none; stroke: var(--muted); stroke-width: 1.2;
+    stroke-dasharray: 3 7; stroke-linecap: round; opacity: 0.7;
+  }
+  .lane-break path { fill: none; stroke: var(--fg); stroke-width: 2; stroke-linecap: round; }
+
+  text { fill: var(--fg); }
+  .d-mid { text-anchor: middle; }
+  .d-head {
+    font-family: var(--font-mono); font-size: 11px; font-weight: 500; fill: var(--muted);
+    letter-spacing: 0.14em; text-transform: uppercase;
+  }
+  .d-stage { font-family: var(--font-sans); font-size: 13.5px; }
+  .d-state { font-family: var(--font-mono); font-size: 11.5px; fill: var(--accent); }
+  .d-dead { fill: var(--muted); }
+</style>

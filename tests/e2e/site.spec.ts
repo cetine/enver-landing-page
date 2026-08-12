@@ -6,9 +6,10 @@ const pages: { path: string; hreflang: number }[] = [
   ...['/', '/work', '/writing', '/ventures', '/about', '/contact',
     '/de', '/de/work', '/de/writing', '/de/ventures', '/de/about', '/de/contact',
   ].map((path) => ({ path, hreflang: 3 })),
-  // Post pages carry the widest content on the site (the PII-flow figure), so
+  // Post pages carry the widest content on the site (the hand-drawn figures), so
   // they are the ones most likely to break the no-horizontal-scroll rule.
   { path: '/writing/gdpr-presidio-llm-privacy', hreflang: 2 },
+  { path: '/writing/ai-act-article-50-marking', hreflang: 2 },
 ];
 
 for (const { path, hreflang } of pages) {
