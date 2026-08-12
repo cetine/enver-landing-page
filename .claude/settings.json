@@ -1,0 +1,31 @@
+{
+  "$comment": [
+    "Guardrails for the unattended weekly article run (scripts/weekly-article/).",
+    "On 2026-08-12 an unattended run drove AppleScript against a live Microsoft Word",
+    "session to test watermark survival, hit the wrong document, and removed files",
+    "belonging to an unrelated project. A prompt asking it not to would not have",
+    "stopped that; a deny rule does. These apply to any Claude session started in",
+    "this repository, so an interactive session is bound by them too."
+  ],
+  "permissions": {
+    "deny": [
+      "Bash(osascript:*)",
+      "Bash(open:*)",
+      "Bash(automator:*)",
+      "Bash(sudo:*)",
+      "Bash(killall:*)",
+      "Bash(pkill:*)",
+      "Bash(launchctl:*)",
+      "Bash(defaults write:*)",
+      "Bash(rm -rf /*)",
+      "Bash(git push:*)",
+      "Bash(vercel deploy:*)",
+      "Read(//Users/ece/Projects/**)",
+      "Read(//Users/ece/Desktop/**)",
+      "Read(//Users/ece/Downloads/**)",
+      "Edit(//Users/ece/Projects/**)",
+      "Edit(//Users/ece/Desktop/**)",
+      "Edit(//Users/ece/Downloads/**)"
+    ]
+  }
+}

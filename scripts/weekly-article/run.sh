@@ -118,12 +118,15 @@ if ! npm run verify > "$LOG_DIR/$STAMP-verify.log" 2>&1; then
   exit 1
 fi
 
+# A writing run creates a throwaway page to look at its own figure. It is not
+# part of the article, and `git add -A` would otherwise commit and publish it.
+rm -f src/pages/diagram-preview.astro src/pages/preview.astro
 git add -A
 git commit --quiet -m "feat: article — $SLUG"
 
 # --- 5. Preview (local tree → Vercel; nothing pushed to GitHub) ---------------
 echo "--- deploying preview"
-PREVIEW="$(vercel deploy --yes 2>/dev/null | grep -Eo 'https://[^[:space:]]+' | tail -1)"
+PREVIEW="$(vercel deploy --yes 2>/dev/null | grep -Eo 'https://[a-z0-9.-]+\.vercel\.app' | tail -1)"
 if [[ -z "$PREVIEW" ]]; then
   notify "⚠️ Weekly article: preview deploy produced no URL. Branch $BRANCH is committed locally. Log: $LOG"
   exit 1
@@ -155,10 +158,9 @@ echo "--- publishing"
 git checkout main --quiet
 git merge --ff-only "$BRANCH" --quiet
 git push --quiet
-# Explicit production promotion, so this works whether or not the GitHub
-# integration is connected. A duplicate build is harmless; drop this line if the
-# Git integration already deploys main.
-PROD="$(vercel deploy --prod --yes 2>/dev/null | grep -Eo 'https://[^[:space:]]+' | tail -1)"
+# Pushing main is enough: the Vercel GitHub integration builds production from
+# it (verified 2026-08-12 — a production build started 12s after a push). No
+# explicit promote here, which also keeps deploy rights out of the model's hands.
 git branch -d "$BRANCH" --quiet || true
 
 notify "✅ Published: https://envercetin.de/writing/$SLUG"

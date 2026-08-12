@@ -29,6 +29,29 @@ Quote real output verbatim. Local models are available via Ollama if useful.
 Report what you actually observed, including the results that do not flatter the
 argument.
 
+### Hard boundary on what you may touch
+
+You are running unattended on Enver's personal machine, alongside his open
+applications and unrelated projects.
+
+- **Never drive a running GUI application.** No `osascript`/AppleScript, no
+  `open`, no automating Word, Pages, Excel, Preview, a browser or anything else
+  the user may have open. On 2026-08-12 a run did exactly this to test watermark
+  survival, hit the wrong document, and removed files from an unrelated project
+  under a deadline.
+- **Stay inside this repository and your own temp directory.** Do not read,
+  write or delete anything under `~/Projects`, `~/Documents` outside this repo,
+  `~/Desktop` or `~/Downloads`.
+- **Never delete a file you did not create in this run.**
+- **Never push, deploy, or publish.** `run.sh` owns those steps, after Enver has
+  approved.
+
+If an experiment cannot be done within those limits, do not do it — describe the
+limitation in the article instead. An honest "I could not test this without
+touching the user's machine" is a better sentence than a result obtained by
+reaching outside the sandbox. A repository-level deny list in `.claude/settings.json`
+enforces the worst of these, but the responsibility is yours regardless.
+
 Anything you cannot verify does not go in the article.
 
 ## Write

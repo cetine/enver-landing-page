@@ -30,3 +30,8 @@ playwright-report
 *.sw?
 .superpowers/
 .vercel
+
+# macOS duplicates ("File 2.ext") — Finder/iCloud artefacts, never source.
+* [0-9].astro
+* [0-9].ts
+* [0-9].mdx
