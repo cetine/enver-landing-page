@@ -13,9 +13,10 @@ article, and publishes it only after you approve a preview.
 | 4 | `npm run verify` runs as a hard gate | no |
 | 5 | `vercel deploy` publishes a **preview** from the local working tree | no — preview URL only, nothing pushed to GitHub |
 | 6 | Telegram sends you the preview link and asks | no |
-| 7 | Only on **Publish**: merge to main, push, deploy to production | yes |
+| 7 | On **Publish**: a one-shot launchd job is scheduled — the following Friday 19:00–21:00 or Saturday 10:00–13:00, picked at random | not yet |
+| 8 | At that moment: merge to main, verify again, push → production | yes |
 
-Nothing reaches GitHub or envercetin.de before step 7. If you answer anything
+Nothing reaches GitHub or envercetin.de before step 8. Approving in step 7 only sets the date; you get a Telegram message naming the exact time and the command to cancel it. If you answer anything
 other than "Publish", the work stays on a local branch and the preview URL
 remains readable.
 

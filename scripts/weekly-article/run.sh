@@ -9,7 +9,8 @@
 #   5. `vercel deploy` publishes a PREVIEW from the local tree — nothing reaches
 #      GitHub, and nothing reaches production, before Enver has seen it
 #   6. Telegram asks for approval, with the preview link
-#   7. Only on "Publish" does the branch merge to main, push, and go to production
+#   7. On "Publish" the article is SCHEDULED, not published: a one-shot job goes
+#      live the following Friday 19:00-21:00 or Saturday 10:00-13:00, at random
 #
 # Anything that fails sends a Telegram message and stops. The working tree is
 # never touched unless it was clean to begin with.
@@ -153,15 +154,18 @@ if [[ $APPROVE_RC -ne 0 || "$APPROVAL" != "Publish" ]]; then
   exit 0
 fi
 
-# --- 7. Publish ---------------------------------------------------------------
-echo "--- publishing"
+# --- 7. Schedule the publish ---------------------------------------------------
+# Approved articles do not go live immediately. They are held and published at a
+# randomised time in one of two windows — the following Friday 19:00-21:00 or the
+# following Saturday 10:00-13:00 — so the site does not read as cron-driven.
+echo "--- scheduling publish"
 git checkout main --quiet
-git merge --ff-only "$BRANCH" --quiet
-git push --quiet
-# Pushing main is enough: the Vercel GitHub integration builds production from
-# it (verified 2026-08-12 — a production build started 12s after a push). No
-# explicit promote here, which also keeps deploy rights out of the model's hands.
-git branch -d "$BRANCH" --quiet || true
+SLOT="$(python3 scripts/weekly-article/lib/schedule_publish.py "$BRANCH")"
+SLOT_HUMAN="${SLOT#*|}"
 
-notify "✅ Published: https://envercetin.de/writing/$SLUG"
+notify "🗓 Approved. \"$SLUG\" is scheduled to go live on $SLOT_HUMAN.
+
+Preview stays up: $PREVIEW
+To cancel: launchctl bootout gui/\$(id -u)/com.enver.envercetin.publish-${SLOT%%|*}"
+echo "scheduled for $SLOT_HUMAN"
 echo "=== done $(date +%H:%M:%S) ==="
