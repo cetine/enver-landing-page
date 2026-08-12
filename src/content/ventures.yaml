@@ -10,7 +10,7 @@
     tagline: 'KI-Vertragsanalyse für Verbraucher: fünf spezialisierte Legal-KI-Agenten prüfen deutsche Verträge in unter zwei Minuten.'
     story: Gebaut, um Vertragsrisiken für Nicht-Juristen verständlich zu machen. Ein „KI-Rat" aus fünf spezialisierten Agenten (Vertragsrecht, AGB, Mietrecht, Arbeitsrecht, Risiko) validiert Befunde gegenseitig und erzeugt einen verständlichen PDF-Report. DSGVO-konform, deutsche Server, Einmalpreis.
 - id: nebenkosten-ninja
-  url: https://nebenkosten-ninja.vercel.app
+  url: https://nebenkosten-ninja.de
   status: live
   en:
     name: Nebenkosten-Ninja
