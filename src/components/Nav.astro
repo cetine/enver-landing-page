@@ -1,8 +1,11 @@
 ---
 import Monogram from './Monogram.astro';
 import { t, localizePath, alternatePath, type Locale } from '../i18n/routes';
-interface Props { locale: Locale; pathname: string }
-const { locale, pathname } = Astro.props;
+interface Props { locale: Locale; pathname: string; alternate?: string }
+const { locale, pathname, alternate } = Astro.props;
+// Base resolves this: the mirrored path normally, or an explicit fallback for
+// pages that exist in one language only (writing posts are English-only).
+const altHref = alternate ?? alternatePath(pathname);
 const tr = t(locale);
 const links = [
   { href: localizePath('/work', locale), label: tr('nav.work') },
@@ -27,12 +30,12 @@ const isActive = (href: string) => pathname === href || pathname.startsWith(`${h
         {tr('nav.search')}
         <kbd class="rounded border border-line px-1.5 py-0.5 font-mono text-[10px]">⌘K</kbd>
       </button>
-      <a href={alternatePath(pathname)} class="font-mono text-[11px] text-muted hover:text-fg" rel="alternate">{locale === 'en' ? 'DE' : 'EN'}</a>
+      <a href={altHref} class="font-mono text-[11px] text-muted hover:text-fg" rel="alternate">{locale === 'en' ? 'DE' : 'EN'}</a>
       <button id="theme-toggle" class="text-muted hover:text-fg" aria-label={tr('chrome.theme')}>◐</button>
     </div>
     <div class="flex items-center gap-4 md:hidden">
       <button id="open-search-mobile" class="text-muted" aria-label={tr('nav.search')}>⌕</button>
-      <a href={alternatePath(pathname)} class="font-mono text-[11px] text-muted" rel="alternate">{locale === 'en' ? 'DE' : 'EN'}</a>
+      <a href={altHref} class="font-mono text-[11px] text-muted" rel="alternate">{locale === 'en' ? 'DE' : 'EN'}</a>
       <button id="menu-toggle" class="text-fg" aria-expanded="false" aria-controls="mobile-menu" aria-label={tr('chrome.menu')}>☰</button>
     </div>
   </nav>

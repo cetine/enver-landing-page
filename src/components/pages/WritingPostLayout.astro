@@ -17,6 +17,7 @@ const url = `https://envercetin.de${localizePath(`/writing/${slug}`, locale)}`;
 const toc = headings.filter((h) => h.depth === 2);
 ---
 <Base title={entry.data.title} description={entry.data.description} ogType="article"
+  alternate={localizePath('/writing', locale === 'en' ? 'de' : 'en')}
   jsonLd={[articleJsonLd({ title: entry.data.title, description: entry.data.description, date: entry.data.date, url, lang: locale })]}>
   <article class="py-14 lg:grid lg:grid-cols-[150px_minmax(0,40em)_1fr] lg:gap-10">
     <aside class="mb-6 font-mono text-[12px] text-muted lg:mb-0">

@@ -1,19 +1,41 @@
 import { test, expect } from '@playwright/test';
 
-const pages = ['/', '/work', '/writing', '/ventures', '/about', '/contact', '/de', '/de/work', '/de/writing', '/de/ventures', '/de/about', '/de/contact'];
+// `hreflang` counts en + de + x-default on translated pages. Writing posts are
+// English-only, so they must NOT advertise a German counterpart: en + x-default.
+const pages: { path: string; hreflang: number }[] = [
+  ...['/', '/work', '/writing', '/ventures', '/about', '/contact',
+    '/de', '/de/work', '/de/writing', '/de/ventures', '/de/about', '/de/contact',
+  ].map((path) => ({ path, hreflang: 3 })),
+  // Post pages carry the widest content on the site (the PII-flow figure), so
+  // they are the ones most likely to break the no-horizontal-scroll rule.
+  { path: '/writing/gdpr-presidio-llm-privacy', hreflang: 2 },
+];
 
-for (const path of pages) {
+for (const { path, hreflang } of pages) {
   test(`no horizontal scroll + meta on ${path}`, async ({ page }) => {
     await page.goto(path);
     const overflow = await page.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth);
     expect(overflow).toBeLessThanOrEqual(1);
     expect(await page.locator('meta[name="description"]').getAttribute('content')).toBeTruthy();
     expect(await page.locator('link[rel="canonical"]').count()).toBe(1);
-    expect(await page.locator('link[rel="alternate"][hreflang]').count()).toBe(3);
+    expect(await page.locator('link[rel="alternate"][hreflang]').count()).toBe(hreflang);
     const lang = await page.locator('html').getAttribute('lang');
     expect(lang).toBe(path.startsWith('/de') ? 'de' : 'en');
   });
 }
+
+test('language toggle on an English-only post does not dead-end', async ({ page, viewport }) => {
+  test.skip(viewport!.width < 640, 'desktop nav');
+  // The mirrored path /de/writing/<slug> does not exist, so the toggle has to
+  // fall back to the German writing index rather than 404.
+  await page.goto('/writing/gdpr-presidio-llm-privacy');
+  const [response] = await Promise.all([
+    page.waitForNavigation(),
+    page.click('a[rel="alternate"]'),
+  ]);
+  expect(response?.status()).toBe(200);
+  await expect(page).toHaveURL(/\/de\/writing$/);
+});
 
 test('hero claim is verbatim', async ({ page }) => {
   await page.goto('/');

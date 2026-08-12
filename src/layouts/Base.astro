@@ -13,14 +13,26 @@ import SearchPalette from '../components/SearchPalette';
 import { pageTitle, websiteJsonLd } from '../lib/seo';
 import { alternatePath, getLocaleFromPath, t, type Locale } from '../i18n/routes';
 
-interface Props { title?: string; description: string; jsonLd?: object[]; noindex?: boolean; ogType?: 'website' | 'article' }
-const { title, description, jsonLd = [], noindex = false, ogType = 'website' } = Astro.props;
+interface Props {
+  title?: string; description: string; jsonLd?: object[]; noindex?: boolean;
+  ogType?: 'website' | 'article';
+  /**
+   * Where the language toggle should go when this page has NO counterpart in
+   * the other locale — writing posts are English-only, so the mirrored path
+   * would 404. Passing an href sends the toggle somewhere useful and suppresses
+   * the other locale's `hreflang`, because that link must point at a real
+   * translation and the fallback is not one.
+   */
+  alternate?: string;
+}
+const { title, description, jsonLd = [], noindex = false, ogType = 'website', alternate } = Astro.props;
 const pathname = Astro.url.pathname.replace(/\/$/, '') || '/';
 const locale: Locale = getLocaleFromPath(pathname);
 const tr = t(locale);
 const site = 'https://envercetin.de';
 const canonical = `${site}${pathname === '/' ? '' : pathname}`;
-const alt = alternatePath(pathname);
+const translated = alternate === undefined;
+const alt = alternate ?? alternatePath(pathname);
 const enHref = locale === 'en' ? canonical : `${site}${alt === '/' ? '' : alt}`;
 const deHref = locale === 'de' ? canonical : `${site}${alt}`;
 const fullTitle = pageTitle(title);
@@ -34,8 +46,8 @@ const allJsonLd = [websiteJsonLd(), ...jsonLd];
     <meta name="description" content={description} />
     {noindex && <meta name="robots" content="noindex" />}
     <link rel="canonical" href={canonical} />
-    <link rel="alternate" hreflang="en" href={enHref} />
-    <link rel="alternate" hreflang="de" href={deHref} />
+    {(translated || locale === 'en') && <link rel="alternate" hreflang="en" href={enHref} />}
+    {(translated || locale === 'de') && <link rel="alternate" hreflang="de" href={deHref} />}
     <link rel="alternate" hreflang="x-default" href={enHref} />
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
@@ -56,7 +68,7 @@ const allJsonLd = [websiteJsonLd(), ...jsonLd];
   </head>
   <body class="min-h-screen bg-bg font-sans text-fg antialiased">
     <a href="#main" data-pagefind-ignore class="sr-only focus:not-sr-only focus:absolute focus:left-4 focus:top-4 focus:z-50 focus:bg-bg focus:p-2">{tr('chrome.skip')}</a>
-    <Nav locale={locale} pathname={pathname} />
+    <Nav locale={locale} pathname={pathname} alternate={alt} />
     <main id="main" tabindex="-1" class="mx-auto max-w-5xl px-5"><slot /></main>
     <Footer locale={locale} />
     <SearchPalette client:idle locale={locale} />
