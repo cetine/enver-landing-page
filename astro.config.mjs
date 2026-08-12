@@ -1,4 +1,5 @@
 import { defineConfig } from 'astro/config';
+import mdx from '@astrojs/mdx';
 import preact from '@astrojs/preact';
 import sitemap from '@astrojs/sitemap';
 import tailwindcss from '@tailwindcss/vite';
@@ -17,6 +18,11 @@ export default defineConfig({
     routing: { prefixDefaultLocale: false },
   },
   integrations: [
+    // Writing posts stay plain markdown unless they need a figure; `.mdx` lets
+    // such a post import one shared, localized diagram component instead of
+    // pasting the same inline SVG into both the EN and DE file. MDX inherits
+    // the `markdown` config above, so heading ids behave identically.
+    mdx(),
     preact({ compat: true }),
     sitemap({
       i18n: { defaultLocale: 'en', locales: { en: 'en', de: 'de' } },

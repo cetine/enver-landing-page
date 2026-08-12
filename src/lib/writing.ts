@@ -29,7 +29,21 @@ export function groupByMonth(items: WritingMeta[], locale: Locale, min = 8) {
   return { grouped: true, groups };
 }
 
+/**
+ * Estimated reading time from a post's raw body.
+ *
+ * The body is MDX source, so a naive word count also counts things nobody
+ * reads at prose speed: `import` statements, JSX/HTML tags, and fenced code.
+ * Those are stripped first — tags go but the text inside them stays, since a
+ * TL;DR list is read like any other paragraph. Code is dropped rather than
+ * discounted: readers skim it, and weighting it would be a guess dressed up as
+ * arithmetic.
+ */
 export function readingTimeMinutes(text: string, wpm = 200): number {
-  const words = text.trim().split(/\s+/).filter(Boolean).length;
+  const prose = text
+    .replace(/```[\s\S]*?```/g, ' ')
+    .replace(/^import\s.+$/gm, ' ')
+    .replace(/<[^>]+>/g, ' ');
+  const words = prose.trim().split(/\s+/).filter(Boolean).length;
   return Math.max(1, Math.ceil(words / wpm));
 }

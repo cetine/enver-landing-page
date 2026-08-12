@@ -1,0 +1,228 @@
+---
+// The anonymise → prompt → re-identify loop, drawn as one figure.
+//
+// The point of the picture is the dashed boundary and what crosses it: the
+// placeholder payload goes out, the answer comes back, and the mapping that
+// makes the placeholders reversible never leaves. Everything else is deliberately
+// left out — a fuller architecture diagram would bury that single idea.
+//
+// Laid out as a tall single column rather than a wide flow: the prose column is
+// 40em, and a landscape figure would have to scale down ~16%, dropping the
+// labels under 9px. At 620 viewBox units the figure renders about 1:1.
+//
+// Rendered as inline SVG rather than a linked image file, so it inherits the
+// page's theme variables and flips with light/dark like the rest of the site.
+import { roughRect, roughLine, roughArrowHead } from '../lib/rough';
+import type { Locale } from '../i18n/routes';
+
+interface Props { locale: Locale }
+const { locale } = Astro.props;
+
+type Line = { text: string; y: number; cls: string };
+type Box = { x: number; y: number; w: number; h: number; seed: number; accent?: boolean; lines: Line[] };
+
+const copy = {
+  en: {
+    zoneOwn: 'Your infrastructure (EU)',
+    zoneLlm: 'LLM provider',
+    rawTitle: 'Raw prompt',
+    rawSample: 'k.meinhardt@…, DE89…',
+    anonTitle: 'Presidio',
+    anonSub: 'analyze + anonymize',
+    anonFine: 'NER · regex · checksums',
+    mapTitle: 'Mapping',
+    mapFine: 'never leaves this box',
+    deanonSub: 'deanonymize',
+    deanonFine: 'restore from mapping',
+    llmSub: 'sees only placeholders',
+    llmFine: 'cannot resolve them',
+    finalTitle: 'Final answer',
+    finalSample: '"Dear Ms Meinhardt…"',
+    back: 'Dear <PERSON_0>',
+    alt:
+      'Flow diagram. Inside a dashed boundary labelled "Your infrastructure (EU)", a raw prompt containing ' +
+      'a customer name and an IBAN goes into Presidio, which detects the personal data, replaces it with ' +
+      'placeholders, and writes the substitutions into a mapping that never leaves the boundary. Only the ' +
+      'placeholder text — <PERSON_0> and <IBAN_CODE_0> — crosses into the LLM provider zone, where the model ' +
+      'sees the placeholders and cannot resolve them. The answer comes back still containing <PERSON_0>, ' +
+      'crosses the boundary again, and Presidio reverses the mapping so the final answer addressed to the ' +
+      'customer by name is assembled inside your own infrastructure.',
+  },
+  de: {
+    zoneOwn: 'Ihre Infrastruktur (EU)',
+    zoneLlm: 'LLM-Anbieter',
+    rawTitle: 'Roher Prompt',
+    rawSample: 'k.meinhardt@…, DE89…',
+    anonTitle: 'Presidio',
+    anonSub: 'erkennen + ersetzen',
+    anonFine: 'NER · Regex · Prüfsummen',
+    mapTitle: 'Mapping',
+    mapFine: 'verlässt diese Box nie',
+    deanonSub: 'de-anonymisieren',
+    deanonFine: 'aus Mapping zurück',
+    llmSub: 'sieht nur Platzhalter',
+    llmFine: 'kann sie nicht auflösen',
+    finalTitle: 'Finale Antwort',
+    finalSample: '„Sehr geehrte Frau…“',
+    back: 'Frau <PERSON_0>',
+    alt:
+      'Ablaufdiagramm. Innerhalb einer gestrichelten Grenze mit der Beschriftung „Ihre Infrastruktur (EU)“ ' +
+      'geht ein roher Prompt mit einem Kundennamen und einer IBAN in Presidio. Presidio erkennt die ' +
+      'personenbezogenen Daten, ersetzt sie durch Platzhalter und legt die Zuordnung in einem Mapping ab, ' +
+      'das die Grenze nie verlässt. Nur der Platzhalter-Text — <PERSON_0> und <IBAN_CODE_0> — überschreitet ' +
+      'die Grenze zum LLM-Anbieter, wo das Modell ausschließlich die Platzhalter sieht und sie nicht ' +
+      'auflösen kann. Die Antwort kommt mit <PERSON_0> zurück, überschreitet die Grenze erneut, und ' +
+      'Presidio dreht das Mapping um, sodass die finale Antwort an die Kundin namentlich innerhalb Ihrer ' +
+      'eigenen Infrastruktur entsteht.',
+  },
+} as const;
+const c = copy[locale];
+
+const ownZone = { x: 6, y: 46, w: 380, h: 576 };
+const llmZone = { x: 412, y: 46, w: 202, h: 576 };
+
+// One vertical spine inside the own-infrastructure zone: prompt → anonymize →
+// mapping → deanonymize → answer. The lane to the right of the spine is kept
+// clear so the two boundary crossings read as straight horizontal lines.
+const boxes: Box[] = [
+  {
+    x: 60, y: 76, w: 180, h: 72, seed: 11,
+    lines: [
+      { text: c.rawTitle, y: 104, cls: 'd-title' },
+      { text: 'Katharina M.-Vogel', y: 125, cls: 'd-mono' },
+      { text: c.rawSample, y: 141, cls: 'd-mono' },
+    ],
+  },
+  {
+    x: 60, y: 176, w: 180, h: 80, seed: 22, accent: true,
+    lines: [
+      { text: c.anonTitle, y: 202, cls: 'd-title d-accent' },
+      { text: c.anonSub, y: 223, cls: 'd-sub' },
+      { text: c.anonFine, y: 241, cls: 'd-fine' },
+    ],
+  },
+  {
+    x: 60, y: 286, w: 180, h: 84, seed: 33, accent: true,
+    lines: [
+      { text: c.mapTitle, y: 310, cls: 'd-title d-accent' },
+      { text: '<PERSON_0> → Katharina', y: 332, cls: 'd-mono' },
+      { text: c.mapFine, y: 355, cls: 'd-fine' },
+    ],
+  },
+  {
+    x: 60, y: 396, w: 180, h: 80, seed: 44, accent: true,
+    lines: [
+      { text: c.anonTitle, y: 422, cls: 'd-title d-accent' },
+      { text: c.deanonSub, y: 443, cls: 'd-sub' },
+      { text: c.deanonFine, y: 461, cls: 'd-fine' },
+    ],
+  },
+  {
+    x: 60, y: 506, w: 180, h: 72, seed: 55,
+    lines: [
+      { text: c.finalTitle, y: 534, cls: 'd-title' },
+      { text: c.finalSample, y: 557, cls: 'd-mono' },
+    ],
+  },
+  {
+    x: 436, y: 272, w: 154, h: 104, seed: 66,
+    lines: [
+      { text: 'LLM', y: 306, cls: 'd-title d-lg' },
+      { text: c.llmSub, y: 331, cls: 'd-fine' },
+      { text: c.llmFine, y: 349, cls: 'd-fine' },
+    ],
+  },
+];
+
+// The two payload chips sit just inside the provider's zone: this is exactly
+// what the provider receives and returns.
+const chips = [
+  {
+    x: 436, y: 192, w: 154, h: 48, seed: 93,
+    lines: [
+      { text: '<PERSON_0>', y: 212 },
+      { text: '<IBAN_CODE_0>', y: 230 },
+    ],
+  },
+  { x: 436, y: 418, w: 154, h: 34, seed: 94, lines: [{ text: c.back, y: 439 }] },
+];
+
+const arrows = [
+  // Spine, top to bottom.
+  { d: roughLine(150, 152, 150, 168, { seed: 71 }), head: roughArrowHead(150, 172, Math.PI / 2, { seed: 72 }) },
+  { d: roughLine(150, 260, 150, 278, { seed: 73 }), head: roughArrowHead(150, 282, Math.PI / 2, { seed: 74 }) },
+  { d: roughLine(150, 374, 150, 388, { seed: 75 }), head: roughArrowHead(150, 392, Math.PI / 2, { seed: 76 }) },
+  { d: roughLine(150, 480, 150, 498, { seed: 77 }), head: roughArrowHead(150, 502, Math.PI / 2, { seed: 78 }) },
+  // Boundary crossings.
+  { d: roughLine(244, 216, 428, 216, { seed: 79 }), head: roughArrowHead(432, 216, 0, { seed: 80 }), crosses: true },
+  { d: roughLine(432, 435, 248, 436, { seed: 81 }), head: roughArrowHead(244, 436, Math.PI, { seed: 82 }), crosses: true },
+  // Provider-internal hops between the payload chips and the model.
+  { d: roughLine(513, 244, 513, 264, { seed: 83 }), head: roughArrowHead(513, 268, Math.PI / 2, { seed: 84 }) },
+  { d: roughLine(513, 380, 513, 410, { seed: 85 }), head: roughArrowHead(513, 414, Math.PI / 2, { seed: 86 }) },
+];
+
+const titleId = `pii-flow-title-${locale}`;
+const descId = `pii-flow-desc-${locale}`;
+---
+<div class="diagram-scroll">
+  <svg viewBox="0 0 620 640" role="img" aria-labelledby={`${titleId} ${descId}`} class="diagram">
+    <title id={titleId}>{c.zoneOwn} → {c.zoneLlm} → {c.zoneOwn}</title>
+    <desc id={descId}>{c.alt}</desc>
+
+    <path d={roughRect(ownZone.x, ownZone.y, ownZone.w, ownZone.h, { seed: 91, roughness: 0.8 })} class="zone zone-own" />
+    <path d={roughRect(llmZone.x, llmZone.y, llmZone.w, llmZone.h, { seed: 92, roughness: 0.8 })} class="zone zone-llm" />
+    <text x={ownZone.x + 4} y={34} class="d-zone">{c.zoneOwn}</text>
+    <text x={llmZone.x + 4} y={34} class="d-zone">{c.zoneLlm}</text>
+
+    {arrows.map((a) => (
+      <g class={a.crosses ? 'arrow arrow-crossing' : 'arrow'}>
+        <path d={a.d} />
+        <path d={a.head} />
+      </g>
+    ))}
+
+    {boxes.map((b) => (
+      <g>
+        <path d={roughRect(b.x, b.y, b.w, b.h, { seed: b.seed })} class={b.accent ? 'node node-accent' : 'node'} />
+        {b.lines.map((l) => <text x={b.x + b.w / 2} y={l.y} class={l.cls}>{l.text}</text>)}
+      </g>
+    ))}
+
+    {chips.map((ch) => (
+      <g>
+        <path d={roughRect(ch.x, ch.y, ch.w, ch.h, { seed: ch.seed, roughness: 0.7 })} class="chip" />
+        {ch.lines.map((l) => <text x={ch.x + ch.w / 2} y={l.y} class="d-mono d-accent">{l.text}</text>)}
+      </g>
+    ))}
+  </svg>
+</div>
+
+<style>
+  /* Below ~600px the labels would shrink into illegibility, so the figure
+     scrolls inside its own box rather than scaling down with the viewport. */
+  .diagram-scroll { overflow-x: auto; margin: 2rem 0 0.75rem; }
+  .diagram { display: block; width: 100%; min-width: 560px; height: auto; }
+
+  .zone { fill: none; stroke-width: 1.4; stroke-dasharray: 7 6; stroke-linecap: round; }
+  .zone-own { stroke: var(--accent); opacity: 0.75; }
+  .zone-llm { stroke: var(--muted); opacity: 0.6; }
+
+  .node { fill: var(--bg); stroke: var(--fg); stroke-width: 1.5; stroke-linecap: round; }
+  .node-accent { stroke: var(--accent); }
+  .chip { fill: var(--accent-soft); stroke: var(--accent); stroke-width: 1.2; stroke-linecap: round; }
+
+  .arrow path { fill: none; stroke: var(--fg); stroke-width: 1.4; stroke-linecap: round; }
+  .arrow-crossing path { stroke: var(--accent); }
+
+  text { text-anchor: middle; }
+  .d-title { font-family: var(--font-sans); font-size: 15px; font-weight: 500; fill: var(--fg); }
+  .d-lg { font-size: 17px; }
+  .d-sub { font-family: var(--font-sans); font-size: 12px; fill: var(--muted); }
+  .d-fine { font-family: var(--font-sans); font-size: 11px; fill: var(--muted); }
+  .d-mono { font-family: var(--font-mono); font-size: 11.5px; fill: var(--fg); }
+  .d-accent { fill: var(--accent); }
+  .d-zone {
+    font-family: var(--font-mono); font-size: 11px; font-weight: 500; fill: var(--muted);
+    letter-spacing: 0.14em; text-transform: uppercase; text-anchor: start;
+  }
+</style>

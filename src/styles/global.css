@@ -194,4 +194,38 @@ html {
 .prose-col li { margin-bottom: 0.35rem; }
 .prose-col code { font-family: var(--font-mono); font-size: 0.88em; background: var(--accent-soft); padding: 0.1em 0.35em; border-radius: 4px; }
 .prose-col pre { overflow-x: auto; border: 1px solid var(--line); border-radius: 8px; padding: 1rem; margin: 0 0 1.1rem; }
+/* Figures in writing posts: the caption carries the qualification the picture
+   cannot, so it is body-adjacent text rather than a throwaway label. */
+.prose-col figure { margin: 0 0 1.4rem; }
+.prose-col figcaption { font-size: 13px; line-height: 1.65; color: var(--muted); text-align: left; }
+
+/* Lead summary at the top of a post. Set apart by an accent rule rather than a
+   filled box, so it reads as part of the article rather than as a callout
+   pasted into it. */
+.prose-col .tldr {
+  margin: 0 0 2rem; padding: 0.1rem 0 0.1rem 1.1rem;
+  border-left: 2px solid var(--accent);
+}
+.prose-col .tldr-label {
+  font-family: var(--font-mono); font-size: 11px; font-weight: 500;
+  letter-spacing: 0.15em; text-transform: uppercase; color: var(--accent);
+  margin: 0 0 0.5rem; text-align: left;
+}
+.prose-col .tldr ul { margin: 0 0 0 1.1rem; }
+.prose-col .tldr li { font-size: 15px; line-height: 1.6; margin-bottom: 0.45rem; }
+.prose-col .tldr li:last-child { margin-bottom: 0; }
+
+/* Result tables. Headers borrow the mono/uppercase eyebrow treatment used for
+   section labels elsewhere; figures are tabular so columns of numbers line up. */
+.prose-col table { width: 100%; border-collapse: collapse; margin: 0 0 1.4rem; font-size: 14px; }
+.prose-col th {
+  text-align: left; font-family: var(--font-mono); font-size: 11px; font-weight: 500;
+  letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted);
+  border-bottom: 1px solid var(--line); padding: 0 0.7rem 0.5rem 0;
+}
+.prose-col td {
+  border-bottom: 1px solid var(--line); padding: 0.5rem 0.7rem 0.5rem 0;
+  font-variant-numeric: tabular-nums;
+}
+.prose-col th:last-child, .prose-col td:last-child { padding-right: 0; }
 .prose-col pre code { background: none; padding: 0; }

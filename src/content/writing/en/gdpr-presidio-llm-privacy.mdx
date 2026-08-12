@@ -1,0 +1,140 @@
+---
+title: 'GDPR, Presidio and LLMs: What Redacting PII Actually Buys You'
+date: 2026-08-11
+description: Running Presidio on German text for a day, and reading what the GDPR, the CJEU and the EDPB actually say about sending redacted prompts to a model.
+tags: [GDPR, Presidio, LLM, Data Privacy]
+type: post
+---
+
+import PiiFlowDiagram from '../../../components/PiiFlowDiagram.astro';
+
+<aside class="tldr">
+<p class="tldr-label">TL;DR</p>
+<ul>
+<li>Presidio <strong>pseudonymises</strong>. Under Art. 4(5) that is still personal data — you get a smaller prompt, not an exemption.</li>
+<li>The CJEU's relative approach in <em>EDPS v SRB</em> helps the recipient, not the controller.</li>
+<li>On German text the defaults are actively wrong: all 13 German recognizers ship disabled, credit cards go undetected, and false positives score 0.85 — like correct hits.</li>
+<li>Redaction is not anonymity: Presidio reaches 0.460 recall on the standard benchmark, and LLMs still infer personal attributes from what is left.</li>
+</ul>
+</aside>
+
+Every enterprise AI conversation I have in Germany reaches the same question: *can we send this to the model at all?* The reflex is to strip the personal data out of the prompt first, and [Presidio](https://presidio.dataprivacystack.org/) is the tool most teams reach for.
+
+The reflex is right. The reasoning behind it usually is not. So I spent a day running Presidio over German support mail, and a second reading what the CJEU and the EDPB have said since.
+
+## What the law actually says
+
+**Art. 4(1)** defines personal data as information relating to a person identifiable "directly or **indirectly**". That one word means removing the name does not settle the question.
+
+**Art. 4(5)** defines pseudonymisation as processing such that data can no longer be attributed to a person "without the use of additional information", kept separately. Note what that presupposes: the additional information still exists. A mapping table is not an accident of the design — it is what makes this pseudonymisation and not anonymisation.
+
+**Recital 26** draws the line: pseudonymised data "should be considered to be information on an identifiable natural person", while genuinely anonymous information falls outside the Regulation — judged by the "means reasonably likely to be used", by the controller *or by another person*.
+
+Replace a name with `<PERSON_0>`, keep the mapping, and you have performed textbook pseudonymisation. You are still processing personal data: still a legal basis, still an Art. 28 processor contract, still a Chapter V analysis if the model sits outside the EU.
+
+### The judgment everyone half-quotes
+
+In **EDPS v SRB** (C-413/23 P, 4 September 2025) the Court of Justice held at paragraph 86 that pseudonymised data "must not be regarded as constituting, **in all cases and for every person**, personal data" — a sentence that now travels around LinkedIn stripped of every qualifier it contains. It was the First Chamber, decided under Regulation (EU) 2018/1725, reaching the GDPR only via paragraph 52, and referred back to the General Court: nothing was finally determined.
+
+What matters for architecture is paragraph 85: data not being personal *for a recipient* has no bearing on the controller who transferred it. The relative approach points away from you, not towards you.
+
+The standard is also moving. The EDPB's [draft Guidelines 02/2026 on Anonymisation](https://www.edpb.europa.eu/system/files/2026-07/edpb_guidelines_202602_anonymisation_v1_en_0.pdf) test anonymity against three criteria: no **singling out**, no **linkability**, no **inference** of attributes. Hold on to the third — it is what entity-based redaction is structurally worst at.
+
+## Presidio in one paragraph
+
+Presidio is an open-source PII detection and anonymisation SDK. One correction, because most write-ups are stale: it is **no longer a Microsoft project**. The canonical repository is now [data-privacy-stack/presidio](https://github.com/data-privacy-stack/presidio), and the docs moved to `presidio.dataprivacystack.org`. `presidio-analyzer` and `presidio-anonymizer` are at **2.2.364** as of August 2026, and detection combines spaCy NER with pattern recognizers and checksum validators.
+
+## The architecture
+
+<figure>
+<PiiFlowDiagram locale="en" />
+<figcaption>Anonymise → prompt → re-identify. The mapping makes the placeholders reversible and must never cross the boundary. This is pseudonymisation: what leaves is still <em>related to</em> a person, and the mapping you keep is itself a re-identification database.</figcaption>
+</figure>
+
+The `encrypt` operator round-trips losslessly but uses a random IV, so it is useless as a join key. What works for LLM round-trips is a custom operator pair sharing a mapping dict, producing stable `<PERSON_0>` tokens. One trap: `anonymize()` returns offsets into the *source* document, useless against the model's reply. Restoring the answer is a plain substitution:
+
+```python
+reverse = {tok: orig for vals in entity_mapping.values() for orig, tok in vals.items()}
+for token, original in reverse.items():
+    restored = restored.replace(token, original)
+```
+
+## What it looks like on German text
+
+Out of the box, `AnalyzerEngine()` supports exactly one language: English. Point it at German and it does not degrade gracefully — it produces confident nonsense. `Sehr` is tagged `LOCATION` at 0.85, `Zu meinem Vertrag` comes back a `PERSON`. Ask for `language="de"` and you get a `ValueError`, not a fallback.
+
+Correct setup needs an NLP model, a language registration, and — the part that bites — the German recognizers registered explicitly:
+
+```python
+nlp_engine = NlpEngineProvider(nlp_configuration={
+    "nlp_engine_name": "spacy",
+    "models": [{"lang_code": "de", "model_name": "de_core_news_lg"}],
+}).create_engine()
+
+analyzer = AnalyzerEngine(nlp_engine=nlp_engine, supported_languages=["de"])
+
+# Without these: no German IDs, no credit cards, and no warning.
+analyzer.registry.add_recognizer(DeTaxIdRecognizer(supported_language="de"))
+analyzer.registry.add_recognizer(DeSocialSecurityRecognizer(supported_language="de"))
+analyzer.registry.add_recognizer(CreditCardRecognizer(supported_language="de"))
+```
+
+Presidio ships 13 German recognizers — Steuer-ID, Sozialversicherungsnummer, PLZ, Kfz-Kennzeichen and more — and every one is `enabled: false` by default, so a German pipeline loads none of them. `CreditCardRecognizer` is enabled but scoped to `en, es, it, pl`, so a German pipeline silently detects no credit cards at all — a default that costs you an entity class.
+
+Configured, a 535-character support mail yields 17 entities in 164 ms. The interesting part is the overlaps:
+
+```
+KUNDENNUMMER    score=1.00  'KD-2024-889231'
+PHONE_NUMBER    score=0.40  '2024-889231'
+EMAIL_ADDRESS   score=1.00  'katharina.meinhardt@webmail-beispiel.de'
+ORGANIZATION    score=0.85  'katharina.meinhardt@webmail-beispiel.de'
+```
+
+One address, three competing labels. Business identifiers like `KUNDENNUMMER` need custom recognizers — twenty lines of regex, and the highest-value thing you will add.
+
+## Where it breaks
+
+**False negatives.** `Ansprechpartner: Dr. Weber` is detected as nothing at all, while the same model handles `Mein Name ist Thomas Mueller` correctly. A German tax ID in its official spaced form, `30 866 963 147`, is missed entirely: the shipped pattern matches unspaced digits only, and the same number unspaced scores 1.00.
+
+**False positives.** `Ich wohne Goethestr. 12, 10115 Berlin.` returns `Goethestr` as a `PERSON` at 0.85 while the house number and postcode go undetected: the address is simultaneously over-redacted and under-redacted.
+
+The important part: **all of these score 0.85, exactly like the correct detections.** These are not calibrated probabilities — no threshold removes `Goethestr` without also removing real names. Anyone planning to "just tune the confidence cutoff" should test that before it becomes an architecture.
+
+The good news is real: German boilerplate produced no false positives, and performance is a non-issue at 5–25 ms per warm call.
+
+## The harder limit: redaction is not anonymity
+
+Everything above is fixable with effort. This is not.
+
+On the [Text Anonymization Benchmark](https://aclanthology.org/2022.cl-4.19/) Presidio reaches **0.460 entity-level recall on direct identifiers** — roughly half. A fine-tuned Longformer reaches 1.000 on the same corpus, so the gap is closable with domain adaptation; out-of-the-box detection is not where to set expectations.
+
+Recall on direct identifiers is the easy metric anyway. Staab et al., [*Beyond Memorization*](https://arxiv.org/abs/2310.07298) (ICLR 2024): GPT-4 infers personal attributes from ordinary text at **85.5% top-1 accuracy**, at roughly 1/100th the cost of human analysts. In the [follow-up](https://arxiv.org/abs/2402.13846) (ICLR 2025), a commercial anonymiser drops location-inference accuracy only from about 86% to 55% — while costing 0.38 on readability.
+
+Read that against the EDPB's inference criterion. Removing every entity Presidio can find leaves the writing style, the sequence of events, and the fact that this customer complained about a specific branch on a specific date. A model reads those — and increasingly, so do agents with a search tool.
+
+## What I would actually build
+
+1. **Treat it as data minimisation under Art. 5(1)(c), not as an exemption.** Write that in the DPIA. Do not write "anonymised".
+2. **Configure German properly, then measure on your own text** — and write custom recognizers for your business identifiers first.
+3. **Protect the mapping like the credential store it is,** and reduce what the crossing means: an EU-hosted model is a materially different posture than a third-country API.
+
+## Bottom line
+
+Presidio is a good tool doing a real job, and the honest description of that job is narrower than the pitch. It pseudonymises, and pseudonymised data is still personal data. The CJEU's relative approach does not rescue the controller, and the EDPB's inference criterion is aimed at what entity redaction cannot do.
+
+Use it — I do. Just make the claim you can defend: *we minimised what left our infrastructure*, not *we anonymised it*.
+
+The compliance argument was never going to be won in the regex.
+
+---
+
+## Sources
+
+- [GDPR](https://eur-lex.europa.eu/legal-content/EN/TXT/HTML/?uri=CELEX:32016R0679) — Art. 4(1), 4(5), 5(1)(c), 28, 44; Recital 26.
+- [CJEU, *EDPS v SRB*, C-413/23 P, 4 September 2025](https://eur-lex.europa.eu/legal-content/EN/TXT/HTML/?uri=CELEX:62023CJ0413) — paras 52, 85, 86.
+- [EDPB Guidelines 02/2026 on Anonymisation](https://www.edpb.europa.eu/system/files/2026-07/edpb_guidelines_202602_anonymisation_v1_en_0.pdf) — draft, to 30 October 2026.
+- [DSK, *KI und Datenschutz*](https://www.datenschutzkonferenz-online.de/media/oh/20240506_DSK_Orientierungshilfe_KI_und_Datenschutz.pdf), 2024 — the German DPAs' checklist.
+- [data-privacy-stack/presidio](https://github.com/data-privacy-stack/presidio), its [docs](https://presidio.dataprivacystack.org/), and [`default_recognizers.yaml`](https://github.com/data-privacy-stack/presidio/blob/main/presidio-analyzer/presidio_analyzer/conf/default_recognizers.yaml) where the German recognizers sit disabled.
+- Pilán et al., [Text Anonymization Benchmark](https://aclanthology.org/2022.cl-4.19/), 2022; Staab et al., [*Beyond Memorization*](https://arxiv.org/abs/2310.07298) (2024) and [*LLMs are Advanced Anonymizers*](https://arxiv.org/abs/2402.13846) (2025).
+
+<p class="text-[13px] text-muted">Verified against <code>presidio-analyzer 2.2.364</code> and <code>de_core_news_lg 3.8.0</code> on 11 August 2026; it will age. Identifiers are synthetic. Engineering write-up, not legal advice.</p>

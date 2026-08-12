@@ -46,4 +46,21 @@ describe('readingTimeMinutes', () => {
     expect(readingTimeMinutes('word '.repeat(450))).toBe(3);
     expect(readingTimeMinutes('short text')).toBe(1);
   });
+
+  it('ignores fenced code, imports and markup, but keeps the text inside tags', () => {
+    const body = [
+      "import Diagram from '../../components/Diagram.astro';",
+      '',
+      '<aside class="tldr"><p class="tldr-label">TL;DR</p></aside>',
+      '',
+      'word '.repeat(400),
+      '',
+      '```python',
+      'noise '.repeat(500),
+      '```',
+    ].join('\n');
+    // 400 prose words + "TL;DR" = 401 -> 3 minutes. Without stripping, the code
+    // block alone would push this to 5.
+    expect(readingTimeMinutes(body)).toBe(3);
+  });
 });
