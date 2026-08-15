@@ -59,9 +59,27 @@ CLAUDE_FLAGS=(--model opus --permission-mode acceptEdits
   --allowed-tools "Bash,Read,Write,Edit,Glob,Grep,WebSearch,WebFetch,Task,Workflow,TodoWrite,TaskCreate,TaskUpdate")
 
 # --- 1. Propose topics --------------------------------------------------------
+# What counts as "already covered" is NOT what is in the working tree. Approved
+# articles wait on their own branch for up to a week before merging, so during
+# that week the subject is finished and scheduled while `src/content/writing/en/`
+# still looks empty of it. On 2026-08-15 the proposer offered the exact article
+# that was queued to publish the next morning. Ask git, across every branch.
+COVERED="$(
+  {
+    git ls-tree -r --name-only main src/content/writing/en/
+    for b in $(git for-each-ref --format='%(refname:short)' 'refs/heads/article/*'); do
+      git ls-tree -r --name-only "$b" src/content/writing/en/
+    done
+  } 2>/dev/null | sed 's|.*/||; s|\.[^.]*$||' | sort -u
+)"
+echo "already covered: $(printf '%s' "$COVERED" | tr '\n' ' ')"
+
 echo "--- proposing topics"
-TOPICS_JSON="$(claude -p "$(cat scripts/weekly-article/prompts/propose-topics.md)" \
-  "${CLAUDE_FLAGS[@]}" | sed -n '/\[/,/\]/p')"
+PROPOSE_PROMPT="$(cat scripts/weekly-article/prompts/propose-topics.md)
+
+ALREADY COVERED — published, or written and waiting for its scheduled publish:
+$COVERED"
+TOPICS_JSON="$(claude -p "$PROPOSE_PROMPT" "${CLAUDE_FLAGS[@]}" | sed -n '/\[/,/\]/p')"
 
 if [[ -z "$TOPICS_JSON" ]]; then
   notify "⚠️ Weekly article: topic proposal returned nothing. Log: $LOG"

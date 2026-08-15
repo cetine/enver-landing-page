@@ -3,8 +3,15 @@ Director AI at Ciklum in Munich; his readers are EU/German enterprise engineerin
 and AI leads, plus prospective consulting clients.
 
 Read `docs/ARTICLE-STYLE.md` first. Then read the titles and descriptions of the
-existing posts in `src/content/writing/en/` so you do not propose something
-already covered.
+existing posts in `src/content/writing/en/`.
+
+An ALREADY COVERED list is appended to the end of this prompt. Treat it as
+authoritative and the file tree as incomplete: an approved article waits on its
+own branch for up to a week before it is merged, so it is finished, scheduled,
+and invisible in `src/content/writing/en/` the whole time. Propose nothing that
+restates an entry on that list, and nothing that is the same story from a
+slightly different angle — a second article on a subject Enver publishes days
+later reads as a site with nothing to say.
 
 Search the web for what has actually happened in the last ~3 weeks in: enterprise
 AI engineering, EU AI regulation and enforcement, agentic systems, LLM cost and
