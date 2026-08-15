@@ -43,12 +43,30 @@ fi
 
 git checkout main --quiet
 git pull --ff-only --quiet
+
+# Where to return to if anything below fails. NOT origin/main: main can legitimately
+# hold local commits that are not pushed yet, and resetting to origin would throw
+# them away while "aborting safely".
+MAIN_BEFORE="$(git rev-parse main)"
+
+# The branch was cut days ago and main has probably moved since — another article
+# may have published in between. Replay the branch on top instead of demanding a
+# fast-forward: an ff-only merge against a moved main cannot succeed, and `verify`
+# below is what actually gates the result. (This is why the 2026-08-12 article
+# would have failed to publish even once its path problem was fixed.)
+if ! git rebase main "$BRANCH" --quiet; then
+  git rebase --abort 2>/dev/null || true
+  git checkout main --quiet
+  notify "⚠️ Scheduled deploy aborted: \`$BRANCH\` conflicts with main and needs a human. Nothing was published."
+  exit 1
+fi
+git checkout main --quiet
 git merge --ff-only "$BRANCH" --quiet
 
 # The gate. A branch that was fine days ago can still break against a moved main.
 echo "--- verifying"
 if ! npm run verify > "$LOG_DIR/deploy-verify.log" 2>&1; then
-  git reset --hard origin/main --quiet
+  git reset --hard "$MAIN_BEFORE" --quiet
   notify "⚠️ Scheduled deploy aborted: \`npm run verify\` failed. main is untouched. Log: $LOG_DIR/deploy-verify.log"
   exit 1
 fi
