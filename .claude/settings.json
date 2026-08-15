@@ -5,7 +5,13 @@
     "session to test watermark survival, hit the wrong document, and removed files",
     "belonging to an unrelated project. A prompt asking it not to would not have",
     "stopped that; a deny rule does. These apply to any Claude session started in",
-    "this repository, so an interactive session is bound by them too."
+    "this repository, so an interactive session is bound by them too.",
+    "",
+    "The deny list is why this repo lives in ~/Sites and not ~/Projects: deny rules",
+    "beat allow rules and a broad pattern cannot carve out an exception, so a repo",
+    "inside a denied tree fences itself out. That happened on 2026-08-15 and cost a",
+    "run. scripts/weekly-article/install.sh now refuses to install from a path these",
+    "rules deny, so the same mistake cannot be made silently again."
   ],
   "permissions": {
     "deny": [
@@ -20,12 +26,26 @@
       "Bash(rm -rf /*)",
       "Bash(git push:*)",
       "Bash(vercel deploy:*)",
+
       "Read(//Users/ece/Projects/**)",
+      "Read(//Users/ece/Documents/**)",
       "Read(//Users/ece/Desktop/**)",
       "Read(//Users/ece/Downloads/**)",
+      "Read(//Users/ece/Library/CloudStorage/**)",
+      "Read(//Users/ece/.ssh/**)",
+      "Read(//Users/ece/.aws/**)",
+      "Read(//Users/ece/.gnupg/**)",
+      "Read(//Users/ece/.config/**)",
+
       "Edit(//Users/ece/Projects/**)",
+      "Edit(//Users/ece/Documents/**)",
       "Edit(//Users/ece/Desktop/**)",
-      "Edit(//Users/ece/Downloads/**)"
+      "Edit(//Users/ece/Downloads/**)",
+      "Edit(//Users/ece/Library/CloudStorage/**)",
+      "Edit(//Users/ece/.ssh/**)",
+      "Edit(//Users/ece/.aws/**)",
+      "Edit(//Users/ece/.gnupg/**)",
+      "Edit(//Users/ece/.config/**)"
     ]
   }
 }

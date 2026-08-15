@@ -21,17 +21,54 @@ UID_NUM="$(id -u)"
 CHECK_ONLY=no
 [[ "${1:-}" == "--check" ]] && CHECK_ONLY=yes
 
-# The repo must not live under a folder macOS protects with TCC. A LaunchAgent
-# gets no Documents/Desktop/Downloads access, so a repo there cannot be started
-# by launchd at all — that is exactly how the 2026-08-15 run was lost.
+# Two independent fences can lock this repo out of its own pipeline, and both
+# did so on 2026-08-15. Check them here rather than discovering them at 14:00 on
+# a Saturday.
+
+# 1. macOS TCC. A LaunchAgent gets no Documents/Desktop/Downloads access, so
+#    launchd cannot even start a script living there.
 case "$REPO/" in
   "$HOME/Documents/"* | "$HOME/Desktop/"* | "$HOME/Downloads/"* | */Library/CloudStorage/*)
     echo "REFUSING: the repo is at $REPO" >&2
     echo "launchd jobs cannot read that location (macOS TCC). Move the repo somewhere" >&2
-    echo "like ~/Projects/envercetin and run this again." >&2
+    echo "like ~/Sites/envercetin and run this again." >&2
     exit 1
     ;;
 esac
+
+# 2. This repo's own sandbox. `.claude/settings.json` denies whole trees to keep
+#    the unattended writer out of unrelated work. Deny beats allow and a broad
+#    pattern cannot carve out an exception, so a repo sitting inside one of its
+#    own denied trees fences itself out: the writer can run, but cannot read the
+#    style guide or write the article. Costly to diagnose, trivial to detect.
+DENIED_BY_OWN_RULES="$(python3 - "$REPO" <<'PY'
+import json, os, sys
+
+repo = os.path.realpath(sys.argv[1])
+settings = os.path.join(repo, ".claude", "settings.json")
+if not os.path.exists(settings):
+    sys.exit(0)
+
+with open(settings, encoding="utf-8") as fh:
+    rules = json.load(fh).get("permissions", {}).get("deny", [])
+
+for rule in rules:
+    if not rule.startswith(("Read(//", "Edit(//")):
+        continue
+    # "Read(//Users/x/Projects/**)" -> "/Users/x/Projects"
+    tree = rule[rule.index("(") + 2:rule.rindex(")")].rstrip("*").rstrip("/")
+    if repo == tree or repo.startswith(tree + "/"):
+        print(rule)
+        break
+PY
+)"
+if [[ -n "$DENIED_BY_OWN_RULES" ]]; then
+  echo "REFUSING: the repo is at $REPO" >&2
+  echo "which its own .claude/settings.json denies via: $DENIED_BY_OWN_RULES" >&2
+  echo "The writer would be unable to read or edit its own repository. Move the repo" >&2
+  echo "outside that tree, or narrow the rule, and run this again." >&2
+  exit 1
+fi
 
 if [[ "$CHECK_ONLY" == yes ]]; then
   echo "repo:  $REPO (not TCC-protected — ok)"
