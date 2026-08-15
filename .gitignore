@@ -35,3 +35,4 @@ playwright-report
 * [0-9].astro
 * [0-9].ts
 * [0-9].mdx
+__pycache__/

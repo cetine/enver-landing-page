@@ -15,7 +15,7 @@ set -euo pipefail
 
 BRANCH="${1:?usage: deploy-scheduled.sh <branch> [launchd-label]}"
 LABEL="${2:-}"
-REPO="/Users/ece/Documents/Documents - MB-928749/EnverLandingPage"
+REPO="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
 PERSONAL_OS="/Users/ece/Projects/personal-os"
 TG="$PERSONAL_OS/tg.py"
 LOG_DIR="$HOME/Library/Logs/envercetin-weekly-article"

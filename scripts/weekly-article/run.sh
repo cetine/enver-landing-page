@@ -20,7 +20,9 @@
 
 set -euo pipefail
 
-REPO="/Users/ece/Documents/Documents - MB-928749/EnverLandingPage"
+# Derived from this script's own location, never hardcoded: moving the repo must
+# not require editing it. scripts/weekly-article/run.sh → ../.. is the root.
+REPO="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
 TG="/Users/ece/Projects/personal-os/tg.py"
 PERSONAL_OS="/Users/ece/Projects/personal-os"
 LOG_DIR="$HOME/Library/Logs/envercetin-weekly-article"

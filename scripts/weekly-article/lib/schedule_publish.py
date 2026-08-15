@@ -16,10 +16,16 @@ import os
 import random
 import subprocess
 import sys
+from pathlib import Path
 
-REPO = "/Users/ece/Documents/Documents - MB-928749/EnverLandingPage"
+# lib/schedule_publish.py → parents[3] is the repo root. Derived, never hardcoded,
+# so moving the repo does not silently break next week's publish.
+REPO = str(Path(__file__).resolve().parents[3])
 AGENTS = os.path.expanduser("~/Library/LaunchAgents")
 LOGS = os.path.expanduser("~/Library/Logs/envercetin-weekly-article")
+# The guard lives outside the repo on purpose: it is what still runs, and still
+# reaches Telegram, when the repo itself has moved or become unreadable.
+GUARD = os.path.expanduser("~/.local/bin/envercetin-guard")
 
 # (weekday, earliest hour, latest hour exclusive). Monday=0 … Friday=4, Saturday=5.
 WINDOWS = [(4, 19, 21), (5, 10, 13)]
@@ -29,13 +35,19 @@ PLIST = """<?xml version="1.0" encoding="UTF-8"?>
 <plist version="1.0">
 <dict>
   <key>Label</key><string>{label}</string>
+  <!-- Everything runs through the guard, which reports a failure to Telegram even
+       when the real script cannot be reached at all. -->
   <key>ProgramArguments</key>
   <array>
     <string>/bin/bash</string>
+    <string>{guard}</string>
+    <string>{label}</string>
     <string>{repo}/scripts/weekly-article/deploy-scheduled.sh</string>
     <string>{branch}</string>
     <string>{label}</string>
   </array>
+  <!-- If the Mac is asleep or off at this moment, launchd runs the job once at
+       the next wake instead of skipping it. -->
   <key>StartCalendarInterval</key>
   <dict>
     <key>Month</key><integer>{month}</integer>
@@ -43,7 +55,8 @@ PLIST = """<?xml version="1.0" encoding="UTF-8"?>
     <key>Hour</key><integer>{hour}</integer>
     <key>Minute</key><integer>{minute}</integer>
   </dict>
-  <key>WorkingDirectory</key><string>{repo}</string>
+  <!-- Deliberately no WorkingDirectory: launchd fails a job outright when it
+       cannot chdir there, which is silent. The guard cds and reports instead. -->
   <key>EnvironmentVariables</key>
   <dict>
     <key>PATH</key><string>{home}/.local/bin:/opt/homebrew/bin:/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin</string>
@@ -82,7 +95,7 @@ def main(argv: list) -> int:
     plist_path = os.path.join(AGENTS, f"{label}.plist")
 
     body = PLIST.format(label=label, repo=REPO, branch=branch, home=os.path.expanduser("~"),
-                        logs=LOGS, month=when.month, day=when.day,
+                        guard=GUARD, logs=LOGS, month=when.month, day=when.day,
                         hour=when.hour, minute=when.minute)
 
     if not dry:
