@@ -1,0 +1,127 @@
+---
+// One idea: the same document, tokenised five ways, in two languages.
+//
+// The picture exists to make a single comparison unmissable — every German bar
+// is longer than every English bar, including across tokenizers. That is what
+// defeats the usual "then we will just pick the cheaper model" answer, so the
+// figure deliberately omits price, vocabulary size and everything else that
+// would invite a second reading.
+//
+// Numbers are the measured token counts from tokenising the officially parallel
+// EN and DE versions of Regulation (EU) 2024/1689 (CELEX 32024R1689), reported
+// in the prose. They are hard-coded rather than imported: the article is a
+// snapshot dated in its own footer, and a figure that silently changed when a
+// tokenizer was re-released would contradict the text beside it.
+//
+// Horizontal bars rather than vertical: the row labels are tokenizer names of
+// wildly different lengths, and stacked left-aligned text beats rotated axis
+// labels in a 40em column.
+import { roughRect, roughLine } from '../lib/rough';
+
+interface Row { name: string; en: number; de: number; seed: number }
+
+const rows: Row[] = [
+  { name: 'cl100k_base', en: 111_282, de: 185_157, seed: 11 },
+  { name: 'Mistral Tekken v7', en: 116_364, de: 155_013, seed: 22 },
+  { name: 'EuroLLM-22B', en: 125_070, de: 152_875, seed: 33 },
+  { name: 'o200k_base', en: 110_874, de: 142_410, seed: 44 },
+  { name: 'Teuken-7B', en: 121_138, de: 133_476, seed: 55 },
+];
+
+// Axis runs to a round 200k so the gridline arithmetic is readable, rather than
+// to the longest bar, which would make cl100k_base look like a natural maximum.
+const AXIS_MAX = 200_000;
+const PLOT_X = 132;
+const PLOT_W = 372;
+const BAR_H = 15;
+const PAIR_GAP = 5;
+const GROUP_TOP = 58;
+const GROUP_H = 58;
+
+const scale = (v: number): number => (v / AXIS_MAX) * PLOT_W;
+const fmt = (v: number): string => `${(v / 1000).toFixed(1)}k`;
+
+const bars = rows.flatMap((r, i) => {
+  const top = GROUP_TOP + i * GROUP_H;
+  return [
+    { lang: 'EN', value: r.en, y: top, seed: r.seed, de: false },
+    { lang: 'DE', value: r.de, y: top + BAR_H + PAIR_GAP, seed: r.seed + 1, de: true },
+  ];
+});
+
+const gridlines = [50_000, 100_000, 150_000, 200_000];
+const plotBottom = GROUP_TOP + rows.length * GROUP_H - (GROUP_H - 2 * BAR_H - PAIR_GAP) + 6;
+
+const alt =
+  'Grouped horizontal bar chart titled "Tokens for one document". Five tokenizers each have two ' +
+  'bars: English and German, for the officially parallel English and German versions of the EU ' +
+  'AI Act. cl100k_base: 111.3 thousand tokens in English, 185.2 thousand in German. ' +
+  'Mistral Tekken v7: 116.4 thousand English, 155.0 thousand German. EuroLLM-22B: 125.1 thousand ' +
+  'English, 152.9 thousand German. o200k_base: 110.9 thousand English, 142.4 thousand German. ' +
+  'Teuken-7B: 121.1 thousand English, 133.5 thousand German. Every German bar is longer than every ' +
+  'English bar, including across different tokenizers: the shortest German bar, Teuken-7B at 133.5 ' +
+  'thousand, still exceeds the longest English bar, EuroLLM-22B at 125.1 thousand. The European ' +
+  'tokenizers narrow the gap between the two languages but do not close it, and EuroLLM-22B needs ' +
+  'more German tokens in absolute terms than o200k_base does.';
+---
+<div class="diagram-scroll">
+  <svg viewBox="0 0 620 360" role="img" aria-labelledby="tcb-title tcb-desc" class="diagram">
+    <title id="tcb-title">Tokens needed for the same document in English and in German, across five tokenizers</title>
+    <desc id="tcb-desc">{alt}</desc>
+
+    <text x="0" y="16" class="d-zone">Tokens for one document · EU AI Act</text>
+    <g class="legend">
+      <path d={roughRect(0, 28, 14, 11, { seed: 7, roughness: 0.7 })} class="bar bar-en" />
+      <text x="20" y="38" class="d-fine d-start">English</text>
+      <path d={roughRect(78, 28, 14, 11, { seed: 8, roughness: 0.7 })} class="bar bar-de" />
+      <text x="98" y="38" class="d-fine d-start">German</text>
+    </g>
+
+    {gridlines.map((g) => (
+      <g>
+        <path d={roughLine(PLOT_X + scale(g), 46, PLOT_X + scale(g), plotBottom, { seed: g / 1000, roughness: 0.5 })} class="grid" />
+        <text x={PLOT_X + scale(g)} y={plotBottom + 16} class="d-fine">{fmt(g)}</text>
+      </g>
+    ))}
+
+    {rows.map((r, i) => (
+      <text x="0" y={GROUP_TOP + i * GROUP_H + BAR_H + 3} class="d-row">{r.name}</text>
+    ))}
+
+    {bars.map((b) => (
+      <g>
+        <path
+          d={roughRect(PLOT_X, b.y, scale(b.value), BAR_H, { seed: b.seed, roughness: 0.7 })}
+          class={b.de ? 'bar bar-de' : 'bar bar-en'}
+        />
+        <text x={PLOT_X + scale(b.value) + 7} y={b.y + BAR_H - 3} class={b.de ? 'd-val d-accent' : 'd-val'}>
+          {fmt(b.value)}
+        </text>
+      </g>
+    ))}
+  </svg>
+</div>
+
+<style>
+  /* Same rule as the other figure on the site: below ~560px the tokenizer names
+     and the k-values would collide, so the figure scrolls rather than scales. */
+  .diagram-scroll { overflow-x: auto; margin: 2rem 0 0.75rem; }
+  .diagram { display: block; width: 100%; min-width: 560px; height: auto; }
+
+  .bar { stroke-width: 1.4; stroke-linecap: round; }
+  .bar-en { fill: none; stroke: var(--muted); }
+  .bar-de { fill: var(--accent-soft); stroke: var(--accent); }
+
+  .grid { fill: none; stroke: var(--muted); stroke-width: 0.8; opacity: 0.3; stroke-dasharray: 3 5; }
+
+  text { text-anchor: middle; }
+  .d-row { font-family: var(--font-sans); font-size: 12.5px; fill: var(--fg); text-anchor: start; }
+  .d-val { font-family: var(--font-mono); font-size: 11px; fill: var(--muted); text-anchor: start; }
+  .d-fine { font-family: var(--font-sans); font-size: 11px; fill: var(--muted); }
+  .d-start { text-anchor: start; }
+  .d-accent { fill: var(--accent); }
+  .d-zone {
+    font-family: var(--font-mono); font-size: 11px; font-weight: 500; fill: var(--muted);
+    letter-spacing: 0.14em; text-transform: uppercase; text-anchor: start;
+  }
+</style>
