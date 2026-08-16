@@ -91,8 +91,9 @@ Telegram message.
   — so `kb_daemon` does not stay paused indefinitely.
 - **`npm run verify` is a hard gate.** A failing build never reaches a preview,
   let alone production.
-- **No reply, no article.** If you do not answer the topic question within 4
-  hours, the run exits and nothing is written.
+- **No reply, no article — but it asks three times first.** The topic question
+  is repeated up to three times, 150 minutes apart, with the last one flagged as
+  a last call. Only then does the run exit, having written nothing.
 
 ## Logs from the guard
 

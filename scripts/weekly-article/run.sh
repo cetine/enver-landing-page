@@ -45,7 +45,16 @@ mkdir -p "$LOG_DIR"
 exec > >(tee -a "$LOG") 2>&1
 echo "=== weekly-article $STAMP $(date +%H:%M:%S) ==="
 
-notify() { (cd "$PERSONAL_OS" && python3 "$TG" send "$1") || echo "TELEGRAM SEND FAILED: $1"; }
+# Goes through envercetin-notify, which queues what it cannot send: the most
+# likely reason a run fails is that there is no network, and that is exactly when
+# a direct tg.py send drops the message telling you so.
+notify() {
+  if command -v envercetin-notify >/dev/null 2>&1; then
+    envercetin-notify "$1" || true
+  else
+    (cd "$PERSONAL_OS" && python3 "$TG" send "$1") || echo "TELEGRAM SEND FAILED: $1"
+  fi
+}
 
 on_error() {
   local line=$1
@@ -64,6 +73,10 @@ if ! wait_for_network 60; then
   notify "📴 Weekly article skipped: the Mac had no network for an hour after the job fired. Nothing was written. I'll try again next Saturday."
   exit 0
 fi
+
+# The network is provably up as of this line — the first chance all week to
+# deliver anything an earlier offline run had to queue.
+command -v envercetin-notify >/dev/null 2>&1 && envercetin-notify --flush || true
 
 # A resume expects a dirty tree — the half-finished article is the whole point.
 if [[ -z "$RESUME_BRANCH" ]]; then
@@ -138,14 +151,39 @@ $COVERED"
   OPTIONS="$(python3 "$LIB" options "$LOG_DIR/$STAMP-topics.json")"
 
   # --- 2. Ask Enver -------------------------------------------------------------
-  echo "--- asking for the topic"
-  set +e
-  ASK_OUT="$(cd "$PERSONAL_OS" && python3 "$TG" ask "$QUESTION" --options "$OPTIONS" --timeout-min 240)"
-  ASK_RC=$?
-  set -e
+  # Ask more than once before giving up. A Saturday afternoon is exactly when a
+  # single unanswered question loses the week, and the cost of a nudge is one
+  # message. Each round holds the personal-os ask lock, which pauses kb_daemon,
+  # so the rounds are bounded rather than open-ended.
+  ASK_ROUNDS="${ENVERCETIN_ASK_ROUNDS:-3}"
+  ASK_ROUND_MIN="${ENVERCETIN_ASK_ROUND_MIN:-150}"
+  echo "--- asking for the topic (up to $ASK_ROUNDS rounds of $ASK_ROUND_MIN min)"
+
+  ASK_RC=2
+  for ROUND in $(seq 1 "$ASK_ROUNDS"); do
+    if [[ $ROUND -eq 1 ]]; then
+      PROMPT_TEXT="$QUESTION"
+    elif [[ $ROUND -lt $ASK_ROUNDS ]]; then
+      PROMPT_TEXT="Still open — this week's article is waiting on a topic.
+
+$QUESTION"
+    else
+      PROMPT_TEXT="Last call for this week's article. If you skip this one, nothing gets written and I will ask again next Saturday.
+
+$QUESTION"
+    fi
+
+    set +e
+    ASK_OUT="$(cd "$PERSONAL_OS" && python3 "$TG" ask "$PROMPT_TEXT" --options "$OPTIONS" --timeout-min "$ASK_ROUND_MIN")"
+    ASK_RC=$?
+    set -e
+
+    [[ $ASK_RC -ne 2 ]] && break
+    echo "round $ROUND: no reply after $ASK_ROUND_MIN min"
+  done
 
   if [[ $ASK_RC -eq 2 ]]; then
-    notify "No reply in 4 h — skipping this week's article. Nothing was written."
+    notify "No topic chosen after $ASK_ROUNDS reminders — skipping this week. Nothing was written, and I will ask again next Saturday."
     exit 0
   elif [[ $ASK_RC -ne 0 ]]; then
     notify "⚠️ Weekly article: Telegram ask failed (rc=$ASK_RC). Log: $LOG"
