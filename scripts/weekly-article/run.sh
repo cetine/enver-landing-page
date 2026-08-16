@@ -66,16 +66,10 @@ trap 'on_error $LINENO' ERR
 # --- Preconditions ------------------------------------------------------------
 cd "$REPO"
 
-# launchd fires a deferred job the instant the Mac wakes, which is usually before
-# Wi-Fi is back. Wait for the network rather than dying on the first git call.
-source scripts/weekly-article/lib/net.sh
-if ! wait_for_network 60; then
-  notify "📴 Weekly article skipped: the Mac had no network for an hour after the job fired. Nothing was written. I'll try again next Saturday."
-  exit 0
-fi
-
-# The network is provably up as of this line — the first chance all week to
-# deliver anything an earlier offline run had to queue.
+# Connectivity is the guard's job — it waits for the network before starting this
+# script at all, and arms a retry rather than giving up. So by this line the
+# network is known good: the first chance all week to deliver anything an earlier
+# offline run had to queue.
 command -v envercetin-notify >/dev/null 2>&1 && envercetin-notify --flush || true
 
 # A resume expects a dirty tree — the half-finished article is the whole point.

@@ -122,7 +122,16 @@ echo "repo: $REPO_DIR"
 NET_WAIT_MIN="${ENVERCETIN_NET_WAIT_MIN:-90}"
 RETRY_IN_MIN="${ENVERCETIN_RETRY_IN_MIN:-30}"
 
-online() { curl -sS --max-time 8 -o /dev/null https://api.github.com/zen 2>/dev/null; }
+# A captive portal answers everything with 200 and a login page, so "the request
+# completed" is not the same as "we have the internet". `-f` rejects non-2xx, and
+# the body check rejects a portal that returns 200 anyway: /zen serves a short
+# plaintext aphorism, never markup. Hotel Wi-Fi you have not clicked through is
+# the exact case that would otherwise sail past this and die at the first git call.
+online() {
+  local body
+  body="$(curl -fsS --max-time 8 https://api.github.com/zen 2>/dev/null)" || return 1
+  [[ -n "$body" && "$body" != *"<html"* && "$body" != *"<!DOCTYPE"* && "$body" != *"<HTML"* ]]
+}
 
 # Re-arm this exact invocation a little later. Date-pinned and one-shot; the
 # guard clears any leftover retry for the job as soon as a run gets going.
