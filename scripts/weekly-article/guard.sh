@@ -34,6 +34,7 @@ if [[ -z "$JOB" || -z "$SCRIPT" ]]; then
   echo "usage: guard.sh <job-name> <script> [script-args...]" >&2
   exit 64
 fi
+ORIG_ARGV=("$JOB" "$SCRIPT" "${@:3}")
 shift 2
 
 PERSONAL_OS="$HOME/Projects/personal-os"
@@ -101,6 +102,90 @@ Nothing ran. Log: $LOG"
   exit 66
 fi
 echo "repo: $REPO_DIR"
+
+# --- Network ------------------------------------------------------------------
+# launchd already handles "the Mac was asleep or off": StartCalendarInterval
+# defers the job to the next wake or login. It does NOT handle "the Mac woke up
+# without a connection" — every stage of this pipeline needs the network, and so
+# does the Telegram message that would report the failure. Offline was therefore
+# the one failure mode that stayed silent.
+#
+# So: wait for a connection rather than failing, and if it stays down, arm a
+# one-shot retry instead of losing the run.
+NET_WAIT_MIN="${ENVERCETIN_NET_WAIT_MIN:-90}"
+RETRY_IN_MIN="${ENVERCETIN_RETRY_IN_MIN:-30}"
+
+online() { curl -sS --max-time 8 -o /dev/null https://api.github.com/zen 2>/dev/null; }
+
+# Re-arm this exact invocation a little later. Date-pinned and one-shot; the
+# guard clears any leftover retry for the job as soon as a run gets going.
+arm_retry() {
+  local when label plist args
+  when="$(date -v "+${RETRY_IN_MIN}M" "+%Y %m %d %H %M")"
+  set -- $when
+  label="com.enver.envercetin.retry-$JOB"
+  plist="$HOME/Library/LaunchAgents/$label.plist"
+  args=""
+  for a in "${ORIG_ARGV[@]}"; do
+    args="$args    <string>$a</string>
+"
+  done
+  cat > "$plist" <<PLIST
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+  <key>Label</key><string>$label</string>
+  <key>ProgramArguments</key>
+  <array>
+    <string>/bin/bash</string>
+    <string>$HOME/.local/bin/envercetin-guard</string>
+$args  </array>
+  <key>StartCalendarInterval</key>
+  <dict>
+    <key>Month</key><integer>$2</integer>
+    <key>Day</key><integer>$3</integer>
+    <key>Hour</key><integer>$4</integer>
+    <key>Minute</key><integer>$5</integer>
+  </dict>
+  <key>EnvironmentVariables</key>
+  <dict>
+    <key>PATH</key><string>$HOME/.local/bin:/opt/homebrew/bin:/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin</string>
+    <key>HOME</key><string>$HOME</string>
+  </dict>
+  <key>StandardOutPath</key><string>$LOG_DIR/retry-launchd.out.log</string>
+  <key>StandardErrorPath</key><string>$LOG_DIR/retry-launchd.err.log</string>
+  <key>RunAtLoad</key><false/>
+</dict>
+</plist>
+PLIST
+  launchctl bootout "gui/$(id -u)/$label" 2>/dev/null
+  launchctl bootstrap "gui/$(id -u)" "$plist" 2>/dev/null
+  echo "retry armed for $4:$5 (label $label)"
+}
+
+# A run that is actually starting supersedes any retry waiting for this job.
+RETRY_LABEL="com.enver.envercetin.retry-$JOB"
+if [[ -f "$HOME/Library/LaunchAgents/$RETRY_LABEL.plist" ]]; then
+  launchctl bootout "gui/$(id -u)/$RETRY_LABEL" 2>/dev/null
+  rm -f "$HOME/Library/LaunchAgents/$RETRY_LABEL.plist"
+  echo "cleared a pending retry for $JOB"
+fi
+
+if ! online; then
+  echo "offline at start — waiting up to ${NET_WAIT_MIN} min for a connection"
+  NET_DEADLINE=$(( $(date +%s) + NET_WAIT_MIN * 60 ))
+  until online; do
+    if (( $(date +%s) >= NET_DEADLINE )); then
+      echo "still offline after ${NET_WAIT_MIN} min — arming a retry instead of failing"
+      arm_retry
+      rm -rf "$LOCK_DIR"
+      exit 0
+    fi
+    sleep 30
+  done
+  echo "network came up — continuing"
+fi
 
 # Remember whether the ask lock was already held by someone else, so cleanup only
 # ever removes a lock this run is responsible for.
