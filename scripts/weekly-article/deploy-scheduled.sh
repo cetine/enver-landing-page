@@ -31,6 +31,25 @@ trap 'echo "FAILED at line $LINENO"; notify "⚠️ Scheduled deploy of $BRANCH 
 
 cd "$REPO"
 
+# This job is date-pinned and fires exactly once, so dying offline would strand a
+# finished, approved article on its branch forever. Wait for the network; if it
+# never comes, move the appointment rather than lose it.
+source scripts/weekly-article/lib/net.sh
+if ! wait_for_network 60; then
+  PLIST="$HOME/Library/LaunchAgents/${LABEL}.plist"
+  if [[ -n "$LABEL" && -f "$PLIST" ]]; then
+    /usr/libexec/PlistBuddy \
+      -c "Set :StartCalendarInterval:Month $(date -v+1d +%-m)" \
+      -c "Set :StartCalendarInterval:Day $(date -v+1d +%-d)" "$PLIST"
+    launchctl bootout "gui/$(id -u)/$LABEL" 2>/dev/null || true
+    launchctl bootstrap "gui/$(id -u)" "$PLIST"
+    notify "📴 Publish of \`$BRANCH\` postponed: the Mac had no network for an hour. Re-armed for tomorrow at the same time. Nothing was published, nothing was lost."
+  else
+    notify "⚠️ Publish of \`$BRANCH\` skipped: no network, and no launchd job to re-arm. The article is still on its branch — run deploy-scheduled.sh $BRANCH by hand."
+  fi
+  exit 0
+fi
+
 if [[ -n "$(git status --porcelain --untracked-files=no)" ]]; then
   notify "⚠️ Scheduled deploy skipped: the repo has uncommitted changes. Nothing was published."
   exit 0

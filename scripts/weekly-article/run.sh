@@ -57,6 +57,14 @@ trap 'on_error $LINENO' ERR
 # --- Preconditions ------------------------------------------------------------
 cd "$REPO"
 
+# launchd fires a deferred job the instant the Mac wakes, which is usually before
+# Wi-Fi is back. Wait for the network rather than dying on the first git call.
+source scripts/weekly-article/lib/net.sh
+if ! wait_for_network 60; then
+  notify "📴 Weekly article skipped: the Mac had no network for an hour after the job fired. Nothing was written. I'll try again next Saturday."
+  exit 0
+fi
+
 # A resume expects a dirty tree — the half-finished article is the whole point.
 if [[ -z "$RESUME_BRANCH" ]]; then
   if [[ -n "$(git status --porcelain --untracked-files=no)" ]]; then
