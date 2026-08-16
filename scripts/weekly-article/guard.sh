@@ -57,6 +57,13 @@ echo "target: $SCRIPT ${*:-}"
 # failure would be just as silent as the bug this guard exists to kill.
 notify() {
   local msg="$1"
+  # envercetin-notify spools what it cannot send and delivers it on the next run
+  # that has a network — the alert about an offline failure would otherwise be
+  # destroyed by the very outage it was reporting.
+  if command -v envercetin-notify >/dev/null 2>&1; then
+    envercetin-notify "$msg"
+    return 0
+  fi
   if [[ -x "$TG" || -f "$TG" ]]; then
     (cd "$PERSONAL_OS" && python3 "$TG" send "$msg") && return 0
   fi

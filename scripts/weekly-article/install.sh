@@ -16,6 +16,7 @@ set -euo pipefail
 REPO="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
 LABEL="com.enver.envercetin.weekly-article"
 GUARD="$HOME/.local/bin/envercetin-guard"
+NOTIFY="$HOME/.local/bin/envercetin-notify"
 PLIST="$HOME/Library/LaunchAgents/$LABEL.plist"
 UID_NUM="$(id -u)"
 CHECK_ONLY=no
@@ -74,6 +75,10 @@ if [[ "$CHECK_ONLY" == yes ]]; then
   echo "repo:  $REPO (not TCC-protected — ok)"
   echo -n "guard: "; [[ -x "$GUARD" ]] && { cmp -s "$REPO/scripts/weekly-article/guard.sh" "$GUARD" \
     && echo "$GUARD (up to date)" || echo "$GUARD (STALE — re-run without --check)"; } || echo "MISSING"
+  echo -n "notify:"; [[ -x "$NOTIFY" ]] && { cmp -s "$REPO/scripts/weekly-article/notify.sh" "$NOTIFY" \
+    && echo " $NOTIFY (up to date)" || echo " $NOTIFY (STALE — re-run without --check)"; } || echo " MISSING"
+  echo -n "queued:"; SPOOL="$HOME/Library/Application Support/envercetin/pending-notifications"
+  echo " $(ls -1 "$SPOOL" 2>/dev/null | wc -l | tr -d ' ') undelivered message(s)"
   echo -n "plist: "; [[ -f "$PLIST" ]] && echo "$PLIST" || echo "MISSING"
   echo -n "job:   "; launchctl print "gui/$UID_NUM/$LABEL" >/dev/null 2>&1 \
     && launchctl list | grep "$LABEL" || echo "NOT LOADED"
@@ -85,6 +90,9 @@ mkdir -p "$HOME/.local/bin" "$HOME/Library/LaunchAgents" \
 
 install -m 755 "$REPO/scripts/weekly-article/guard.sh" "$GUARD"
 echo "guard installed: $GUARD"
+
+install -m 755 "$REPO/scripts/weekly-article/notify.sh" "$NOTIFY"
+echo "notifier installed: $NOTIFY"
 
 cat > "$PLIST" <<PLIST_END
 <?xml version="1.0" encoding="UTF-8"?>

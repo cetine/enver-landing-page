@@ -26,7 +26,14 @@ mkdir -p "$LOG_DIR"
 exec > >(tee -a "$LOG") 2>&1
 echo "=== scheduled deploy of $BRANCH — $(date) ==="
 
-notify() { (cd "$PERSONAL_OS" && python3 "$TG" send "$1") || echo "TELEGRAM FAILED: $1"; }
+# Queues what it cannot send — see scripts/weekly-article/notify.sh.
+notify() {
+  if command -v envercetin-notify >/dev/null 2>&1; then
+    envercetin-notify "$1" || true
+  else
+    (cd "$PERSONAL_OS" && python3 "$TG" send "$1") || echo "TELEGRAM FAILED: $1"
+  fi
+}
 trap 'echo "FAILED at line $LINENO"; notify "⚠️ Scheduled deploy of $BRANCH failed at line $LINENO. Nothing was published. Log: $LOG"' ERR
 
 cd "$REPO"
