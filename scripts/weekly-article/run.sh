@@ -20,6 +20,16 @@
 
 set -euo pipefail
 
+# --resume <branch> picks up a run that died AFTER the article was written —
+# skipping topics and writing, and continuing at the verify gate. On 2026-08-15
+# the writer finished the article and then hit the monthly spend limit before it
+# could print its SLUG line, so run.sh threw away 24 minutes of finished work.
+# Nothing downstream of the writer needs a model, so a resume always can run.
+RESUME_BRANCH=""
+if [[ "${1:-}" == "--resume" ]]; then
+  RESUME_BRANCH="${2:?usage: run.sh --resume <branch>}"
+fi
+
 # Derived from this script's own location, never hardcoded: moving the repo must
 # not require editing it. scripts/weekly-article/run.sh → ../.. is the root.
 REPO="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
@@ -47,89 +57,131 @@ trap 'on_error $LINENO' ERR
 # --- Preconditions ------------------------------------------------------------
 cd "$REPO"
 
-if [[ -n "$(git status --porcelain --untracked-files=no)" ]]; then
-  notify "⚠️ Weekly article skipped: the repo has uncommitted changes. I did not touch them."
-  exit 0
-fi
+# A resume expects a dirty tree — the half-finished article is the whole point.
+if [[ -z "$RESUME_BRANCH" ]]; then
+  if [[ -n "$(git status --porcelain --untracked-files=no)" ]]; then
+    notify "⚠️ Weekly article skipped: the repo has uncommitted changes. I did not touch them."
+    exit 0
+  fi
 
-git checkout main --quiet
-git pull --ff-only --quiet
+  git checkout main --quiet
+  git pull --ff-only --quiet
+fi
 
 CLAUDE_FLAGS=(--model opus --permission-mode acceptEdits
   --allowed-tools "Bash,Read,Write,Edit,Glob,Grep,WebSearch,WebFetch,Task,Workflow,TodoWrite,TaskCreate,TaskUpdate")
 
-# --- 1. Propose topics --------------------------------------------------------
-# What counts as "already covered" is NOT what is in the working tree. Approved
-# articles wait on their own branch for up to a week before merging, so during
-# that week the subject is finished and scheduled while `src/content/writing/en/`
-# still looks empty of it. On 2026-08-15 the proposer offered the exact article
-# that was queued to publish the next morning. Ask git, across every branch.
-COVERED="$(
-  {
-    git ls-tree -r --name-only main src/content/writing/en/
-    for b in $(git for-each-ref --format='%(refname:short)' 'refs/heads/article/*'); do
-      git ls-tree -r --name-only "$b" src/content/writing/en/
-    done
-  } 2>/dev/null | sed 's|.*/||; s|\.[^.]*$||' | sort -u
-)"
-echo "already covered: $(printf '%s' "$COVERED" | tr '\n' ' ')"
+if [[ -n "$RESUME_BRANCH" ]]; then
+  # --- Resume -------------------------------------------------------------------
+  # Steps 1-3 already happened in the run that died. Adopt its branch and read the
+  # slug off the draft on disk rather than off the writer's stdout, which is the
+  # thing that went missing.
+  BRANCH="$RESUME_BRANCH"
+  if git rev-parse --verify "$BRANCH" >/dev/null 2>&1; then
+    git checkout "$BRANCH" --quiet
+  else
+    git checkout -b "$BRANCH" --quiet
+  fi
 
-echo "--- proposing topics"
-PROPOSE_PROMPT="$(cat scripts/weekly-article/prompts/propose-topics.md)
+  SLUG="$(
+    {
+      git status --porcelain --untracked-files=all -- src/content/writing/en/
+      git diff --name-only main...HEAD -- src/content/writing/en/
+    } 2>/dev/null | grep -oE '[^/ ]+\.mdx' | sed 's/\.mdx$//' | sort -u | head -1
+  )"
+
+  if [[ -z "$SLUG" || ! -f "src/content/writing/en/$SLUG.mdx" ]]; then
+    notify "⚠️ Resume of \`$BRANCH\` found no article to publish. Nothing was done. Log: $LOG"
+    exit 1
+  fi
+  echo "resuming $BRANCH at the verify gate — slug: $SLUG"
+else
+  # --- 1. Propose topics --------------------------------------------------------
+  # What counts as "already covered" is NOT what is in the working tree. Approved
+  # articles wait on their own branch for up to a week before merging, so during
+  # that week the subject is finished and scheduled while `src/content/writing/en/`
+  # still looks empty of it. On 2026-08-15 the proposer offered the exact article
+  # that was queued to publish the next morning. Ask git, across every branch.
+  COVERED="$(
+    {
+      git ls-tree -r --name-only main src/content/writing/en/
+      for b in $(git for-each-ref --format='%(refname:short)' 'refs/heads/article/*'); do
+        git ls-tree -r --name-only "$b" src/content/writing/en/
+      done
+    } 2>/dev/null | sed 's|.*/||; s|\.[^.]*$||' | sort -u
+  )"
+  echo "already covered: $(printf '%s' "$COVERED" | tr '\n' ' ')"
+
+  echo "--- proposing topics"
+  PROPOSE_PROMPT="$(cat scripts/weekly-article/prompts/propose-topics.md)
 
 ALREADY COVERED — published, or written and waiting for its scheduled publish:
 $COVERED"
-TOPICS_JSON="$(claude -p "$PROPOSE_PROMPT" "${CLAUDE_FLAGS[@]}" | sed -n '/\[/,/\]/p')"
+  TOPICS_JSON="$(claude -p "$PROPOSE_PROMPT" "${CLAUDE_FLAGS[@]}" | sed -n '/\[/,/\]/p')"
 
-if [[ -z "$TOPICS_JSON" ]]; then
-  notify "⚠️ Weekly article: topic proposal returned nothing. Log: $LOG"
-  exit 1
-fi
-echo "$TOPICS_JSON" > "$LOG_DIR/$STAMP-topics.json"
+  if [[ -z "$TOPICS_JSON" ]]; then
+    notify "⚠️ Weekly article: topic proposal returned nothing. Log: $LOG"
+    exit 1
+  fi
+  echo "$TOPICS_JSON" > "$LOG_DIR/$STAMP-topics.json"
 
-LIB="scripts/weekly-article/lib/topics.py"
-QUESTION="$(python3 "$LIB" question "$LOG_DIR/$STAMP-topics.json")"
-OPTIONS="$(python3 "$LIB" options "$LOG_DIR/$STAMP-topics.json")"
+  LIB="scripts/weekly-article/lib/topics.py"
+  QUESTION="$(python3 "$LIB" question "$LOG_DIR/$STAMP-topics.json")"
+  OPTIONS="$(python3 "$LIB" options "$LOG_DIR/$STAMP-topics.json")"
 
-# --- 2. Ask Enver -------------------------------------------------------------
-echo "--- asking for the topic"
-set +e
-ASK_OUT="$(cd "$PERSONAL_OS" && python3 "$TG" ask "$QUESTION" --options "$OPTIONS" --timeout-min 240)"
-ASK_RC=$?
-set -e
+  # --- 2. Ask Enver -------------------------------------------------------------
+  echo "--- asking for the topic"
+  set +e
+  ASK_OUT="$(cd "$PERSONAL_OS" && python3 "$TG" ask "$QUESTION" --options "$OPTIONS" --timeout-min 240)"
+  ASK_RC=$?
+  set -e
 
-if [[ $ASK_RC -eq 2 ]]; then
-  notify "No reply in 4 h — skipping this week's article. Nothing was written."
-  exit 0
-elif [[ $ASK_RC -ne 0 ]]; then
-  notify "⚠️ Weekly article: Telegram ask failed (rc=$ASK_RC). Log: $LOG"
-  exit 1
-fi
+  if [[ $ASK_RC -eq 2 ]]; then
+    notify "No reply in 4 h — skipping this week's article. Nothing was written."
+    exit 0
+  elif [[ $ASK_RC -ne 0 ]]; then
+    notify "⚠️ Weekly article: Telegram ask failed (rc=$ASK_RC). Log: $LOG"
+    exit 1
+  fi
 
-TOPIC="$(printf '%s\n' "$ASK_OUT" | grep '^REPLY: ' | tail -1 | sed 's/^REPLY: //')"
-if [[ -z "$TOPIC" ]]; then
-  notify "⚠️ Weekly article: could not read your reply. Log: $LOG"
-  exit 1
-fi
-echo "topic: $TOPIC"
+  TOPIC="$(printf '%s\n' "$ASK_OUT" | grep '^REPLY: ' | tail -1 | sed 's/^REPLY: //')"
+  if [[ -z "$TOPIC" ]]; then
+    notify "⚠️ Weekly article: could not read your reply. Log: $LOG"
+    exit 1
+  fi
+  echo "topic: $TOPIC"
 
-# If Enver tapped a button, hand the full proposal to the writer, not just the label.
-TOPIC_BRIEF="$(python3 "$LIB" brief "$LOG_DIR/$STAMP-topics.json" "$TOPIC")"
+  # If Enver tapped a button, hand the full proposal to the writer, not just the label.
+  TOPIC_BRIEF="$(python3 "$LIB" brief "$LOG_DIR/$STAMP-topics.json" "$TOPIC")"
 
-# --- 3. Write -----------------------------------------------------------------
-BRANCH="article/$STAMP"
-git checkout -b "$BRANCH" --quiet
-notify "✍️ Writing this week's article: $TOPIC — I'll send a preview link when it's ready."
+  # --- 3. Write -----------------------------------------------------------------
+  BRANCH="article/$STAMP"
+  git checkout -b "$BRANCH" --quiet
+  notify "✍️ Writing this week's article: $TOPIC — I'll send a preview link when it's ready."
 
-echo "--- writing"
-PROMPT="$(sed "s|{{TOPIC}}|$TOPIC_BRIEF|" scripts/weekly-article/prompts/write-article.md)"
-WRITE_OUT="$(claude -p "$PROMPT" "${CLAUDE_FLAGS[@]}")"
-echo "$WRITE_OUT" | tail -40
+  echo "--- writing"
+  PROMPT="$(sed "s|{{TOPIC}}|$TOPIC_BRIEF|" scripts/weekly-article/prompts/write-article.md)"
+  WRITE_OUT="$(claude -p "$PROMPT" "${CLAUDE_FLAGS[@]}")"
+  echo "$WRITE_OUT" | tail -40
 
-SLUG="$(printf '%s\n' "$WRITE_OUT" | grep '^SLUG: ' | tail -1 | sed 's/^SLUG: //' | tr -d '[:space:]')"
-if [[ -z "$SLUG" || ! -f "src/content/writing/en/$SLUG.mdx" ]]; then
-  notify "⚠️ Weekly article: no usable article was produced. Branch $BRANCH kept locally. Log: $LOG"
-  exit 1
+  # The writer prints SLUG last. If it dies after writing the article but before
+  # printing — a crash, a spend limit — the article is on disk and only this line
+  # is missing. Say so, so the work can be resumed instead of rewritten.
+  SLUG="$(printf '%s\n' "$WRITE_OUT" | grep '^SLUG: ' | tail -1 | sed 's/^SLUG: //' | tr -d '[:space:]')"
+  if [[ -z "$SLUG" || ! -f "src/content/writing/en/$SLUG.mdx" ]]; then
+    DRAFT="$(git status --porcelain --untracked-files=all -- src/content/writing/en/ | grep -c '\.mdx' || true)"
+    if [[ "$DRAFT" -gt 0 ]]; then
+      notify "⚠️ Weekly article: the writer stopped before naming its article, but a draft IS on \`$BRANCH\`.
+
+Resume it with:
+scripts/weekly-article/run.sh --resume $BRANCH
+
+Log: $LOG"
+    else
+      notify "⚠️ Weekly article: no usable article was produced. Branch $BRANCH kept locally. Log: $LOG"
+    fi
+    exit 1
+  fi
 fi
 
 # --- 4. Hard gate -------------------------------------------------------------
