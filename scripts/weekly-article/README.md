@@ -50,6 +50,45 @@ folders under macOS TCC, so launchd cannot start a script there at all. That is
 not theoretical: it is how the run of **2026-08-15** was lost, silently, after
 the repo had been sitting in `~/Documents` all along.
 
+## The watchdog
+
+`watchdog.sh` runs Saturdays and Tuesdays at 10:00, from its own launchd job. It
+watches the pipeline from outside and reports **only problems**, so silence means
+healthy. Saturday is the pre-flight — today is a writing day, is last week's
+article actually out? Tuesday is the post-mortem — Saturday has been and gone,
+did anything come of it?
+
+It checks four things, all from local state:
+
+1. the weekly job is still loaded in launchd;
+2. `~/.local/bin/envercetin-guard` and `-notify` match the repo (editing
+   `guard.sh` changes nothing until `install.sh` copies it, so a fix can look
+   done and not be);
+3. every `article/*` branch either has a publish job still in the future, or is
+   reported as stuck — including the case where the job exists but its date has
+   already passed, which is precisely what 2026-08-22 left behind;
+4. how long since anything actually reached the site (default: complain after
+   10 days).
+
+Run it by hand without sending anything:
+
+```sh
+scripts/weekly-article/watchdog.sh --check
+```
+
+## Tests
+
+```sh
+scripts/weekly-article/tests/guard.test.sh
+scripts/weekly-article/tests/watchdog.test.sh
+```
+
+`install.sh` runs both and refuses to install if either fails. The guard tests
+drive the real guard through real launchd jobs, because the bugs worth catching
+here only exist under launchd — a self-`bootout` cannot be reproduced any other
+way. Every probe job is labelled `com.enver.envercetin.retry-guardtest-*` and is
+booted out in a trap.
+
 ## Running it by hand
 
 ```sh
@@ -103,9 +142,34 @@ never started it.
 
 ## Known constraints
 
+- **A closed lid on battery still sleeps through Saturday.** This is the real
+  limit and it is not fixable from here. `caffeinate` — which the guard now holds
+  for the duration of a run — prevents *idle* sleep; it cannot prevent *clamshell*
+  sleep on battery. On 2026-08-22 the Mac went to clamshell sleep at 10:28 and
+  only dark-woke for a few seconds every quarter hour for the rest of the day, so
+  neither the publish nor the write ever got a usable connection. The job does
+  catch up at the next real wake, and the watchdog says so on Tuesday — but if
+  weekends away become normal, the schedule belongs on a machine that does not
+  sleep.
 - The Mac does not have to be awake at Saturday 14:00. If it is asleep, shut down
   or logged out, launchd runs the job once at the next wake or login rather than
   skipping the week. Several missed weeks still collapse into a single run.
+- **The network budget is awake time, not wall-clock.** A run that starts offline
+  waits up to 90 minutes *of actual running*, crediting each poll with the time
+  that poll really took, capped. A wall-clock deadline is spent almost entirely
+  while a sleeping machine is not running: on 2026-08-22 ninety minutes of
+  deadline bought about two minutes of runtime before the run gave up.
+- **Giving up is never silent.** When the wait is exhausted the run arms a retry
+  *and says so*, through the spool. The give-up branch used to exit 0 without a
+  word, which is why a lost Saturday looked exactly like a normal one.
+- **A retry never boots out its own label.** `launchctl bootout` terminates the
+  process executing it. The guard used to clear "a pending retry for this job"
+  without noticing that it *was* that retry, so every retry it armed killed itself
+  three lines before the network check — silently, without running, reporting, or
+  releasing its lock. `deploy-scheduled.sh` had the same shape at the end.
+- **Queued alerts drain on their own.** `com.enver.envercetin.notify-flush` runs
+  every 30 minutes. The backlog used to be flushed only by the weekly run, which
+  is the very thing that fails when there is no network to deliver on.
 - Step 8 publishes by pushing `main` and nothing else. The Vercel GitHub
   integration builds production from that push (verified 2026-08-12: a build
   started 12 s after one). No `vercel --prod` call, which also keeps production

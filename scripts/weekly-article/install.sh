@@ -80,6 +80,10 @@ if [[ "$CHECK_ONLY" == yes ]]; then
   echo -n "queued:"; SPOOL="$HOME/Library/Application Support/envercetin/pending-notifications"
   echo " $(ls -1 "$SPOOL" 2>/dev/null | wc -l | tr -d ' ') undelivered message(s)"
   echo -n "plist: "; [[ -f "$PLIST" ]] && echo "$PLIST" || echo "MISSING"
+  echo -n "watch: "; launchctl print "gui/$UID_NUM/com.enver.envercetin.watchdog" >/dev/null 2>&1 \
+    && echo "loaded (Sat + Tue 10:00)" || echo "NOT LOADED"
+  echo -n "flush: "; launchctl print "gui/$UID_NUM/com.enver.envercetin.notify-flush" >/dev/null 2>&1 \
+    && echo "loaded (every 30 min)" || echo "NOT LOADED"
   echo -n "job:   "; launchctl print "gui/$UID_NUM/$LABEL" >/dev/null 2>&1 \
     && launchctl list | grep "$LABEL" || echo "NOT LOADED"
   exit 0
@@ -95,6 +99,14 @@ if [[ "${ENVERCETIN_SKIP_GUARD_TESTS:-}" != "1" ]]; then
     echo >&2
     echo "REFUSING: guard.sh fails its own tests. Nothing was installed." >&2
     echo "Set ENVERCETIN_SKIP_GUARD_TESTS=1 to override, but read the failures first." >&2
+    exit 1
+  fi
+  echo
+  echo "running watchdog tests..."
+  if ! "$REPO/scripts/weekly-article/tests/watchdog.test.sh"; then
+    echo >&2
+    echo "REFUSING: watchdog.sh fails its own tests. Nothing was installed." >&2
+    echo "A watchdog that reports healthy through a broken week is worse than none." >&2
     exit 1
   fi
   echo
@@ -195,6 +207,46 @@ plutil -lint "$FLUSH_PLIST" >/dev/null
 launchctl bootout "gui/$UID_NUM/$FLUSH_LABEL" 2>/dev/null || true
 launchctl bootstrap "gui/$UID_NUM" "$FLUSH_PLIST"
 echo "notification flusher loaded: $FLUSH_LABEL (every 30 min)"
+
+# The deadline watchdog. Saturdays 10:00 is the pre-flight — today is a writing
+# day, so is last week's article actually out? Tuesdays 10:00 is the post-mortem:
+# Saturday has been and gone, did anything come of it? It reports only problems,
+# so silence means healthy, and it runs from the repo rather than ~/.local/bin
+# because unlike the guard it has no job if the repo is gone.
+WATCH_LABEL="com.enver.envercetin.watchdog"
+WATCH_PLIST="$HOME/Library/LaunchAgents/$WATCH_LABEL.plist"
+cat > "$WATCH_PLIST" <<WATCH_END
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+  <key>Label</key><string>$WATCH_LABEL</string>
+  <key>ProgramArguments</key>
+  <array>
+    <string>/bin/bash</string>
+    <string>$REPO/scripts/weekly-article/watchdog.sh</string>
+  </array>
+  <key>StartCalendarInterval</key>
+  <array>
+    <dict><key>Weekday</key><integer>6</integer><key>Hour</key><integer>10</integer><key>Minute</key><integer>0</integer></dict>
+    <dict><key>Weekday</key><integer>2</integer><key>Hour</key><integer>10</integer><key>Minute</key><integer>0</integer></dict>
+  </array>
+  <key>EnvironmentVariables</key>
+  <dict>
+    <key>PATH</key><string>$HOME/.local/bin:/opt/homebrew/bin:/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin</string>
+    <key>HOME</key><string>$HOME</string>
+  </dict>
+  <key>StandardOutPath</key><string>$HOME/Library/Logs/envercetin-weekly-article/watchdog.log</string>
+  <key>StandardErrorPath</key><string>$HOME/Library/Logs/envercetin-weekly-article/watchdog.log</string>
+  <key>RunAtLoad</key><false/>
+  <key>ProcessType</key><string>Background</string>
+</dict>
+</plist>
+WATCH_END
+plutil -lint "$WATCH_PLIST" >/dev/null
+launchctl bootout "gui/$UID_NUM/$WATCH_LABEL" 2>/dev/null || true
+launchctl bootstrap "gui/$UID_NUM" "$WATCH_PLIST"
+echo "watchdog loaded: $WATCH_LABEL (Sat + Tue, 10:00)"
 
 plutil -lint "$PLIST" >/dev/null
 launchctl bootout "gui/$UID_NUM/$LABEL" 2>/dev/null || true
