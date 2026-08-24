@@ -57,6 +57,12 @@ echo "target: $SCRIPT ${*:-}"
 # failure would be just as silent as the bug this guard exists to kill.
 notify() {
   local msg="$1"
+  # The launchd tests run the real guard end to end. Without this they would send
+  # Telegram messages every time the suite runs.
+  if [[ -n "${ENVERCETIN_TEST_SILENT:-}" ]]; then
+    echo "[test-silent] would notify: $msg"
+    return 0
+  fi
   # envercetin-notify spools what it cannot send and delivers it on the next run
   # that has a network — the alert about an offline failure would otherwise be
   # destroyed by the very outage it was reporting.
@@ -127,9 +133,11 @@ RETRY_IN_MIN="${ENVERCETIN_RETRY_IN_MIN:-30}"
 # the body check rejects a portal that returns 200 anyway: /zen serves a short
 # plaintext aphorism, never markup. Hotel Wi-Fi you have not clicked through is
 # the exact case that would otherwise sail past this and die at the first git call.
+# ENVERCETIN_PROBE_URL exists so the tests can drive the offline path against an
+# address that always fails, rather than asking someone to pull the Wi-Fi.
 online() {
   local body
-  body="$(curl -fsS --max-time 8 https://api.github.com/zen 2>/dev/null)" || return 1
+  body="$(curl -fsS --max-time 8 "${ENVERCETIN_PROBE_URL:-https://api.github.com/zen}" 2>/dev/null)" || return 1
   [[ -n "$body" && "$body" != *"<html"* && "$body" != *"<!DOCTYPE"* && "$body" != *"<HTML"* ]]
 }
 
@@ -168,6 +176,9 @@ $args  </array>
   <dict>
     <key>PATH</key><string>$HOME/.local/bin:/opt/homebrew/bin:/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin</string>
     <key>HOME</key><string>$HOME</string>
+    <!-- So the run this job starts can recognise that it IS the retry, and not
+         boot out the label it is running under. See the retry-clearing block. -->
+    <key>ENVERCETIN_RETRY_OF</key><string>$JOB</string>
   </dict>
   <key>StandardOutPath</key><string>$LOG_DIR/retry-launchd.out.log</string>
   <key>StandardErrorPath</key><string>$LOG_DIR/retry-launchd.err.log</string>
@@ -180,27 +191,86 @@ PLIST
   echo "retry armed for $4:$5 (label $label)"
 }
 
-# A run that is actually starting supersedes any retry waiting for this job.
+# A run that is actually starting supersedes any retry waiting for this job —
+# unless this run IS that retry.
+#
+# `launchctl bootout` on your own label terminates the process executing the line.
+# That is how 2026-08-22 was lost: both retries died right here, three lines before
+# the network check, without running, without reporting, and without releasing
+# their lock. The offline recovery had therefore never worked at all — every retry
+# it armed killed itself the moment it started.
+#
+# launchd sets XPC_SERVICE_NAME to the running job's own label, and arm_retry also
+# stamps ENVERCETIN_RETRY_OF into the plist it writes; either identifies us.
 RETRY_LABEL="com.enver.envercetin.retry-$JOB"
-if [[ -f "$HOME/Library/LaunchAgents/$RETRY_LABEL.plist" ]]; then
-  launchctl bootout "gui/$(id -u)/$RETRY_LABEL" 2>/dev/null
-  rm -f "$HOME/Library/LaunchAgents/$RETRY_LABEL.plist"
-  echo "cleared a pending retry for $JOB"
+RETRY_PLIST="$HOME/Library/LaunchAgents/$RETRY_LABEL.plist"
+if [[ -f "$RETRY_PLIST" ]]; then
+  if [[ "${XPC_SERVICE_NAME:-}" == "$RETRY_LABEL" || "${ENVERCETIN_RETRY_OF:-}" == "$JOB" ]]; then
+    # Deleting the plist is enough, and is the only safe half. The job is one-shot
+    # with a StartCalendarInterval already in the past, so it cannot fire again;
+    # with the file gone it is not reloaded at next login either.
+    rm -f "$RETRY_PLIST"
+    echo "this run is the retry for $JOB — dropped its plist, kept the process"
+  else
+    launchctl bootout "gui/$(id -u)/$RETRY_LABEL" 2>/dev/null
+    rm -f "$RETRY_PLIST"
+    echo "cleared a pending retry for $JOB"
+  fi
 fi
 
 if ! online; then
-  echo "offline at start — waiting up to ${NET_WAIT_MIN} min for a connection"
-  NET_DEADLINE=$(( $(date +%s) + NET_WAIT_MIN * 60 ))
+  echo "offline at start — waiting for up to ${NET_WAIT_MIN} min of awake time"
+
+  # The budget is AWAKE time, not wall-clock. A closed MacBook wakes for a few
+  # seconds every ~15 minutes and sleeps again; a wall-clock deadline is spent
+  # almost entirely while the process is not running. On 2026-08-22 a 90-minute
+  # budget burned from 11:00 to 13:30 and bought perhaps two minutes of runtime,
+  # then declared the machine hopeless and gave up.
+  #
+  # So credit each poll with the time it actually took, capped: an iteration that
+  # ran straight through credits its ~30 s, and one that spanned a system sleep
+  # credits the same 30 s rather than the quarter hour the clock advanced.
+  NET_POLL_SEC="${ENVERCETIN_NET_POLL_SEC:-30}"
+  NET_BUDGET_SEC=$(( NET_WAIT_MIN * 60 ))
+  # A ceiling so a machine that is awake and permanently offline cannot sit here
+  # until next Saturday. Generous, because the budget above is the real limit.
+  NET_HARD_DEADLINE=$(( $(date +%s) + ${ENVERCETIN_NET_MAX_HOURS:-12} * 3600 ))
+  AWAKE=0
+
   until online; do
-    if (( $(date +%s) >= NET_DEADLINE )); then
-      echo "still offline after ${NET_WAIT_MIN} min — arming a retry instead of failing"
+    if (( AWAKE >= NET_BUDGET_SEC )) || (( $(date +%s) >= NET_HARD_DEADLINE )); then
+      echo "still offline after $(( AWAKE / 60 )) min awake — arming a retry instead of failing"
       arm_retry
+      # Silence here is what made 2026-08-22 invisible: the run ended with exit 0
+      # and no message, so a lost Saturday looked exactly like a normal one. The
+      # notifier spools this and delivers it as soon as anything gets a network.
+      notify "📴 $JOB could not start: the Mac has had no usable connection for $(( AWAKE / 60 )) min of awake time.
+
+Nothing was lost — I re-armed the job for ${RETRY_IN_MIN} min from now and will keep re-arming. Log: $LOG"
       rm -rf "$LOCK_DIR"
       exit 0
     fi
-    sleep 30
+    BEFORE=$(date +%s)
+    sleep "$NET_POLL_SEC"
+    DELTA=$(( $(date +%s) - BEFORE ))
+    (( DELTA > NET_POLL_SEC * 2 )) && DELTA=$NET_POLL_SEC
+    AWAKE=$(( AWAKE + DELTA ))
   done
-  echo "network came up — continuing"
+  echo "network came up after $(( AWAKE / 60 )) min awake — continuing"
+fi
+
+# --- Stay awake for the run ----------------------------------------------------
+# Writing an article takes 20+ minutes of continuous network. Idle sleep in the
+# middle of it kills the run. This holds the machine awake for exactly as long as
+# the guard lives, and dies with it.
+#
+# It is a partial defence and worth being honest about: `caffeinate` cannot stop
+# CLAMSHELL sleep on battery, which is what actually happened on 2026-08-22. A lid
+# closed on battery will still sleep through the whole job. The only real fix for
+# that case is to run the schedule somewhere that does not sleep.
+if command -v caffeinate >/dev/null 2>&1; then
+  caffeinate -i -m -w $$ &
+  echo "holding an idle-sleep assertion for the duration of this run"
 fi
 
 # Remember whether the ask lock was already held by someone else, so cleanup only

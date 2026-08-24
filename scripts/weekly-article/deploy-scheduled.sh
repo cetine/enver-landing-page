@@ -93,7 +93,15 @@ echo "=== done $(date) ==="
 
 # Remove the one-shot schedule so it cannot fire again next year.
 if [[ -n "$LABEL" ]]; then
-  launchctl bootout "gui/$(id -u)/$LABEL" 2>/dev/null || true
+  # Delete the file FIRST. This script runs under $LABEL, via the guard, so
+  # `launchctl bootout` on it terminates this very process — on 2026-08-16 it did,
+  # swallowing the "removed" line, the guard's exit-code report and its lock
+  # cleanup, and it is only luck that the push had already happened. Removing the
+  # plist is what actually matters: a one-shot job whose StartCalendarInterval has
+  # passed cannot fire again, and with no file it is not reloaded at next login.
   rm -f "$HOME/Library/LaunchAgents/$LABEL.plist"
+  if [[ "${XPC_SERVICE_NAME:-}" != "$LABEL" ]]; then
+    launchctl bootout "gui/$(id -u)/$LABEL" 2>/dev/null || true
+  fi
   echo "one-shot schedule $LABEL removed"
 fi

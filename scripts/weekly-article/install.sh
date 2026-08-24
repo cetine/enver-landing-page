@@ -85,6 +85,21 @@ if [[ "$CHECK_ONLY" == yes ]]; then
   exit 0
 fi
 
+# The guard's launchd behaviour is not reachable by the site's unit tests, and it
+# is where the expensive bugs live: on 2026-08-22 it boot-ed out its own label and
+# every offline retry killed itself in silence. This is the moment that regression
+# would be introduced, so this is where the gate belongs.
+if [[ "${ENVERCETIN_SKIP_GUARD_TESTS:-}" != "1" ]]; then
+  echo "running guard tests..."
+  if ! "$REPO/scripts/weekly-article/tests/guard.test.sh"; then
+    echo >&2
+    echo "REFUSING: guard.sh fails its own tests. Nothing was installed." >&2
+    echo "Set ENVERCETIN_SKIP_GUARD_TESTS=1 to override, but read the failures first." >&2
+    exit 1
+  fi
+  echo
+fi
+
 mkdir -p "$HOME/.local/bin" "$HOME/Library/LaunchAgents" \
          "$HOME/Library/Logs/envercetin-weekly-article"
 
@@ -148,6 +163,38 @@ cat > "$PLIST" <<PLIST_END
 </plist>
 PLIST_END
 echo "plist written: $PLIST"
+
+# A queued alert used to wait for the next weekly run to deliver it — and the
+# weekly run is exactly what fails when there is no network to deliver on. The
+# backlog could therefore sit unseen for a week, or forever. This drains it on its
+# own schedule, so bad news arrives when the connection does.
+FLUSH_LABEL="com.enver.envercetin.notify-flush"
+FLUSH_PLIST="$HOME/Library/LaunchAgents/$FLUSH_LABEL.plist"
+cat > "$FLUSH_PLIST" <<FLUSH_END
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+  <key>Label</key><string>$FLUSH_LABEL</string>
+  <key>ProgramArguments</key>
+  <array><string>$NOTIFY</string><string>--flush</string></array>
+  <key>StartInterval</key><integer>1800</integer>
+  <key>RunAtLoad</key><true/>
+  <key>EnvironmentVariables</key>
+  <dict>
+    <key>PATH</key><string>$HOME/.local/bin:/opt/homebrew/bin:/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin</string>
+    <key>HOME</key><string>$HOME</string>
+  </dict>
+  <key>StandardOutPath</key><string>$HOME/Library/Logs/envercetin-weekly-article/notify-flush.log</string>
+  <key>StandardErrorPath</key><string>$HOME/Library/Logs/envercetin-weekly-article/notify-flush.log</string>
+  <key>ProcessType</key><string>Background</string>
+</dict>
+</plist>
+FLUSH_END
+plutil -lint "$FLUSH_PLIST" >/dev/null
+launchctl bootout "gui/$UID_NUM/$FLUSH_LABEL" 2>/dev/null || true
+launchctl bootstrap "gui/$UID_NUM" "$FLUSH_PLIST"
+echo "notification flusher loaded: $FLUSH_LABEL (every 30 min)"
 
 plutil -lint "$PLIST" >/dev/null
 launchctl bootout "gui/$UID_NUM/$LABEL" 2>/dev/null || true
