@@ -32,14 +32,42 @@ fi
 
 # Derived from this script's own location, never hardcoded: moving the repo must
 # not require editing it. scripts/weekly-article/run.sh → ../.. is the root.
-REPO="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
-TG="/Users/ece/Projects/personal-os/tg.py"
-PERSONAL_OS="/Users/ece/Projects/personal-os"
+HERE="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+# ENVERCETIN_* here are test seams. The approval branches below decide whether a
+# finished article is published, kept, or left undecided, and before these seams
+# existed not one of them had ever been executed outside a real Saturday.
+REPO="${ENVERCETIN_REPO:-$(cd "$HERE/../.." && pwd)}"
+PERSONAL_OS="${ENVERCETIN_PERSONAL_OS:-/Users/ece/Projects/personal-os}"
+TG="$PERSONAL_OS/tg.py"
+VERIFY_CMD="${ENVERCETIN_VERIFY_CMD:-npm run verify}"
+# Named explicitly rather than found on PATH: this script prepends ~/.local/bin
+# to PATH a few lines below, so a test that puts a stand-in earlier on PATH is
+# silently overruled and ends up driving the real model against a fixture repo.
+CLAUDE_BIN="${ENVERCETIN_CLAUDE_BIN:-claude}"
+VERCEL_BIN="${ENVERCETIN_VERCEL_BIN:-vercel}"
 LOG_DIR="$HOME/Library/Logs/envercetin-weekly-article"
 STAMP="$(date +%Y-%m-%d)"
 LOG="$LOG_DIR/$STAMP.log"
 
 export PATH="$HOME/.local/bin:/opt/homebrew/bin:/usr/local/bin:$PATH"
+
+# Every long step below can hang instead of failing — a model call waiting on a
+# socket that will never answer, a deploy against a dead endpoint. A hang holds
+# the repo lock, and from then on every Saturday is skipped with "a previous run
+# is still going". These are ceilings, not expectations: a real writing run takes
+# about 25 minutes.
+PROPOSE_TIMEOUT="${ENVERCETIN_PROPOSE_TIMEOUT_SEC:-1800}"
+WRITE_TIMEOUT="${ENVERCETIN_WRITE_TIMEOUT_SEC:-7200}"
+VERIFY_TIMEOUT="${ENVERCETIN_VERIFY_TIMEOUT_SEC:-2700}"
+DEPLOY_TIMEOUT="${ENVERCETIN_DEPLOY_TIMEOUT_SEC:-900}"
+NET_TIMEOUT="${ENVERCETIN_NET_TIMEOUT_SEC:-600}"
+
+# shellcheck source=lib/with_timeout.sh
+source "$HERE/lib/with_timeout.sh"
+# shellcheck source=lib/approval.sh
+source "$HERE/lib/approval.sh"
+# shellcheck source=lib/repo_lock.sh
+source "$HERE/lib/repo_lock.sh"
 
 mkdir -p "$LOG_DIR"
 exec > >(tee -a "$LOG") 2>&1
@@ -49,6 +77,10 @@ echo "=== weekly-article $STAMP $(date +%H:%M:%S) ==="
 # likely reason a run fails is that there is no network, and that is exactly when
 # a direct tg.py send drops the message telling you so.
 notify() {
+  if [[ -n "${ENVERCETIN_TEST_SILENT:-}" ]]; then
+    echo "[test-silent] would notify: $1"
+    return 0
+  fi
   if command -v envercetin-notify >/dev/null 2>&1; then
     envercetin-notify "$1" || true
   else
@@ -66,6 +98,14 @@ trap 'on_error $LINENO' ERR
 # --- Preconditions ------------------------------------------------------------
 cd "$REPO"
 
+# One article job at a time in this working tree. Under the guard this lock is
+# already held on our behalf and this is a no-op; it matters when this script is
+# started by hand while a scheduled publish is due.
+if ! repo_lock_hold "$REPO" "run.sh"; then
+  notify "⚠️ Weekly article skipped: \`$REPO_LOCK_BUSY_JOB\` is working in the repo right now. Nothing was written or changed."
+  exit 0
+fi
+
 # Connectivity is the guard's job — it waits for the network before starting this
 # script at all, and arms a retry rather than giving up. So by this line the
 # network is known good: the first chance all week to deliver anything an earlier
@@ -80,7 +120,10 @@ if [[ -z "$RESUME_BRANCH" ]]; then
   fi
 
   git checkout main --quiet
-  git pull --ff-only --quiet
+  if ! with_timeout "$NET_TIMEOUT" git pull --ff-only --quiet; then
+    notify "⚠️ Weekly article stopped before it started: \`git pull\` failed or hung. Nothing was written."
+    exit 1
+  fi
 fi
 
 CLAUDE_FLAGS=(--model opus --permission-mode acceptEdits
@@ -132,7 +175,7 @@ else
 
 ALREADY COVERED — published, or written and waiting for its scheduled publish:
 $COVERED"
-  TOPICS_JSON="$(claude -p "$PROPOSE_PROMPT" "${CLAUDE_FLAGS[@]}" | sed -n '/\[/,/\]/p')"
+  TOPICS_JSON="$(with_timeout "$PROPOSE_TIMEOUT" "$CLAUDE_BIN" -p "$PROPOSE_PROMPT" "${CLAUDE_FLAGS[@]}" | sed -n '/\[/,/\]/p')"
 
   if [[ -z "$TOPICS_JSON" ]]; then
     notify "⚠️ Weekly article: topic proposal returned nothing. Log: $LOG"
@@ -168,7 +211,8 @@ $QUESTION"
     fi
 
     set +e
-    ASK_OUT="$(cd "$PERSONAL_OS" && python3 "$TG" ask "$PROMPT_TEXT" --options "$OPTIONS" --timeout-min "$ASK_ROUND_MIN")"
+    # tg.py enforces its own deadline; this one only catches it hanging past it.
+    ASK_OUT="$(cd "$PERSONAL_OS" && with_timeout $(( ASK_ROUND_MIN * 60 + 600 )) python3 "$TG" ask "$PROMPT_TEXT" --options "$OPTIONS" --timeout-min "$ASK_ROUND_MIN")"
     ASK_RC=$?
     set -e
 
@@ -184,7 +228,10 @@ $QUESTION"
     exit 1
   fi
 
-  TOPIC="$(printf '%s\n' "$ASK_OUT" | grep '^REPLY: ' | tail -1 | sed 's/^REPLY: //')"
+  # sed, not grep: grep exits 1 when nothing matched, and under `set -e` with
+  # pipefail that kills the run at the assignment — on precisely the paths where
+  # there is no reply to read, which are the ones that must stay recoverable.
+  TOPIC="$(printf '%s\n' "$ASK_OUT" | sed -n 's/^REPLY: //p' | tail -1)"
   if [[ -z "$TOPIC" ]]; then
     notify "⚠️ Weekly article: could not read your reply. Log: $LOG"
     exit 1
@@ -201,8 +248,21 @@ $QUESTION"
 
   echo "--- writing"
   PROMPT="$(sed "s|{{TOPIC}}|$TOPIC_BRIEF|" scripts/weekly-article/prompts/write-article.md)"
-  WRITE_OUT="$(claude -p "$PROMPT" "${CLAUDE_FLAGS[@]}")"
+  set +e
+  WRITE_OUT="$(with_timeout "$WRITE_TIMEOUT" "$CLAUDE_BIN" -p "$PROMPT" "${CLAUDE_FLAGS[@]}")"
+  WRITE_RC=$?
+  set -e
   echo "$WRITE_OUT" | tail -40
+
+  if [[ $WRITE_RC -eq 124 ]]; then
+    notify "⚠️ Weekly article: the writer was still running after $(( WRITE_TIMEOUT / 60 )) minutes, so I stopped it rather than let it hold the repo until next week.
+
+Whatever it managed is on \`$BRANCH\`. If there is a draft there:
+$REPO/scripts/weekly-article/run.sh --resume $BRANCH
+
+Log: $LOG"
+    exit 1
+  fi
 
   # The writer prints SLUG last. If it dies after writing the article but before
   # printing — a crash, a spend limit — the article is on disk and only this line
@@ -226,8 +286,8 @@ fi
 
 # --- 4. Hard gate -------------------------------------------------------------
 echo "--- verifying"
-if ! npm run verify > "$LOG_DIR/$STAMP-verify.log" 2>&1; then
-  notify "⚠️ Weekly article: \`npm run verify\` failed, so nothing was deployed. Branch $BRANCH is on your Mac. Log: $LOG_DIR/$STAMP-verify.log"
+if ! with_timeout "$VERIFY_TIMEOUT" bash -c "$VERIFY_CMD" > "$LOG_DIR/$STAMP-verify.log" 2>&1; then
+  notify "⚠️ Weekly article: \`$VERIFY_CMD\` failed, so nothing was deployed. Branch $BRANCH is on your Mac. Log: $LOG_DIR/$STAMP-verify.log"
   exit 1
 fi
 
@@ -239,7 +299,7 @@ git commit --quiet -m "feat: article — $SLUG"
 
 # --- 5. Preview (local tree → Vercel; nothing pushed to GitHub) ---------------
 echo "--- deploying preview"
-PREVIEW="$(vercel deploy --yes 2>/dev/null | grep -Eo 'https://[a-z0-9.-]+\.vercel\.app' | tail -1)"
+PREVIEW="$(with_timeout "$DEPLOY_TIMEOUT" "$VERCEL_BIN" deploy --yes 2>/dev/null | grep -Eo 'https://[a-z0-9.-]+\.vercel\.app' | tail -1)"
 if [[ -z "$PREVIEW" ]]; then
   notify "⚠️ Weekly article: preview deploy produced no URL. Branch $BRANCH is committed locally. Log: $LOG"
   exit 1
@@ -247,24 +307,86 @@ fi
 echo "preview: $PREVIEW"
 
 # --- 6. Approval --------------------------------------------------------------
-set +e
-APPROVE_OUT="$(cd "$PERSONAL_OS" && python3 "$TG" ask \
-  "📄 This week's article is ready.
+# A failed question is not a No. run.sh used to treat every non-zero exit from
+# `tg.py ask` as "Keep as draft": an expired token or a dropped poll answered on
+# Enver's behalf, the finished article became a permanent draft, its topic stayed
+# marked COVERED on the branch so it could never be proposed again — and the
+# message he got told him he had chosen that. lib/approval.sh separates the four
+# outcomes; this block does something different with each.
+APPROVE_ROUNDS="${ENVERCETIN_APPROVE_ROUNDS:-2}"
+APPROVE_MIN="${ENVERCETIN_APPROVE_MIN:-720}"
+
+DECISION=undecided
+APPROVE_RC=1
+for ROUND in $(seq 1 "$APPROVE_ROUNDS"); do
+  if [[ $ROUND -eq 1 ]]; then
+    APPROVE_TEXT="📄 This week's article is ready.
 
 $PREVIEW/writing/$SLUG
 
-Publish it to envercetin.de?" \
-  --options "Publish,Keep as draft" --timeout-min 720)"
-APPROVE_RC=$?
-set -e
+Publish it to envercetin.de?"
+  else
+    APPROVE_TEXT="Still waiting on this week's article — it is written and the preview is up.
 
-APPROVAL="$(printf '%s\n' "$APPROVE_OUT" | grep '^REPLY: ' | tail -1 | sed 's/^REPLY: //')"
+$PREVIEW/writing/$SLUG
 
-if [[ $APPROVE_RC -ne 0 || "$APPROVAL" != "Publish" ]]; then
-  git checkout main --quiet
-  notify "Article kept as a draft on branch \`$BRANCH\`. Nothing was published. Preview stays at $PREVIEW"
-  exit 0
-fi
+Publish it to envercetin.de?"
+  fi
+
+  set +e
+  APPROVE_OUT="$(cd "$PERSONAL_OS" && with_timeout $(( APPROVE_MIN * 60 + 600 )) \
+    python3 "$TG" ask "$APPROVE_TEXT" --options "Publish,Keep as draft" --timeout-min "$APPROVE_MIN")"
+  APPROVE_RC=$?
+  set -e
+
+  APPROVAL="$(printf '%s\n' "$APPROVE_OUT" | sed -n 's/^REPLY: //p' | tail -1)"
+  DECISION="$(classify_approval "$APPROVE_RC" "$APPROVAL")"
+  echo "round $ROUND: rc=$APPROVE_RC reply='${APPROVAL:-}' → $DECISION"
+
+  # Only "nothing usable came back" is worth asking again. An error means the
+  # question never arrived, and repeating it just fails twice.
+  [[ "$DECISION" == "undecided" ]] || break
+done
+
+case "$DECISION" in
+  publish)
+    ;;
+
+  draft)
+    git checkout main --quiet
+    notify "Article kept as a draft on branch \`$BRANCH\`. Nothing was published. Preview stays at $PREVIEW"
+    exit 0
+    ;;
+
+  undecided)
+    # He was asked and did not answer. That is not a decision, and it must not be
+    # filed as one — say plainly that nothing was decided and how to decide later.
+    git checkout main --quiet
+    notify "🤔 No answer on this week's article after $APPROVE_ROUNDS asks, so I published nothing — and I did not read the silence as a No.
+
+It is finished and waiting on \`$BRANCH\`. Preview: $PREVIEW
+
+Publish it whenever you like:
+$REPO/scripts/weekly-article/deploy-scheduled.sh $BRANCH
+
+Drop it for good (and stop the reminders):
+$REPO/scripts/weekly-article/cancel-publish.sh $BRANCH"
+    exit 0
+    ;;
+
+  error)
+    git checkout main --quiet
+    notify "⚠️ I could not ask you about this week's article — Telegram returned an error (rc=$APPROVE_RC). Nobody decided anything, so nothing was published.
+
+The article is finished on \`$BRANCH\` and the preview is up: $PREVIEW
+
+Publish it with:
+$REPO/scripts/weekly-article/deploy-scheduled.sh $BRANCH
+
+Log: $LOG"
+    exit 1
+    ;;
+esac
 
 # --- 7. Schedule the publish ---------------------------------------------------
 # Approved articles do not go live immediately. They are held and published at a
@@ -278,6 +400,6 @@ SLOT_HUMAN="${SLOT#*|}"
 notify "🗓 Approved. \"$SLUG\" is scheduled to go live on $SLOT_HUMAN.
 
 Preview stays up: $PREVIEW
-To cancel: launchctl bootout gui/\$(id -u)/com.enver.envercetin.publish-${SLOT%%|*}"
+To cancel: $REPO/scripts/weekly-article/cancel-publish.sh $BRANCH"
 echo "scheduled for $SLOT_HUMAN"
 echo "=== done $(date +%H:%M:%S) ==="

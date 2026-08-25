@@ -26,9 +26,13 @@ FAIL=0
 ok()  { PASS=$((PASS+1)); printf '  ok   — %s\n' "$1"; }
 bad() { FAIL=$((FAIL+1)); printf '  FAIL — %s\n' "$1"; [[ -n "${2:-}" ]] && printf '         got: %s\n' "$(printf '%s' "${2:-}" | head -4 | tr '\n' ' ')"; return 0; }
 
+LOCK_ROOT="$HOME/Library/Caches/envercetin-guard"
+HUNG_LOCK="$LOCK_ROOT/watchdog-selftest-hung.lock"
+
 cleanup() {
   git -C "$REPO" branch -D "$BRANCH" --quiet 2>/dev/null
-  rm -rf "$TMP"
+  [[ -n "${HOLDER:-}" ]] && kill -KILL "$HOLDER" 2>/dev/null
+  rm -rf "$TMP" "$HUNG_LOCK" "$UNPUSHED_REPO"
 }
 trap cleanup EXIT
 
@@ -144,14 +148,108 @@ cp "$REPO/scripts/weekly-article/notify.sh" "$TMP/bin/envercetin-notify"
 chmod +x "$TMP/bin/envercetin-notify"
 
 # --- 7. Nothing has been published for too long --------------------------------
-# Driven from real history rather than a fabricated clock: one commit back, the
-# newest article is the one from mid-August, which is genuinely more than three
-# days old — and gets older, never younger, so this cannot rot into a pass.
-OUT="$(WD_REF=main~1 WD_MAX_DAYS=3 run_wd)"; RC=$?
-if [[ $RC -ne 0 ]] && grep -q "days ago" <<<"$OUT"; then
+# Against a fixture with a backdated commit, not against the real repo's history:
+# the previous version of this case asserted that `main~1` still pointed at an
+# old article, which stopped being true the moment another article was committed.
+# A test that decays into a pass is the failure mode the watchdog itself exists
+# to prevent.
+QUIET_REPO="$TMP/quiet"
+git init --quiet "$QUIET_REPO"
+git -C "$QUIET_REPO" config user.email "test@example.com"
+git -C "$QUIET_REPO" config user.name "Test"
+git -C "$QUIET_REPO" config commit.gpgsign false
+git -C "$QUIET_REPO" symbolic-ref HEAD refs/heads/main
+mkdir -p "$QUIET_REPO/src/content/writing/en"
+echo old > "$QUIET_REPO/src/content/writing/en/an-old-one.mdx"
+git -C "$QUIET_REPO" add -A
+OLD_DATE="$(date -v-30d '+%Y-%m-%dT%H:%M:%S')"
+GIT_AUTHOR_DATE="$OLD_DATE" GIT_COMMITTER_DATE="$OLD_DATE" \
+  git -C "$QUIET_REPO" commit --quiet -m "feat: article — an-old-one"
+
+OUT="$(ENVERCETIN_REPO="$QUIET_REPO" ENVERCETIN_AGENTS_DIR="$TMP/agents" \
+  ENVERCETIN_BIN_DIR="$TMP/bin" ENVERCETIN_MAX_DAYS=10 "$WD" --check 2>&1)"; RC=$?
+if [[ $RC -ne 0 ]] && grep -q "30 days ago" <<<"$OUT"; then
   ok "catches a site that has gone quiet"
 else
   bad "catches a site that has gone quiet" "$OUT"
+fi
+
+OUT="$(ENVERCETIN_REPO="$QUIET_REPO" ENVERCETIN_AGENTS_DIR="$TMP/agents" \
+  ENVERCETIN_BIN_DIR="$TMP/bin" ENVERCETIN_MAX_DAYS=40 "$WD" --check 2>&1)"
+if grep -q "days ago" <<<"$OUT"; then
+  bad "stays quiet while the site is still within its rhythm" "$OUT"
+else
+  ok "stays quiet while the site is still within its rhythm"
+fi
+
+# --- 7b. A run that has been holding a lock since who knows when ---------------
+# One hang used to mean every later week was skipped with "a previous run is
+# still going" — silently, because nothing looks at the locks.
+# >/dev/null so the holder does not keep the command substitution's pipe open.
+set -m
+sleep 600 >/dev/null 2>&1 &
+HOLDER=$!
+set +m
+rm -rf "$HUNG_LOCK"; mkdir -p "$HUNG_LOCK"
+echo "$HOLDER" > "$HUNG_LOCK/pid"
+printf 'weekly-article' > "$HUNG_LOCK/job"
+
+# Within the cap: still working, and no business of the watchdog's.
+date +%s > "$HUNG_LOCK/since"
+OUT="$(run_wd)"; RC=$?
+if grep -q "has been running for" <<<"$OUT"; then
+  bad "leaves a run that is merely slow alone" "$OUT"
+else
+  ok "leaves a run that is merely slow alone"
+fi
+
+# Past the cap: hung, and everything behind it is stuck.
+echo $(( $(date +%s) - 40 * 3600 )) > "$HUNG_LOCK/since"
+OUT="$(run_wd)"; RC=$?
+if [[ $RC -ne 0 ]] && grep -q "has been running for 40 hours" <<<"$OUT"; then
+  ok "catches a run that has hung and is blocking every other job"
+else
+  bad "catches a run that has hung and is blocking every other job" "$OUT"
+fi
+kill -KILL "$HOLDER" 2>/dev/null
+HOLDER=""
+rm -rf "$HUNG_LOCK"
+
+# --- 7c. An article that never left this Mac ----------------------------------
+# The 2026-08-22 push failure, reconstructed: main carries an article the remote
+# has never seen. Every other check reads local main and calls that healthy.
+UNPUSHED_REPO="$TMP/unpushed"
+git init --bare --quiet "$TMP/unpushed-origin.git"
+git init --quiet "$UNPUSHED_REPO"
+git -C "$UNPUSHED_REPO" config user.email "test@example.com"
+git -C "$UNPUSHED_REPO" config user.name "Test"
+git -C "$UNPUSHED_REPO" config commit.gpgsign false
+git -C "$UNPUSHED_REPO" symbolic-ref HEAD refs/heads/main
+mkdir -p "$UNPUSHED_REPO/src/content/writing/en"
+echo old > "$UNPUSHED_REPO/src/content/writing/en/already-there.mdx"
+git -C "$UNPUSHED_REPO" add -A
+git -C "$UNPUSHED_REPO" commit --quiet -m "chore: base"
+git -C "$UNPUSHED_REPO" remote add origin "$TMP/unpushed-origin.git"
+git -C "$UNPUSHED_REPO" push --quiet -u origin main
+
+OUT="$(ENVERCETIN_REPO="$UNPUSHED_REPO" ENVERCETIN_AGENTS_DIR="$TMP/agents" \
+  ENVERCETIN_BIN_DIR="$TMP/bin" ENVERCETIN_MAX_DAYS=99999 "$WD" --check 2>&1)"
+if grep -q "NOT on GitHub" <<<"$OUT"; then
+  bad "a repo in step with its remote raises no push alarm" "$OUT"
+else
+  ok "a repo in step with its remote raises no push alarm"
+fi
+
+# Now commit an article locally and do not push it.
+echo new > "$UNPUSHED_REPO/src/content/writing/en/never-pushed.mdx"
+git -C "$UNPUSHED_REPO" add -A
+git -C "$UNPUSHED_REPO" commit --quiet -m "feat: article — never-pushed"
+OUT="$(ENVERCETIN_REPO="$UNPUSHED_REPO" ENVERCETIN_AGENTS_DIR="$TMP/agents" \
+  ENVERCETIN_BIN_DIR="$TMP/bin" ENVERCETIN_MAX_DAYS=99999 "$WD" --check 2>&1)"
+if grep -q "NOT on GitHub" <<<"$OUT"; then
+  ok "catches an article that is committed locally but never reached the site"
+else
+  bad "catches an article that is committed locally but never reached the site" "$OUT"
 fi
 
 # --- 8. Back to healthy --------------------------------------------------------

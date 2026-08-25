@@ -21,11 +21,15 @@ from pathlib import Path
 # lib/schedule_publish.py → parents[3] is the repo root. Derived, never hardcoded,
 # so moving the repo does not silently break next week's publish.
 REPO = str(Path(__file__).resolve().parents[3])
-AGENTS = os.path.expanduser("~/Library/LaunchAgents")
+# ENVERCETIN_AGENTS_DIR is a test seam, the same one watchdog.sh uses: it lets a
+# test watch a real schedule being written without touching the real one.
+AGENTS = os.environ.get("ENVERCETIN_AGENTS_DIR") or os.path.expanduser("~/Library/LaunchAgents")
 LOGS = os.path.expanduser("~/Library/Logs/envercetin-weekly-article")
 # The guard lives outside the repo on purpose: it is what still runs, and still
 # reaches Telegram, when the repo itself has moved or become unreadable.
 GUARD = os.path.expanduser("~/.local/bin/envercetin-guard")
+
+DAYS = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"]
 
 # (weekday, earliest hour, latest hour exclusive). Monday=0 … Friday=4, Saturday=5.
 WINDOWS = [(4, 19, 21), (5, 10, 13)]
@@ -102,6 +106,14 @@ def main(argv: list) -> int:
         os.makedirs(LOGS, exist_ok=True)
         with open(plist_path, "w", encoding="utf-8") as fh:
             fh.write(body)
+        # A plist written outside ~/Library/LaunchAgents is a fixture, not a job:
+        # nothing to load, and loading it would put a test's schedule into the
+        # user's real launchd. stdout stays exactly the same either way, because
+        # run.sh parses it.
+        if os.environ.get("ENVERCETIN_AGENTS_DIR"):
+            print(f"{when:%Y-%m-%d %H:%M}|{DAYS[when.weekday()]} {when:%d %B} at {when:%H:%M}")
+            return 0
+
         uid = os.getuid()
         # bootout first so re-running for the same slot cannot fail on a duplicate.
         subprocess.run(["launchctl", "bootout", f"gui/{uid}/{label}"],
@@ -112,8 +124,7 @@ def main(argv: list) -> int:
             print(f"launchctl bootstrap failed: {result.stderr.strip()}", file=sys.stderr)
             return 1
 
-    days = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"]
-    print(f"{when:%Y-%m-%d %H:%M}|{days[when.weekday()]} {when:%d %B} at {when:%H:%M}")
+    print(f"{when:%Y-%m-%d %H:%M}|{DAYS[when.weekday()]} {when:%d %B} at {when:%H:%M}")
     return 0
 
 

@@ -16,9 +16,27 @@ article, and publishes it only after you approve a preview.
 | 7 | On **Publish**: a one-shot launchd job is scheduled — the following Friday 19:00–21:00 or Saturday 10:00–13:00, picked at random | not yet |
 | 8 | At that moment: merge to main, verify again, push → production | yes |
 
-Nothing reaches GitHub or envercetin.de before step 8. Approving in step 7 only sets the date; you get a Telegram message naming the exact time and the command to cancel it. If you answer anything
-other than "Publish", the work stays on a local branch and the preview URL
-remains readable.
+Nothing reaches GitHub or envercetin.de before step 8. Approving in step 7 only
+sets the date; you get a Telegram message naming the exact time and the command
+to cancel it. If you decline, the work stays on a local branch and the preview
+URL remains readable — and if the question never reaches you, or you never
+answer, that is reported as undecided rather than filed as a No.
+
+### Calling off a scheduled publish
+
+```sh
+scripts/weekly-article/cancel-publish.sh <branch>     # keeps the work as draft/<name>
+scripts/weekly-article/cancel-publish.sh --list       # what is scheduled
+```
+
+Do **not** cancel with `launchctl bootout` alone: that unloads the job and leaves
+the plist in `~/Library/LaunchAgents`, so at the next login launchd loads it
+again and the article you withdrew goes live. `cancel-publish.sh` deletes the
+file first, then unloads, and renames `article/<name>` to `draft/<name>` so the
+watchdog stops reporting a branch with no schedule as stuck. Add
+`--delete-branch` to throw the article away, or `--keep-branch` to leave it where
+it is because you mean to reschedule. Undo a rename with
+`git branch -m draft/<name> article/<name>`.
 
 ## Activation
 
@@ -58,7 +76,7 @@ healthy. Saturday is the pre-flight — today is a writing day, is last week's
 article actually out? Tuesday is the post-mortem — Saturday has been and gone,
 did anything come of it?
 
-It checks four things, all from local state:
+It checks six things, nearly all from local state:
 
 1. the weekly job is still loaded in launchd;
 2. `~/.local/bin/envercetin-guard` and `-notify` match the repo (editing
@@ -67,7 +85,12 @@ It checks four things, all from local state:
 3. every `article/*` branch either has a publish job still in the future, or is
    reported as stuck — including the case where the job exists but its date has
    already passed, which is precisely what 2026-08-22 left behind;
-4. how long since anything actually reached the site (default: complain after
+4. whether local `main` holds article commits the remote has never seen — a
+   failed push used to leave exactly that, and every other check here reads
+   local `main` and would have called it healthy;
+5. whether a run is still holding a lock past the 36-hour cap, which blocks
+   every other job behind it;
+6. how long since anything actually reached the site (default: complain after
    10 days).
 
 Run it by hand without sending anything:
@@ -79,15 +102,31 @@ scripts/weekly-article/watchdog.sh --check
 ## Tests
 
 ```sh
-scripts/weekly-article/tests/guard.test.sh
-scripts/weekly-article/tests/watchdog.test.sh
+scripts/weekly-article/tests/run-all.sh      # everything
+scripts/weekly-article/tests/guard.test.sh   # or one suite at a time
 ```
 
-`install.sh` runs both and refuses to install if either fails. The guard tests
-drive the real guard through real launchd jobs, because the bugs worth catching
-here only exist under launchd — a self-`bootout` cannot be reproduced any other
-way. Every probe job is labelled `com.enver.envercetin.retry-guardtest-*` and is
-booted out in a trap.
+`install.sh` runs `run-all.sh` and refuses to install if anything fails, because
+installing is the moment a regression goes live and every failure mode here is a
+silent one.
+
+| Suite | What it pins down |
+|---|---|
+| `guard.test.sh` | the launchd-only behaviour: a retry that must not boot itself out, the offline give-up path |
+| `repo-lock.test.sh` | one job at a time per working tree; a hung run swept and killed rather than blocking every later week |
+| `timeout.test.sh` | `with_timeout`: 124 on a hang, children die with the parent, and it works inside a pipeline |
+| `approval.test.sh` | what an answer to "Publish it?" means — including a broken Telegram, which is not a No |
+| `approval-flow.test.sh` | what `run.sh` actually *does* with each of those answers, end to end with fake `claude`/`vercel`/`tg.py` |
+| `deploy.test.sh` | a rejected push leaves the repo exactly as it was, and success is confirmed against the remote before it is claimed |
+| `cancel-publish.test.sh` | the plist is deleted rather than merely unloaded, and the watchdog stops nagging |
+| `watchdog.test.sh` | each broken state is reported, and a healthy one is silent |
+
+The guard tests drive the real guard through real launchd jobs, because the bugs
+worth catching there only exist under launchd — a self-`bootout` cannot be
+reproduced any other way. Every probe job is labelled
+`com.enver.envercetin.retry-guardtest-*` and is booted out in a trap. Everything
+else runs against temp repos with a real bare remote, and reaches neither GitHub,
+Vercel, nor Telegram.
 
 ## Running it by hand
 
@@ -122,9 +161,30 @@ Telegram message.
   target script is readable before running it, and reports any non-zero exit,
   including crashes and kills that the script itself could not report. Telegram
   is the channel; a macOS notification is the fallback if Telegram is what broke.
-- **One run at a time.** The guard takes a PID lock, so a run that is still going
-  is never joined by a second one. A lock left by a killed run is taken over, not
-  honoured forever.
+- **One run at a time, and one job at a time per repo.** The guard takes a lock
+  for the job *and* a lock for the working tree. The second one matters because
+  a publish job that launchd deferred to the next wake and the Saturday writing
+  run are different jobs with equal right to run — and both begin with
+  `git checkout` in the same directory. A job that finds the repo busy arms a
+  retry and says so once, rather than joining in or being lost.
+- **A hung run cannot cost more than one cycle.** Every long step has a ceiling
+  (writing 2 h, verify 45 min, deploy 15 min, anything on the network 10 min) and
+  is killed with its whole process group when it passes it. If a run hangs
+  anyway, its lock carries the time it was taken: the next job to arrive kills
+  the holder and reports it. There is deliberately no sweeper daemon — alarms do
+  not fire while the Mac sleeps and a background sweeper would sleep with it, so
+  the check belongs in whatever wakes up next.
+- **A failed push rolls back.** `deploy-scheduled.sh` either leaves the article
+  on GitHub or leaves the repo exactly as it found it. It confirms the push
+  landed by asking the remote before it reports success — "✅ Published" used to
+  be sent on the strength of `git push` returning 0, and a rejected push left the
+  article merged into local `main` only, with the branch deleted and every alarm
+  green.
+- **A question that fails is not an answer.** A Telegram error, a dropped poll or
+  a reply that is neither option is reported as undecided — with both ways out —
+  and never as "kept as a draft, as you asked". Collapsing those into a No turned
+  a finished article into a permanent draft whose topic could never be proposed
+  again.
 - **The ask lock is always released.** If a run dies holding personal-os's
   `data/ask-active.lock`, the guard removes it — but only if that run created it
   — so `kb_daemon` does not stay paused indefinitely.

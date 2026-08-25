@@ -94,19 +94,11 @@ fi
 # every offline retry killed itself in silence. This is the moment that regression
 # would be introduced, so this is where the gate belongs.
 if [[ "${ENVERCETIN_SKIP_GUARD_TESTS:-}" != "1" ]]; then
-  echo "running guard tests..."
-  if ! "$REPO/scripts/weekly-article/tests/guard.test.sh"; then
+  echo "running the pipeline's tests..."
+  if ! "$REPO/scripts/weekly-article/tests/run-all.sh"; then
     echo >&2
-    echo "REFUSING: guard.sh fails its own tests. Nothing was installed." >&2
+    echo "REFUSING: the pipeline fails its own tests. Nothing was installed." >&2
     echo "Set ENVERCETIN_SKIP_GUARD_TESTS=1 to override, but read the failures first." >&2
-    exit 1
-  fi
-  echo
-  echo "running watchdog tests..."
-  if ! "$REPO/scripts/weekly-article/tests/watchdog.test.sh"; then
-    echo >&2
-    echo "REFUSING: watchdog.sh fails its own tests. Nothing was installed." >&2
-    echo "A watchdog that reports healthy through a broken week is worse than none." >&2
     exit 1
   fi
   echo

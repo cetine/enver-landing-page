@@ -42,11 +42,19 @@ TG="$PERSONAL_OS/tg.py"
 ASK_LOCK="$PERSONAL_OS/data/ask-active.lock"
 LOG_DIR="$HOME/Library/Logs/envercetin-weekly-article"
 LOG="$LOG_DIR/guard-$JOB-$(date +%Y-%m-%d-%H%M).log"
-LOCK_DIR="$HOME/Library/Caches/envercetin-guard/$JOB.lock"
+LOCK_ROOT="$HOME/Library/Caches/envercetin-guard"
+LOCK_DIR="$LOCK_ROOT/$JOB.lock"
+RETRY_LABEL="com.enver.envercetin.retry-$JOB"
+
+# What separates "still working" from "hung forever". A legitimate run can take
+# most of a day — the topic question waits up to three rounds of 150 minutes and
+# the approval question up to twelve hours — so the cap sits well above a real
+# run, and far below the seven days until the next one.
+MAX_RUN_SEC=$(( ${ENVERCETIN_MAX_RUN_HOURS:-36} * 3600 ))
 
 export PATH="$HOME/.local/bin:/opt/homebrew/bin:/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin"
 
-mkdir -p "$LOG_DIR" "$(dirname "$LOCK_DIR")"
+mkdir -p "$LOG_DIR" "$LOCK_ROOT"
 exec > >(tee -a "$LOG") 2>&1
 echo "=== guard: $JOB — $(date) ==="
 echo "target: $SCRIPT ${*:-}"
@@ -78,21 +86,118 @@ notify() {
   return 0
 }
 
-# --- Single instance ----------------------------------------------------------
-# mkdir is atomic. A lock whose PID is gone is stale — a previous run that was
-# killed — and gets taken over rather than blocking every future week.
-if ! mkdir "$LOCK_DIR" 2>/dev/null; then
-  STALE_PID="$(cat "$LOCK_DIR/pid" 2>/dev/null || echo "")"
-  if [[ -n "$STALE_PID" ]] && kill -0 "$STALE_PID" 2>/dev/null; then
-    echo "another $JOB run is active (pid $STALE_PID) — exiting without starting a second one"
-    notify "⚠️ Skipped $JOB: a previous run (pid $STALE_PID) is still going. Nothing was started."
-    exit 0
+# A retry re-arms itself for as long as its condition holds. Reporting on every
+# attempt turns one problem into an alarm clock — a dozen identical messages for
+# a single long wait, all delivered at once when the network returns. Say it on
+# the run that first hit it, and then keep quiet about it.
+notify_unless_retry() {
+  if [[ "${XPC_SERVICE_NAME:-}" == "$RETRY_LABEL" || "${ENVERCETIN_RETRY_OF:-}" == "$JOB" ]]; then
+    echo "(reported already on the first attempt, staying quiet) $1"
+    return 0
   fi
-  echo "taking over a stale lock (pid ${STALE_PID:-unknown} is gone)"
-  rm -rf "$LOCK_DIR"
-  mkdir -p "$LOCK_DIR"
+  notify "$1"
+}
+
+# --- Locks --------------------------------------------------------------------
+# Two of them, both mkdir-atomic:
+#
+#   job lock  — do not start the same job twice
+#   repo lock — do not let two DIFFERENT jobs into the same working tree
+#
+# The repo lock is the one that was missing. A publish job that launchd deferred
+# to the next wake and the Saturday writing run are different jobs with equal
+# right to run, and both begin with `git checkout` in the same directory: one
+# `git reset --hard` lands on the other's half-written article, and nothing in
+# the pipeline notices which one lost.
+#
+# Each lock records its holder's pid, the epoch it was taken and the job that
+# took it. The age is what makes a hung run recoverable WITHOUT a daemon: no
+# process has to stay awake watching — and none could, on a MacBook that spends
+# its life with the lid shut — because the next run to arrive is what judges it.
+LOCKS_HELD=()
+LOCK_BUSY_PID=""
+LOCK_BUSY_JOB=""
+
+lock_take() {
+  local dir="$1"
+  mkdir "$dir" 2>/dev/null || return 1
+  echo $$ > "$dir/pid"
+  date +%s > "$dir/since"
+  printf '%s' "$JOB" > "$dir/job"
+  LOCKS_HELD+=("$dir")
+  return 0
+}
+
+# Only ever removes locks this run actually holds — a lock belonging to someone
+# else must survive our exit, however we exit.
+release_locks() {
+  local dir
+  for dir in ${LOCKS_HELD+"${LOCKS_HELD[@]}"}; do
+    rm -rf "$dir"
+  done
+  LOCKS_HELD=()
+}
+trap release_locks EXIT
+
+# Kill a process, and the whole process group when it leads one — which is how
+# launchd starts every job here. `claude -p` and `npm run verify` leave children
+# that would otherwise keep holding the network and the repo: the hang, still
+# hanging, just without anything left to report it.
+kill_tree() {
+  local pid="$1" pgid
+  pgid="$(ps -o pgid= -p "$pid" 2>/dev/null | tr -d ' ')"
+  if [[ -n "$pgid" && "$pgid" == "$pid" ]]; then
+    kill -TERM "-$pid" 2>/dev/null
+    sleep 2
+    kill -KILL "-$pid" 2>/dev/null
+  else
+    kill -TERM "$pid" 2>/dev/null
+    sleep 2
+    kill -KILL "$pid" 2>/dev/null
+  fi
+}
+
+# 0 = acquired, 1 = someone else is legitimately working.
+lock_acquire() {
+  local dir="$1" what="$2"
+  lock_take "$dir" && return 0
+
+  local pid since job age
+  pid="$(cat "$dir/pid" 2>/dev/null || echo "")"
+  since="$(cat "$dir/since" 2>/dev/null || echo 0)"
+  job="$(cat "$dir/job" 2>/dev/null || echo unknown)"
+  [[ "$since" =~ ^[0-9]+$ ]] || since=0
+  age=$(( $(date +%s) - since ))
+  LOCK_BUSY_PID="$pid"
+  LOCK_BUSY_JOB="$job"
+
+  if [[ -n "$pid" ]] && kill -0 "$pid" 2>/dev/null; then
+    # A lock with no timestamp was written before the cap existed. Unknown age is
+    # not evidence of a hang, and killing a healthy run in the middle of writing
+    # an article is far worse than waiting one cycle.
+    if (( since > 0 && age > MAX_RUN_SEC )); then
+      echo "$what lock held by $job (pid $pid) for $(( age / 3600 ))h — past the $(( MAX_RUN_SEC / 3600 ))h cap, treating it as hung"
+      kill_tree "$pid"
+      notify "🧹 Found a hung run: \`$job\` had been holding the $what lock since $(date -r "$since" '+%d.%m. %H:%M') — $(( age / 3600 )) hours. I killed it so $JOB could run, and it may have left something half-done. Log: $LOG"
+      rm -rf "$dir"
+      lock_take "$dir" && return 0
+      return 1
+    fi
+    return 1
+  fi
+
+  echo "taking over a stale $what lock (job $job, pid ${pid:-unknown} is gone)"
+  rm -rf "$dir"
+  lock_take "$dir" && return 0
+  return 1
+}
+
+# --- Single instance ----------------------------------------------------------
+if ! lock_acquire "$LOCK_DIR" "job"; then
+  echo "another $JOB run is active (pid $LOCK_BUSY_PID) — exiting without starting a second one"
+  notify "⚠️ Skipped $JOB: a previous run (pid $LOCK_BUSY_PID) is still going. Nothing was started."
+  exit 0
 fi
-echo $$ > "$LOCK_DIR/pid"
 
 # --- Pre-flight ---------------------------------------------------------------
 # This is the check that would have caught 2026-08-15 before the week was lost.
@@ -101,7 +206,6 @@ if [[ ! -r "$SCRIPT" ]]; then
   notify "⚠️ The weekly article job could not start: \`$SCRIPT\` is missing or unreadable.
 
 Nothing ran. The repo has probably moved, or macOS is denying access to its folder. Log: $LOG"
-  rm -rf "$LOCK_DIR"
   exit 66
 fi
 
@@ -111,7 +215,6 @@ if [[ -z "$REPO_DIR" || ! -d "$REPO_DIR/.git" ]]; then
   notify "⚠️ The weekly article job could not start: no git repo above \`$SCRIPT\`.
 
 Nothing ran. Log: $LOG"
-  rm -rf "$LOCK_DIR"
   exit 66
 fi
 echo "repo: $REPO_DIR"
@@ -202,7 +305,6 @@ PLIST
 #
 # launchd sets XPC_SERVICE_NAME to the running job's own label, and arm_retry also
 # stamps ENVERCETIN_RETRY_OF into the plist it writes; either identifies us.
-RETRY_LABEL="com.enver.envercetin.retry-$JOB"
 RETRY_PLIST="$HOME/Library/LaunchAgents/$RETRY_LABEL.plist"
 if [[ -f "$RETRY_PLIST" ]]; then
   if [[ "${XPC_SERVICE_NAME:-}" == "$RETRY_LABEL" || "${ENVERCETIN_RETRY_OF:-}" == "$JOB" ]]; then
@@ -217,6 +319,24 @@ if [[ -f "$RETRY_PLIST" ]]; then
     echo "cleared a pending retry for $JOB"
   fi
 fi
+
+# --- One job at a time per working tree ---------------------------------------
+# Keyed by the physical repo path, so two checkouts of the same project do not
+# block each other and a symlinked path cannot slip past as a different repo.
+REPO_KEY="$(printf '%s' "$(cd "$REPO_DIR" && pwd -P)" | shasum | cut -c1-12)"
+REPO_LOCK="$LOCK_ROOT/repo-$REPO_KEY.lock"
+
+if ! lock_acquire "$REPO_LOCK" "repo"; then
+  echo "another article job is working in this repo: $LOCK_BUSY_JOB (pid $LOCK_BUSY_PID) — deferring rather than joining it"
+  arm_retry
+  notify_unless_retry "⏳ $JOB is waiting: \`$LOCK_BUSY_JOB\` is still working in $REPO_DIR.
+
+Two jobs in one working tree would overwrite each other's article, so I re-armed this one for ${RETRY_IN_MIN} min from now and will keep re-arming. Nothing was lost."
+  exit 0
+fi
+# So run.sh and deploy-scheduled.sh know the lock is already held on their behalf
+# and do not refuse to start inside their own guard.
+export ENVERCETIN_REPO_LOCK="$REPO_LOCK"
 
 if ! online; then
   echo "offline at start — waiting for up to ${NET_WAIT_MIN} min of awake time"
@@ -244,10 +364,9 @@ if ! online; then
       # Silence here is what made 2026-08-22 invisible: the run ended with exit 0
       # and no message, so a lost Saturday looked exactly like a normal one. The
       # notifier spools this and delivers it as soon as anything gets a network.
-      notify "📴 $JOB could not start: the Mac has had no usable connection for $(( AWAKE / 60 )) min of awake time.
+      notify_unless_retry "📴 $JOB could not start: the Mac has had no usable connection for $(( AWAKE / 60 )) min of awake time.
 
 Nothing was lost — I re-armed the job for ${RETRY_IN_MIN} min from now and will keep re-arming. Log: $LOG"
-      rm -rf "$LOCK_DIR"
       exit 0
     fi
     BEFORE=$(date +%s)
@@ -289,7 +408,7 @@ if [[ "$ASK_LOCK_PRE_EXISTING" == "no" && -e "$ASK_LOCK" ]]; then
   echo "releasing the personal-os ask lock left behind by this run"
   rm -f "$ASK_LOCK"
 fi
-rm -rf "$LOCK_DIR"
+release_locks
 
 # The scripts report their own handled failures. This catches everything they
 # could not: a crash, a kill, an exit path with no message of its own.

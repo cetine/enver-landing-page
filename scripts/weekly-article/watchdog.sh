@@ -19,7 +19,7 @@
 
 set -uo pipefail
 
-REPO="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
+REPO="${ENVERCETIN_REPO:-$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)}"
 # Seams, so the tests can build each broken state without touching the real
 # schedule. A watchdog you cannot safely test is one you find out about the same
 # way you found out about everything else: too late.
@@ -31,8 +31,16 @@ MAX_DAYS="${ENVERCETIN_MAX_DAYS:-10}"
 # Which ref counts as published. Only the tests ever override it, so the quiet-site
 # alarm can be driven from real history rather than a fabricated timestamp.
 MAIN_REF="${ENVERCETIN_MAIN_REF:-main}"
+# Deliberately NOT configurable: the guard writes its locks here, and a watchdog
+# reading a different directory would report a healthy pipeline by watching an
+# empty one.
+LOCK_ROOT="$HOME/Library/Caches/envercetin-guard"
+MAX_RUN_HOURS="${ENVERCETIN_MAX_RUN_HOURS:-36}"
 CHECK_ONLY=no
 [[ "${1:-}" == "--check" ]] && CHECK_ONLY=yes
+
+# shellcheck source=lib/with_timeout.sh
+source "$(dirname "${BASH_SOURCE[0]}")/lib/with_timeout.sh"
 
 cd "$REPO" || { echo "cannot reach $REPO" >&2; exit 66; }
 
@@ -90,13 +98,56 @@ PY
     else
       add "• \`$branch\` was approved and scheduled, but its publish job was due $(date -r "${fire:-$NOW_EPOCH}" '+%d.%m. um %H:%M') and never ran.
   The article is written and sitting on your Mac, unpublished.
-  Fix: $REPO/scripts/weekly-article/deploy-scheduled.sh $branch"
+  Publish it: $REPO/scripts/weekly-article/deploy-scheduled.sh $branch
+  Or drop it:  $REPO/scripts/weekly-article/cancel-publish.sh $branch"
       pending=yes   # reported; do not also report it as an orphan below
     fi
   done
   if [[ "$pending" == no ]]; then
     add "• \`$branch\` exists but nothing is scheduled to publish it. It is written and stuck.
-  Fix: $REPO/scripts/weekly-article/deploy-scheduled.sh $branch"
+  Publish it: $REPO/scripts/weekly-article/deploy-scheduled.sh $branch
+  Or drop it:  $REPO/scripts/weekly-article/cancel-publish.sh $branch"
+  fi
+done
+
+# --- 3b. An article that is on this Mac and nowhere else ----------------------
+# A push that failed used to leave main locally merged and the branch deleted.
+# Every other check here reads LOCAL main, so all of them would have reported a
+# freshly published article — while the site showed nothing and no branch was
+# left to notice. deploy-scheduled.sh now rolls back instead, and this is the
+# net under it: whatever the reason, main holding an article the remote has not
+# seen is never healthy.
+if git rev-parse --verify origin/main >/dev/null 2>&1; then
+  # Best-effort refresh. The watchdog is otherwise local-only on purpose, and a
+  # `git push` updates the local origin/main ref anyway, so a failure here costs
+  # accuracy about someone else's pushes, not about our own.
+  with_timeout 20 git fetch --quiet origin main >/dev/null 2>&1 || true
+
+  UNPUSHED="$(git rev-list --count origin/main..main -- src/content/writing/en/ 2>/dev/null || echo 0)"
+  if [[ "$UNPUSHED" =~ ^[0-9]+$ ]] && (( UNPUSHED > 0 )); then
+    add "• $UNPUSHED article commit(s) are on your local main but NOT on GitHub, so the site does not have them.
+  A push must have failed. Nothing here will retry it on its own.
+  Fix: cd $REPO && git push"
+  fi
+fi
+
+# --- 3c. A run that is still holding a lock ----------------------------------
+# The guard sweeps a lock held past the cap the next time a job arrives — but the
+# next job may be six days away, and until then every run is skipped with
+# "a previous run is still going". Saying so on Saturday morning is the point.
+for lock in "$LOCK_ROOT"/*.lock; do
+  [[ -d "$lock" ]] || continue
+  lock_pid="$(cat "$lock/pid" 2>/dev/null || echo "")"
+  lock_since="$(cat "$lock/since" 2>/dev/null || echo 0)"
+  lock_job="$(cat "$lock/job" 2>/dev/null || echo unknown)"
+  [[ "$lock_since" =~ ^[0-9]+$ ]] || lock_since=0
+  [[ -n "$lock_pid" ]] && kill -0 "$lock_pid" 2>/dev/null || continue
+  (( lock_since > 0 )) || continue
+  lock_hours=$(( ($(date +%s) - lock_since) / 3600 ))
+  if (( lock_hours >= MAX_RUN_HOURS )); then
+    add "• \`$lock_job\` (pid $lock_pid) has been running for $lock_hours hours and still holds $(basename "$lock").
+  Everything else in the pipeline is waiting behind it.
+  Fix: kill $lock_pid && rm -rf $lock"
   fi
 done
 
