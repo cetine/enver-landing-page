@@ -548,9 +548,35 @@ fi
 
 # --- 5. Preview (local tree → Vercel; nothing pushed to GitHub) ---------------
 echo "--- deploying preview"
-PREVIEW="$(with_timeout "$DEPLOY_TIMEOUT" "$VERCEL_BIN" deploy --yes 2>/dev/null | grep -Eo 'https://[a-z0-9.-]+\.vercel\.app' | tail -1)"
+# The same shape that killed the propose step, one stage later and with more at
+# stake: by this line the article is written, verified and committed. A bare
+# assignment under `set -euo pipefail` fails the run at the assignment itself —
+# `grep -Eo` exits 1 when the output holds no URL, and with_timeout returns 124
+# when the deploy hangs — so the handler two lines below, which is the one that
+# says something useful, could never run. The `if` form keeps the exit code and
+# reaches the handler.
+if DEPLOY_OUT="$(with_timeout "$DEPLOY_TIMEOUT" "$VERCEL_BIN" deploy --yes 2>/dev/null)"; then
+  DEPLOY_RC=0
+else
+  DEPLOY_RC=$?
+fi
+PREVIEW="$(printf '%s\n' "$DEPLOY_OUT" | grep -Eo 'https://[a-z0-9.-]+\.vercel\.app' | tail -1 || true)"
 if [[ -z "$PREVIEW" ]]; then
-  notify "⚠️ Weekly article: preview deploy produced no URL. Branch $BRANCH is committed locally. Log: $LOG"
+  if [[ $DEPLOY_RC -eq 124 ]]; then
+    WHY="the deploy was still running after $(( DEPLOY_TIMEOUT / 60 )) minutes and had to be killed"
+  elif [[ $DEPLOY_RC -ne 0 ]]; then
+    WHY="\`$VERCEL_BIN deploy\` exited $DEPLOY_RC"
+  else
+    WHY="the deploy finished but printed no preview URL"
+  fi
+  notify "⚠️ Weekly article: no preview to show you — $WHY.
+
+\"$SLUG\" is written, verified and committed on \`$BRANCH\`. Nothing was published.
+
+Retry the deploy and the approval with:
+$REPO/scripts/weekly-article/run.sh --resume $BRANCH
+
+Log: $LOG"
   exit 1
 fi
 echo "preview: $PREVIEW"
@@ -645,8 +671,19 @@ esac
 # following Saturday 10:00-13:00 — so the site does not read as cron-driven.
 echo "--- scheduling publish"
 git checkout main --quiet
-SLOT="$(python3 scripts/weekly-article/lib/schedule_publish.py "$BRANCH")"
-SLOT_HUMAN="${SLOT#*|}"
+# Guarded for the same reason: an unguarded assignment dies at the assignment,
+# and by this line Enver has already been told his article was approved.
+if SLOT="$(python3 scripts/weekly-article/lib/schedule_publish.py "$BRANCH")" && [[ -n "$SLOT" ]]; then
+  SLOT_HUMAN="${SLOT#*|}"
+else
+  notify "⚠️ Weekly article: you approved \"$SLUG\", but I could not schedule its publish.
+
+It is finished and waiting on \`$BRANCH\`. Publish it whenever you like:
+$REPO/scripts/weekly-article/deploy-scheduled.sh $BRANCH
+
+Log: $LOG"
+  exit 1
+fi
 
 notify "🗓 Approved. \"$SLUG\" is scheduled to go live on $SLOT_HUMAN.
 

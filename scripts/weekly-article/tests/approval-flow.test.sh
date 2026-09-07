@@ -50,7 +50,12 @@ FAKE
 
 cat > "$BIN/vercel" <<'FAKE'
 #!/usr/bin/env bash
-echo "https://envercetin-test-preview.vercel.app"
+# VERCEL_MODE: ok (default) | silent (deploys, prints no URL) | fail (exits 1)
+case "${VERCEL_MODE:-ok}" in
+  silent) echo "Deploying..."; exit 0 ;;
+  fail)   echo "Error: no credentials" >&2; exit 1 ;;
+  *)      echo "https://envercetin-test-preview.vercel.app" ;;
+esac
 FAKE
 
 cat > "$FAKE_OS/tg.py" <<'FAKE'
@@ -116,6 +121,7 @@ run_pipeline() {
       ENVERCETIN_APPROVE_MIN=1 \
       ENVERCETIN_ASK_ROUND_MIN=1 \
       TG_SCRIPT="$TG_SCRIPT" \
+      VERCEL_MODE="${VERCEL_MODE:-ok}" \
       /bin/bash "$RUN" > "$TMP/run.log" 2>&1
   RUN_RC=$?
 }
@@ -190,6 +196,35 @@ ls "$AGENTS"/com.enver.envercetin.publish-*.plist >/dev/null 2>&1 \
   && ok "an unusable answer is re-asked, and the real answer wins" \
   || bad "an unusable answer is re-asked, and the real answer wins" "nothing was scheduled: $(grep 'round' "$TMP/run.log")"
 rm -f "$AGENTS"/*.plist
+
+# --- 6. The preview deploy produced no URL -------------------------------------
+# The assignment used to be bare, so `grep -Eo` exiting 1 on output with no URL
+# — or with_timeout returning 124 on a hung deploy — killed the run AT the
+# assignment, under `set -euo pipefail`, and the handler below it that says
+# something useful could never run. By this line the article is written,
+# verified and committed, so the message is the difference between a resumable
+# article and a mystery.
+VERCEL_MODE=silent run_pipeline "0:A test topic" "0:Publish"
+VERCEL_MODE=ok
+[[ $RUN_RC -ne 0 ]] && ok "a deploy with no preview URL fails the run" \
+  || bad "a deploy with no preview URL fails the run" "rc=$RUN_RC"
+grep -q "no preview to show you" "$TMP/run.log" && ok "a deploy with no URL says so in plain words" \
+  || bad "a deploy with no URL says so in plain words" "$(grep 'would notify' "$TMP/run.log" | tail -1)"
+grep -q "run.sh --resume" "$TMP/run.log" && ok "a failed deploy tells you how to resume the finished article" \
+  || bad "a failed deploy tells you how to resume the finished article" "no --resume hint"
+branch_exists && ok "a failed deploy keeps the article it could not show you" \
+  || bad "a failed deploy keeps the article it could not show you" "the branch was lost"
+ls "$AGENTS"/com.enver.envercetin.publish-*.plist >/dev/null 2>&1 \
+  && bad "a failed deploy publishes nothing" "a publish job was armed" \
+  || ok "a failed deploy publishes nothing"
+
+# --- 7. The deploy command itself failed ---------------------------------------
+VERCEL_MODE=fail run_pipeline "0:A test topic" "0:Publish"
+VERCEL_MODE=ok
+grep -q "exited 1" "$TMP/run.log" && ok "a deploy that exits non-zero is reported with its exit code" \
+  || bad "a deploy that exits non-zero is reported with its exit code" "$(grep 'would notify' "$TMP/run.log" | tail -1)"
+branch_exists && ok "a broken deploy keeps the finished article too" \
+  || bad "a broken deploy keeps the finished article too" "the branch was lost"
 
 echo
 echo "$PASS passed, $FAIL failed"
