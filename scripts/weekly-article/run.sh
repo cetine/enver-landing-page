@@ -25,10 +25,22 @@ set -euo pipefail
 # the writer finished the article and then hit the monthly spend limit before it
 # could print its SLUG line, so run.sh threw away 24 minutes of finished work.
 # Nothing downstream of the writer needs a model, so a resume always can run.
+#
+# --topics <topics.json> is the other half of that argument, one step earlier.
+# The topic gate used to end a run by throwing away the proposals: the research
+# had happened, the JSON was on disk, and no entry point could consume it, so
+# the only way on was a full re-run of the step that had just cost thirty
+# minutes. On 2026-08-29 that is exactly how a week was lost — the questions
+# went out at 21:39, 00:09 and 02:39, nobody was awake, and four researched
+# topics were discarded. This skips the proposer and asks straight away.
 RESUME_BRANCH=""
-if [[ "${1:-}" == "--resume" ]]; then
-  RESUME_BRANCH="${2:?usage: run.sh --resume <branch>}"
-fi
+TOPICS_FILE=""
+case "${1:-}" in
+  --resume) RESUME_BRANCH="${2:?usage: run.sh --resume <branch>}" ;;
+  --topics) TOPICS_FILE="${2:?usage: run.sh --topics <topics.json>}" ;;
+  "")       ;;
+  *)        echo "usage: run.sh [--resume <branch> | --topics <topics.json>]" >&2; exit 2 ;;
+esac
 
 # Derived from this script's own location, never hardcoded: moving the repo must
 # not require editing it. scripts/weekly-article/run.sh → ../.. is the root.
@@ -45,7 +57,9 @@ VERIFY_CMD="${ENVERCETIN_VERIFY_CMD:-npm run verify}"
 # silently overruled and ends up driving the real model against a fixture repo.
 CLAUDE_BIN="${ENVERCETIN_CLAUDE_BIN:-claude}"
 VERCEL_BIN="${ENVERCETIN_VERCEL_BIN:-vercel}"
-LOG_DIR="$HOME/Library/Logs/envercetin-weekly-article"
+# Seam: the tests plant and inspect deferral markers and proposal JSON, and doing
+# that in the real log directory means a test run leaves state a real run reads.
+LOG_DIR="${ENVERCETIN_LOG_DIR:-$HOME/Library/Logs/envercetin-weekly-article}"
 STAMP="$(date +%Y-%m-%d)"
 LOG="$LOG_DIR/$STAMP.log"
 
@@ -62,12 +76,25 @@ VERIFY_TIMEOUT="${ENVERCETIN_VERIFY_TIMEOUT_SEC:-2700}"
 DEPLOY_TIMEOUT="${ENVERCETIN_DEPLOY_TIMEOUT_SEC:-900}"
 NET_TIMEOUT="${ENVERCETIN_NET_TIMEOUT_SEC:-600}"
 
+# The topic question is only worth asking when Enver can answer it. The rounds
+# below used to be a pure elapsed-time ladder with no idea what time it was, so
+# a run that reached the gate at 21:39 spent its whole escalation between then
+# and 02:39 and declared the week lost at dawn. Asking now happens only inside
+# these hours; outside them the proposals are kept and the question is re-armed
+# for the next morning, up to MAX_DEFERRALS times.
+ASK_FROM_HOUR="${ENVERCETIN_ASK_FROM_HOUR:-9}"
+ASK_UNTIL_HOUR="${ENVERCETIN_ASK_UNTIL_HOUR:-21}"
+ASK_DEFER_HOUR="${ENVERCETIN_ASK_DEFER_HOUR:-10}"
+MAX_DEFERRALS="${ENVERCETIN_MAX_DEFERRALS:-2}"
+
 # shellcheck source=lib/with_timeout.sh
 source "$HERE/lib/with_timeout.sh"
 # shellcheck source=lib/approval.sh
 source "$HERE/lib/approval.sh"
 # shellcheck source=lib/repo_lock.sh
 source "$HERE/lib/repo_lock.sh"
+# shellcheck source=lib/arm_job.sh
+source "$HERE/lib/arm_job.sh"
 
 mkdir -p "$LOG_DIR"
 exec > >(tee -a "$LOG") 2>&1
@@ -88,12 +115,22 @@ notify() {
   fi
 }
 
+# `set +e` turns off errexit but NOT this trap. Every handled non-zero therefore
+# used to fire it: on the night of 2026-08-29 a topic question nobody answered —
+# the designed, fully handled path — sent Enver three "⚠️ Weekly article failed
+# at line 200" messages, each contradicted moments later by the correct one, and
+# line 200 was the `for` keyword rather than anything that had failed. Fallible
+# steps are now run as `if VAR="$(...)"; then` conditions, which bash exempts
+# from the trap, and this is left for the genuinely unexpected. It reports the
+# command as well as the line, because a trap that fires inside a compound
+# statement reports the line of the compound, not of the failure — that is how
+# 2026-09-05 came to blame a closing `fi`.
 on_error() {
-  local line=$1
-  echo "FAILED at line $line"
-  notify "⚠️ Weekly article failed at line $line. Log: $LOG"
+  local line=$1 cmd=${2:-}
+  echo "FAILED at line $line: $cmd"
+  notify "⚠️ Weekly article failed at line $line: \`$cmd\`. Log: $LOG"
 }
-trap 'on_error $LINENO' ERR
+trap 'on_error $LINENO "$BASH_COMMAND"' ERR
 
 # --- Preconditions ------------------------------------------------------------
 cd "$REPO"
@@ -110,7 +147,13 @@ fi
 # script at all, and arms a retry rather than giving up. So by this line the
 # network is known good: the first chance all week to deliver anything an earlier
 # offline run had to queue.
-command -v envercetin-notify >/dev/null 2>&1 && envercetin-notify --flush || true
+#
+# Gated on the same seam as notify(): install.sh runs the test suite before it
+# installs, and an ungated flush here drove the real notifier against Enver's
+# real spool five times per test run.
+if [[ -z "${ENVERCETIN_TEST_SILENT:-}" ]] && command -v envercetin-notify >/dev/null 2>&1; then
+  envercetin-notify --flush || true
+fi
 
 # A resume expects a dirty tree — the half-finished article is the whole point.
 if [[ -z "$RESUME_BRANCH" ]]; then
@@ -128,6 +171,19 @@ fi
 
 CLAUDE_FLAGS=(--model opus --permission-mode acceptEdits
   --allowed-tools "Bash,Read,Write,Edit,Glob,Grep,WebSearch,WebFetch,Task,Workflow,TodoWrite,TaskCreate,TaskUpdate")
+
+# On 2026-09-05 `claude -p` hung for thirty fully awake minutes and was killed at
+# the ceiling. It left a session directory, its two SessionStart hook env files
+# and a touched plugin-cache directory — and no transcript at all, so it never
+# reached its first model turn. Startup hung, not research: the CLI refreshes
+# plugin marketplaces and checks for updates before it begins, and those are
+# network calls this pipeline gains nothing from. Turn off what can be turned
+# off; the retry below covers whatever cannot.
+CLAUDE_ENV=(env
+  CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC=1
+  DISABLE_AUTOUPDATER=1
+  DISABLE_TELEMETRY=1
+  DISABLE_ERROR_REPORTING=1)
 
 if [[ -n "$RESUME_BRANCH" ]]; then
   # --- Resume -------------------------------------------------------------------
@@ -155,6 +211,26 @@ if [[ -n "$RESUME_BRANCH" ]]; then
   echo "resuming $BRANCH at the verify gate — slug: $SLUG"
 else
   # --- 1. Propose topics --------------------------------------------------------
+  # ...unless a previous run already did, and nobody was awake to answer it.
+  # `--topics` hands those proposals straight back to the question below.
+  if [[ -n "$TOPICS_FILE" ]]; then
+    [[ -f "$TOPICS_FILE" ]] || { notify "⚠️ Weekly article: --topics $TOPICS_FILE does not exist. Nothing was done."; exit 1; }
+    cp "$TOPICS_FILE" "$LOG_DIR/$STAMP-topics.json"
+    echo "reusing topics from $TOPICS_FILE"
+    # The reminder that started this run has fired and is now inert. Drop it, so
+    # that "a marker with no reminder loaded" means what the watchdog reads it to
+    # mean: nothing will ask again. Deferring below re-arms it.
+    if [[ -z "${ENVERCETIN_TEST_NO_LAUNCHCTL:-}" ]]; then
+      launchctl bootout "gui/$(id -u)/com.enver.envercetin.topics-retry" 2>/dev/null || true
+    fi
+    rm -f "${ENVERCETIN_AGENTS_DIR:-$HOME/Library/LaunchAgents}/com.enver.envercetin.topics-retry.plist"
+    # A deferral chain is counted per question, not per day: carry the count of
+    # the day the topics were researched into today.
+    SRC_STAMP="$(basename "$TOPICS_FILE")"; SRC_STAMP="${SRC_STAMP%-topics.json}"
+    if [[ "$SRC_STAMP" != "$STAMP" && -f "$LOG_DIR/$SRC_STAMP-deferrals" ]]; then
+      mv "$LOG_DIR/$SRC_STAMP-deferrals" "$LOG_DIR/$STAMP-deferrals"
+    fi
+  else
   # What counts as "already covered" is NOT what is in the working tree. Approved
   # articles wait on their own branch for up to a week before merging, so during
   # that week the subject is finished and scheduled while `src/content/writing/en/`
@@ -175,29 +251,147 @@ else
 
 ALREADY COVERED — published, or written and waiting for its scheduled publish:
 $COVERED"
-  TOPICS_JSON="$(with_timeout "$PROPOSE_TIMEOUT" "$CLAUDE_BIN" -p "$PROPOSE_PROMPT" "${CLAUDE_FLAGS[@]}" | sed -n '/\[/,/\]/p')"
+
+  # Two attempts, not one. On 2026-09-05 this call produced nothing whatsoever
+  # for thirty fully awake minutes — no stdout, no stderr, and not one entry in
+  # its own session transcript, so it never completed a single model turn — and
+  # was killed at the ceiling. The identical call ran in four minutes two days
+  # later. A stalled model call is a transient thing; the cost of proving that
+  # is one more attempt, and the cost of assuming otherwise is a lost week.
+  #
+  # `< /dev/null` because the CLI otherwise waits on stdin before starting, and
+  # a step that must not hang should not begin by waiting for something that is
+  # never coming.
+  #
+  # `if VAR="$(...)"` rather than `set +e`: see on_error. sed runs afterwards
+  # rather than in the pipeline, so the exit code belongs to claude and a
+  # timeout can be told apart from a model that answered with prose.
+  TOPICS_JSON=""
+  PROPOSE_ATTEMPTS="${ENVERCETIN_PROPOSE_ATTEMPTS:-2}"
+  for ATTEMPT in $(seq 1 "$PROPOSE_ATTEMPTS"); do
+    if PROPOSE_OUT="$(with_timeout "$PROPOSE_TIMEOUT" "${CLAUDE_ENV[@]}" "$CLAUDE_BIN" -p "$PROPOSE_PROMPT" "${CLAUDE_FLAGS[@]}" < /dev/null)"; then
+      PROPOSE_RC=0
+    else
+      PROPOSE_RC=$?
+    fi
+    TOPICS_JSON="$(printf '%s\n' "$PROPOSE_OUT" | sed -n '/\[/,/\]/p')"
+    [[ -n "$TOPICS_JSON" ]] && break
+    if [[ $PROPOSE_RC -eq 124 ]]; then
+      echo "propose attempt $ATTEMPT: still running after $(( PROPOSE_TIMEOUT / 60 )) min — killed"
+    else
+      echo "propose attempt $ATTEMPT: exited $PROPOSE_RC with no JSON in its output"
+    fi
+  done
 
   if [[ -z "$TOPICS_JSON" ]]; then
-    notify "⚠️ Weekly article: topic proposal returned nothing. Log: $LOG"
+    if [[ $PROPOSE_RC -eq 124 ]]; then
+      WHY="every attempt was still running after $(( PROPOSE_TIMEOUT / 60 )) minutes and had to be killed. That is the 2026-09-05 failure: the CLI hangs during startup, before its first model turn, and writes nothing at all"
+    else
+      WHY="the last attempt exited $PROPOSE_RC with no JSON anywhere in its output"
+    fi
+    notify "⚠️ Weekly article: no topics after $PROPOSE_ATTEMPTS attempts — $WHY.
+
+Nothing was written. To try again by hand:
+$REPO/scripts/weekly-article/run.sh
+
+Log: $LOG"
     exit 1
   fi
   echo "$TOPICS_JSON" > "$LOG_DIR/$STAMP-topics.json"
+  fi
 
   LIB="scripts/weekly-article/lib/topics.py"
   QUESTION="$(python3 "$LIB" question "$LOG_DIR/$STAMP-topics.json")"
   OPTIONS="$(python3 "$LIB" options "$LOG_DIR/$STAMP-topics.json")"
 
   # --- 2. Ask Enver -------------------------------------------------------------
-  # Ask more than once before giving up. A Saturday afternoon is exactly when a
-  # single unanswered question loses the week, and the cost of a nudge is one
-  # message. Each round holds the personal-os ask lock, which pauses kb_daemon,
-  # so the rounds are bounded rather than open-ended.
+  # Ask more than once before giving up, but only while he could plausibly be
+  # awake. The rounds used to be a pure elapsed-time ladder: on 2026-08-29 the
+  # proposer finished at 21:39, so the three reminders went out at 21:39, 00:09
+  # and 02:39, and at 05:10 the run announced that no topic had been chosen and
+  # threw the research away. Nobody ignored anything — nobody was asked.
+  #
+  # So: rounds are clipped to the civil window, and running out of window is not
+  # a No. The proposals are kept and the same question is re-armed for the next
+  # morning, up to MAX_DEFERRALS times, before the week is finally let go.
   ASK_ROUNDS="${ENVERCETIN_ASK_ROUNDS:-3}"
   ASK_ROUND_MIN="${ENVERCETIN_ASK_ROUND_MIN:-150}"
-  echo "--- asking for the topic (up to $ASK_ROUNDS rounds of $ASK_ROUND_MIN min)"
+  TOPICS_KEPT="$LOG_DIR/$STAMP-topics.json"
+  DEFERRALS_FILE="$LOG_DIR/$STAMP-deferrals"
+  DEFERRALS="$(cat "$DEFERRALS_FILE" 2>/dev/null || echo 0)"
+
+  # Minutes from now until the civil window shuts. Negative or zero means it is
+  # already shut. Computed with `date`, never by arithmetic on the hour alone,
+  # so it stays right across a DST change.
+  minutes_of_window_left() {
+    local now_min until_min hour
+    hour="$(date +%H)"; hour="${hour#0}"; hour="${hour:-0}"
+    now_min=$(( hour * 60 + 10#$(date +%M) ))
+    until_min=$(( ASK_UNTIL_HOUR * 60 ))
+    echo $(( until_min - now_min ))
+  }
+
+  # Keep the proposals, re-arm the question for tomorrow morning, and stop. The
+  # retry re-enters run.sh through the guard — which holds the locks, waits for
+  # the network and keeps the Mac awake — with `--topics`, so it asks rather
+  # than researches.
+  defer_topic_question() {
+    local why="$1" next_label mm dd
+    if [[ "$DEFERRALS" -ge "$MAX_DEFERRALS" ]]; then
+      # The marker is what tells the watchdog a question is still outstanding.
+      # Leaving it here would have the watchdog report a dead chain every day
+      # until Saturday; the message below is the last word on this week.
+      rm -f "$DEFERRALS_FILE"
+      notify "No topic chosen after $(( MAX_DEFERRALS + 1 )) days of asking, so nothing was written this week.
+
+The four proposals are still on disk if you want one of them:
+$REPO/scripts/weekly-article/run.sh --topics $TOPICS_KEPT
+
+Otherwise I will research fresh ones next Saturday."
+      exit 0
+    fi
+
+    next_label="com.enver.envercetin.topics-retry"
+    mm="$(date -v+1d +%m)"; dd="$(date -v+1d +%d)"
+    if arm_job "$next_label" "${mm#0}" "${dd#0}" "$ASK_DEFER_HOUR" 0 \
+         "$HOME/.local/bin/envercetin-guard" weekly-article \
+         "$REPO/scripts/weekly-article/run.sh" --topics "$TOPICS_KEPT"; then
+      echo $(( DEFERRALS + 1 )) > "$DEFERRALS_FILE"
+      notify "🌙 $why — so I did not burn this week's question on it.
+
+The four topics are researched and waiting. I will ask again tomorrow at $(printf '%02d' "$ASK_DEFER_HOUR"):00.
+
+To pick one right now instead:
+$REPO/scripts/weekly-article/run.sh --topics $TOPICS_KEPT"
+      exit 0
+    fi
+
+    # A retry that failed to arm must not be reported as scheduled.
+    notify "⚠️ $why, and I could not schedule tomorrow's reminder either.
+
+The four topics are researched and waiting. Pick one with:
+$REPO/scripts/weekly-article/run.sh --topics $TOPICS_KEPT"
+    exit 1
+  }
+
+  WINDOW_LEFT="$(minutes_of_window_left)"
+  HOUR_NOW="$(date +%H)"; HOUR_NOW="${HOUR_NOW#0}"; HOUR_NOW="${HOUR_NOW:-0}"
+  if (( HOUR_NOW < ASK_FROM_HOUR || WINDOW_LEFT <= 0 )); then
+    defer_topic_question "It is $(date +%H:%M) and I only ask between ${ASK_FROM_HOUR}:00 and ${ASK_UNTIL_HOUR}:00"
+  fi
+
+  echo "--- asking for the topic (up to $ASK_ROUNDS rounds of $ASK_ROUND_MIN min, window shuts at $ASK_UNTIL_HOUR:00)"
 
   ASK_RC=2
   for ROUND in $(seq 1 "$ASK_ROUNDS"); do
+    WINDOW_LEFT="$(minutes_of_window_left)"
+    (( WINDOW_LEFT > 0 )) || defer_topic_question "Nobody answered before ${ASK_UNTIL_HOUR}:00"
+
+    # Never let a round run past the window: a question posted at 20:50 with a
+    # 150-minute deadline is a question that expires at 23:20.
+    ROUND_MIN="$ASK_ROUND_MIN"
+    (( ROUND_MIN > WINDOW_LEFT )) && ROUND_MIN="$WINDOW_LEFT"
+
     if [[ $ROUND -eq 1 ]]; then
       PROMPT_TEXT="$QUESTION"
     elif [[ $ROUND -lt $ASK_ROUNDS ]]; then
@@ -205,28 +399,44 @@ $COVERED"
 
 $QUESTION"
     else
-      PROMPT_TEXT="Last call for this week's article. If you skip this one, nothing gets written and I will ask again next Saturday.
+      PROMPT_TEXT="Last call for today. If nobody picks one, I will ask again tomorrow morning rather than drop the week.
 
 $QUESTION"
     fi
 
-    set +e
     # tg.py enforces its own deadline; this one only catches it hanging past it.
-    ASK_OUT="$(cd "$PERSONAL_OS" && with_timeout $(( ASK_ROUND_MIN * 60 + 600 )) python3 "$TG" ask "$PROMPT_TEXT" --options "$OPTIONS" --timeout-min "$ASK_ROUND_MIN")"
-    ASK_RC=$?
-    set -e
+    # The `if` form matters: `set +e` does not suppress the ERR trap, and this
+    # timing out is the normal path, not a failure. See on_error.
+    if ASK_OUT="$(cd "$PERSONAL_OS" && with_timeout $(( ROUND_MIN * 60 + 600 )) python3 "$TG" ask "$PROMPT_TEXT" --options "$OPTIONS" --timeout-min "$ROUND_MIN")"; then
+      ASK_RC=0
+    else
+      ASK_RC=$?
+    fi
 
     [[ $ASK_RC -ne 2 ]] && break
-    echo "round $ROUND: no reply after $ASK_ROUND_MIN min"
+    echo "round $ROUND: no reply after $ROUND_MIN min"
   done
 
   if [[ $ASK_RC -eq 2 ]]; then
-    notify "No topic chosen after $ASK_ROUNDS reminders — skipping this week. Nothing was written, and I will ask again next Saturday."
-    exit 0
+    defer_topic_question "No answer after $ASK_ROUNDS asks today"
   elif [[ $ASK_RC -ne 0 ]]; then
-    notify "⚠️ Weekly article: Telegram ask failed (rc=$ASK_RC). Log: $LOG"
+    notify "⚠️ Weekly article: Telegram ask failed (rc=$ASK_RC), so the question never reached you. Nothing was written.
+
+The four topics are researched and waiting:
+$REPO/scripts/weekly-article/run.sh --topics $TOPICS_KEPT
+
+Log: $LOG"
     exit 1
   fi
+
+  # Answered. Any reminder armed by an earlier day of this same question is now
+  # stale — leaving it loaded means being asked again about an article that is
+  # already being written.
+  rm -f "$DEFERRALS_FILE"
+  if [[ -z "${ENVERCETIN_TEST_NO_LAUNCHCTL:-}" ]]; then
+    launchctl bootout "gui/$(id -u)/com.enver.envercetin.topics-retry" 2>/dev/null || true
+  fi
+  rm -f "${ENVERCETIN_AGENTS_DIR:-$HOME/Library/LaunchAgents}/com.enver.envercetin.topics-retry.plist"
 
   # sed, not grep: grep exits 1 when nothing matched, and under `set -e` with
   # pipefail that kills the run at the assignment — on precisely the paths where
@@ -242,16 +452,27 @@ $QUESTION"
   TOPIC_BRIEF="$(python3 "$LIB" brief "$LOG_DIR/$STAMP-topics.json" "$TOPIC")"
 
   # --- 3. Write -----------------------------------------------------------------
+  # `checkout -b` fails outright if the branch exists, and under the ERR trap
+  # that ends the run — after Enver has already been interrupted for a topic.
+  # A second attempt on the same day is exactly when that happens.
   BRANCH="article/$STAMP"
+  ATTEMPT_N=2
+  while git rev-parse --verify "$BRANCH" >/dev/null 2>&1; do
+    BRANCH="article/$STAMP-$ATTEMPT_N"
+    ATTEMPT_N=$(( ATTEMPT_N + 1 ))
+  done
   git checkout -b "$BRANCH" --quiet
   notify "✍️ Writing this week's article: $TOPIC — I'll send a preview link when it's ready."
 
   echo "--- writing"
   PROMPT="$(sed "s|{{TOPIC}}|$TOPIC_BRIEF|" scripts/weekly-article/prompts/write-article.md)"
-  set +e
-  WRITE_OUT="$(with_timeout "$WRITE_TIMEOUT" "$CLAUDE_BIN" -p "$PROMPT" "${CLAUDE_FLAGS[@]}")"
-  WRITE_RC=$?
-  set -e
+  # `if`, not `set +e`: the trap fires regardless of errexit, and a writer that
+  # times out is a case this block handles rather than a failure to announce.
+  if WRITE_OUT="$(with_timeout "$WRITE_TIMEOUT" "${CLAUDE_ENV[@]}" "$CLAUDE_BIN" -p "$PROMPT" "${CLAUDE_FLAGS[@]}" < /dev/null)"; then
+    WRITE_RC=0
+  else
+    WRITE_RC=$?
+  fi
   echo "$WRITE_OUT" | tail -40
 
   if [[ $WRITE_RC -eq 124 ]]; then
@@ -294,8 +515,36 @@ fi
 # A writing run creates a throwaway page to look at its own figure. It is not
 # part of the article, and `git add -A` would otherwise commit and publish it.
 rm -f src/pages/diagram-preview.astro src/pages/preview.astro
-git add -A
-git commit --quiet -m "feat: article — $SLUG"
+# Named paths, not `git add -A`. The writer is told to install and run things in
+# order to measure them, and whatever that leaves behind — a virtualenv, a model
+# download, a cache — would otherwise be committed and deployed with the article.
+# Only paths that exist are passed: `git add` fails the whole invocation on one
+# unmatched pathspec, and a fixture repo does not have every directory the site
+# has.
+STAGE=()
+for PATHSPEC in src/content/writing/en src/content/writing/de src/components \
+                src/lib src/pages src/data src/styles src/assets public docs tests; do
+  [[ -e "$PATHSPEC" ]] && STAGE+=("$PATHSPEC")
+done
+# bash 3.2 treats an empty array under `set -u` as unbound, so never expand one.
+[[ ${#STAGE[@]} -gt 0 ]] && git add "${STAGE[@]}"
+git add -u   # tracked deletions anywhere, which the list above would miss
+
+# A commit that does not contain the article is worse than no commit: verify has
+# already passed, the deploy would go out, and the preview would show nothing.
+# A resume may arrive here with the article already committed by the run that
+# died, so the branch counts as well as the index.
+if ! { git diff --cached --name-only
+       git diff --name-only main...HEAD 2>/dev/null
+     } | grep -q "src/content/writing/.*/$SLUG\."; then
+  notify "⚠️ Weekly article: \"$SLUG\" was written but did not end up staged, so nothing was committed or deployed. Branch \`$BRANCH\` is on your Mac. Log: $LOG"
+  exit 1
+fi
+if ! git diff --cached --quiet; then
+  git commit --quiet -m "feat: article — $SLUG"
+else
+  echo "nothing new to commit — the article is already on $BRANCH"
+fi
 
 # --- 5. Preview (local tree → Vercel; nothing pushed to GitHub) ---------------
 echo "--- deploying preview"
@@ -333,11 +582,13 @@ $PREVIEW/writing/$SLUG
 Publish it to envercetin.de?"
   fi
 
-  set +e
-  APPROVE_OUT="$(cd "$PERSONAL_OS" && with_timeout $(( APPROVE_MIN * 60 + 600 )) \
-    python3 "$TG" ask "$APPROVE_TEXT" --options "Publish,Keep as draft" --timeout-min "$APPROVE_MIN")"
-  APPROVE_RC=$?
-  set -e
+  # `if`, not `set +e`: an unanswered approval is classified below, not a crash.
+  if APPROVE_OUT="$(cd "$PERSONAL_OS" && with_timeout $(( APPROVE_MIN * 60 + 600 )) \
+    python3 "$TG" ask "$APPROVE_TEXT" --options "Publish,Keep as draft" --timeout-min "$APPROVE_MIN")"; then
+    APPROVE_RC=0
+  else
+    APPROVE_RC=$?
+  fi
 
   APPROVAL="$(printf '%s\n' "$APPROVE_OUT" | sed -n 's/^REPLY: //p' | tail -1)"
   DECISION="$(classify_approval "$APPROVE_RC" "$APPROVAL")"

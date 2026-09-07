@@ -36,3 +36,15 @@ playwright-report
 * [0-9].ts
 * [0-9].mdx
 __pycache__/
+
+# Research leftovers from a writing run: the writer installs and runs things to
+# measure them, and none of that belongs in the site.
+.venv/
+venv/
+.pytest_cache/
+.ruff_cache/
+.mypy_cache/
+tmp/
+models/
+*.sqlite
+*.sqlite3

@@ -38,7 +38,7 @@ trap cleanup EXIT
 
 # A LaunchAgents directory and an install directory of our own, populated to look
 # healthy. Individual cases break exactly one thing.
-mkdir -p "$TMP/agents" "$TMP/bin"
+mkdir -p "$TMP/agents" "$TMP/bin" "$TMP/logs"
 cp "$REPO/scripts/weekly-article/guard.sh"  "$TMP/bin/envercetin-guard"
 cp "$REPO/scripts/weekly-article/notify.sh" "$TMP/bin/envercetin-notify"
 chmod +x "$TMP/bin/envercetin-notify"
@@ -49,6 +49,7 @@ run_wd() {
   ENVERCETIN_BIN_DIR="$TMP/bin" \
   ENVERCETIN_LABEL="${WD_LABEL:-com.enver.envercetin.weekly-article}" \
   ENVERCETIN_MAX_DAYS="${WD_MAX_DAYS:-10}" \
+  ENVERCETIN_LOG_DIR="${WD_LOG_DIR:-$TMP/logs}" \
   ENVERCETIN_MAIN_REF="${WD_REF:-main}" \
   "$WD" --check 2>&1
 }
@@ -73,7 +74,13 @@ EOF
 echo "watchdog.sh"
 
 # --- 0. Healthy is silent ------------------------------------------------------
-OUT="$(run_wd)"; RC=$?
+# WD_MAX_DAYS is pinned high here and in case 8. These two cases assert that the
+# fixture-controlled checks are quiet; the age check reads the REAL repo, so
+# leaving it at its default made both of them fail the moment the site actually
+# went quiet — the test went red for the one condition the watchdog exists to
+# report, and stayed red until the site was fixed. Cases 6a and 6b pin their own
+# thresholds and are where the age check is actually tested.
+OUT="$(WD_MAX_DAYS=99999 run_wd)"; RC=$?
 if [[ $RC -eq 0 ]] && [[ "$OUT" == watchdog:\ healthy* ]]; then
   ok "says nothing when the pipeline is healthy"
 else
@@ -244,9 +251,23 @@ fi
 echo new > "$UNPUSHED_REPO/src/content/writing/en/never-pushed.mdx"
 git -C "$UNPUSHED_REPO" add -A
 git -C "$UNPUSHED_REPO" commit --quiet -m "feat: article — never-pushed"
+
+# Fresh, so the grace period must hold its tongue. On 2026-08-25 an article was
+# committed by hand at 09:13 and pushed at 11:37, and the 10:00 watchdog fired in
+# the gap telling Enver a push had failed when none had been attempted.
 OUT="$(ENVERCETIN_REPO="$UNPUSHED_REPO" ENVERCETIN_AGENTS_DIR="$TMP/agents" \
   ENVERCETIN_BIN_DIR="$TMP/bin" ENVERCETIN_MAX_DAYS=99999 "$WD" --check 2>&1)"
-if grep -q "NOT on GitHub" <<<"$OUT"; then
+if grep -q "not on GitHub" <<<"$OUT"; then
+  bad "gives a just-made commit time to be pushed before crying about it" "$OUT"
+else
+  ok "gives a just-made commit time to be pushed before crying about it"
+fi
+
+# Past the grace period, it is a real problem and must be reported.
+OUT="$(ENVERCETIN_REPO="$UNPUSHED_REPO" ENVERCETIN_AGENTS_DIR="$TMP/agents" \
+  ENVERCETIN_BIN_DIR="$TMP/bin" ENVERCETIN_MAX_DAYS=99999 \
+  ENVERCETIN_UNPUSHED_GRACE_SEC=0 "$WD" --check 2>&1)"
+if grep -q "not on GitHub" <<<"$OUT"; then
   ok "catches an article that is committed locally but never reached the site"
 else
   bad "catches an article that is committed locally but never reached the site" "$OUT"
@@ -254,7 +275,7 @@ fi
 
 # --- 8. Back to healthy --------------------------------------------------------
 # The alarms above are only worth anything if the watchdog can still be quiet.
-OUT="$(run_wd)"; RC=$?
+OUT="$(WD_MAX_DAYS=99999 run_wd)"; RC=$?
 if [[ $RC -eq 0 ]] && [[ "$OUT" == watchdog:\ healthy* ]]; then
   ok "returns to silence once each fault is repaired"
 else

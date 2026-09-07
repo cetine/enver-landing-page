@@ -60,7 +60,11 @@ Anything you cannot verify does not go in the article.
   TL;DR aside, 6–9 sections, one figure, 1,200–1,600 words of prose, 6–9 sources.
 - Build the figure as a new Astro component using `src/lib/rough.ts`. One idea
   only. Give it a real `<title>`/`<desc>` for screen readers, keep it inside the
-  40em prose column, and make it work in light and dark.
+  40em prose column, and make it work in light and dark. It must ship **zero
+  client JavaScript** — render the SVG at build time and use no `client:*`
+  directive. The site's gzip budget is 15 KB and 13.3 KB of it is already spent,
+  so an interactive island fails `npm run verify` at the very end of your work,
+  after everything else is finished.
 - Add the new route to `tests/e2e/site.spec.ts` with `hreflang: 2`.
 
 ## Verify before you finish

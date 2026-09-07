@@ -35,6 +35,9 @@ MAIN_REF="${ENVERCETIN_MAIN_REF:-main}"
 # reading a different directory would report a healthy pipeline by watching an
 # empty one.
 LOCK_ROOT="$HOME/Library/Caches/envercetin-guard"
+# Where run.sh keeps its logs and its researched-but-unanswered proposals. A seam
+# so the tests can plant one without writing into the real log directory.
+LOG_DIR="${ENVERCETIN_LOG_DIR:-$HOME/Library/Logs/envercetin-weekly-article}"
 MAX_RUN_HOURS="${ENVERCETIN_MAX_RUN_HOURS:-36}"
 CHECK_ONLY=no
 [[ "${1:-}" == "--check" ]] && CHECK_ONLY=yes
@@ -124,12 +127,40 @@ if git rev-parse --verify origin/main >/dev/null 2>&1; then
   with_timeout 20 git fetch --quiet origin main >/dev/null 2>&1 || true
 
   UNPUSHED="$(git rev-list --count origin/main..main -- src/content/writing/en/ 2>/dev/null || echo 0)"
+  # Only once it has had time to be pushed. On 2026-08-25 an article was
+  # committed by hand at 09:13 and pushed at 11:37, and the 10:00 watchdog fired
+  # in the gap — correctly seeing an unpushed commit, but telling Enver "a push
+  # must have failed" when no push had been attempted yet. A watchdog that
+  # invents a cause teaches you to distrust it.
+  UNPUSHED_GRACE_SEC="${ENVERCETIN_UNPUSHED_GRACE_SEC:-7200}"
   if [[ "$UNPUSHED" =~ ^[0-9]+$ ]] && (( UNPUSHED > 0 )); then
-    add "• $UNPUSHED article commit(s) are on your local main but NOT on GitHub, so the site does not have them.
-  A push must have failed. Nothing here will retry it on its own.
+    NEWEST_UNPUSHED="$(git log -1 --format=%ct origin/main..main -- src/content/writing/en/ 2>/dev/null || echo 0)"
+    [[ "$NEWEST_UNPUSHED" =~ ^[0-9]+$ ]] || NEWEST_UNPUSHED=0
+    if (( NOW_EPOCH - NEWEST_UNPUSHED >= UNPUSHED_GRACE_SEC )); then
+      add "• $UNPUSHED article commit(s) have been on your local main for over $(( UNPUSHED_GRACE_SEC / 3600 ))h and are still not on GitHub, so the site does not have them.
+  Nothing here will push them on its own.
   Fix: cd $REPO && git push"
+    fi
   fi
 fi
+
+# --- 3b2. A deferred topic question that nothing will ask again --------------
+# The topic gate defers overnight rather than throwing the week away, and a
+# deferral is only worth anything if something actually asks again. run.sh
+# removes the marker when the question is answered and when it finally gives up,
+# so a marker still here with no reminder loaded means the chain died quietly —
+# the 2026-08-29 loss, one step further along.
+#
+# Keyed on the marker, not on the proposals: every past week leaves a topics
+# JSON behind, and reporting those would mean reporting history forever.
+for marker in "$LOG_DIR"/*-deferrals; do
+  [[ -f "$marker" ]] || continue
+  stamp="$(basename "$marker")"; stamp="${stamp%-deferrals}"
+  [[ -f "$AGENTS/com.enver.envercetin.topics-retry.plist" ]] && continue
+  add "• The topics researched on $stamp are still waiting for you to pick one, and no reminder is scheduled any more.
+  Pick one: $REPO/scripts/weekly-article/run.sh --topics $LOG_DIR/$stamp-topics.json
+  Or forget it: rm $marker — I will research fresh ones on Saturday."
+done
 
 # --- 3c. A run that is still holding a lock ----------------------------------
 # The guard sweeps a lock held past the cap the next time a job arrives — but the

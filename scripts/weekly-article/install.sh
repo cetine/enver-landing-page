@@ -84,8 +84,33 @@ if [[ "$CHECK_ONLY" == yes ]]; then
     && echo "loaded (Sat + Tue 10:00)" || echo "NOT LOADED"
   echo -n "flush: "; launchctl print "gui/$UID_NUM/com.enver.envercetin.notify-flush" >/dev/null 2>&1 \
     && echo "loaded (every 30 min)" || echo "NOT LOADED"
-  echo -n "job:   "; launchctl print "gui/$UID_NUM/$LABEL" >/dev/null 2>&1 \
-    && launchctl list | grep "$LABEL" || echo "NOT LOADED"
+  # The last exit status, interpreted rather than printed raw. This line read
+  # `-	124	com.enver.envercetin.weekly-article` for two days after the run of
+  # 2026-09-05 was killed at its ceiling, and looked like every other green row.
+  echo -n "job:   "
+  if launchctl print "gui/$UID_NUM/$LABEL" >/dev/null 2>&1; then
+    LAST_RC="$(launchctl list | awk -v l="$LABEL" '$3 == l { print $2 }')"
+    if [[ -z "$LAST_RC" || "$LAST_RC" == "0" || "$LAST_RC" == "-" ]]; then
+      echo "loaded (Sat 14:00)"
+    else
+      echo "loaded (Sat 14:00) — LAST RUN FAILED, exit $LAST_RC"
+    fi
+  else
+    echo "NOT LOADED"
+  fi
+  # What actually happened last, which no other line here reports.
+  LAST_LOG="$(ls -1t "$HOME/Library/Logs/envercetin-weekly-article"/????-??-??.log 2>/dev/null | head -1)"
+  if [[ -n "$LAST_LOG" ]]; then
+    echo "last:  $(basename "$LAST_LOG" .log) — $(tail -1 "$LAST_LOG")"
+  fi
+  # A question still waiting on an answer is the state that silently lost
+  # 2026-08-29, so say so here as well as in the watchdog.
+  for MARKER in "$HOME/Library/Logs/envercetin-weekly-article"/*-deferrals; do
+    [[ -f "$MARKER" ]] || continue
+    STAMP_D="$(basename "$MARKER")"; STAMP_D="${STAMP_D%-deferrals}"
+    echo "open:  topics from $STAMP_D are still waiting for you to pick one"
+    echo "       $REPO/scripts/weekly-article/run.sh --topics $HOME/Library/Logs/envercetin-weekly-article/$STAMP_D-topics.json"
+  done
   exit 0
 fi
 

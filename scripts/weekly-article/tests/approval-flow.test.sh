@@ -28,7 +28,7 @@ bad() { FAIL=$((FAIL+1)); printf '  FAIL — %s\n' "$1"; [[ -n "${2:-}" ]] && pr
 cleanup() { rm -rf "$TMP"; }
 trap cleanup EXIT
 
-mkdir -p "$BIN" "$FAKE_OS" "$AGENTS"
+mkdir -p "$BIN" "$FAKE_OS" "$AGENTS" "$TMP/logs"
 
 # --- Fakes --------------------------------------------------------------------
 cat > "$BIN/claude" <<'FAKE'
@@ -111,6 +111,8 @@ run_pipeline() {
       ENVERCETIN_CLAUDE_BIN="$BIN/claude" \
       ENVERCETIN_VERCEL_BIN="$BIN/vercel" \
       ENVERCETIN_AGENTS_DIR="$AGENTS" \
+      ENVERCETIN_LOG_DIR="$TMP/logs" \
+      ENVERCETIN_TEST_NO_LAUNCHCTL=1 \
       ENVERCETIN_APPROVE_MIN=1 \
       ENVERCETIN_ASK_ROUND_MIN=1 \
       TG_SCRIPT="$TG_SCRIPT" \
