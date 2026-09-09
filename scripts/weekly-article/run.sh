@@ -279,7 +279,18 @@ $COVERED"
     if [[ $PROPOSE_RC -eq 124 ]]; then
       echo "propose attempt $ATTEMPT: still running after $(( PROPOSE_TIMEOUT / 60 )) min — killed"
     else
+      # Print what it actually said. On 2026-09-07 both attempts exited 1 in
+      # three minutes and the log recorded only the exit code, so the run looked
+      # like the 09-05 hang when it was almost certainly a usage limit — the CLI
+      # prints that reason on stdout and this threw it away. Never diagnose a
+      # failed model call from an exit code alone.
       echo "propose attempt $ATTEMPT: exited $PROPOSE_RC with no JSON in its output"
+      PROPOSE_SAID="$(printf '%s' "$PROPOSE_OUT" | tail -5)"
+      if [[ -n "$PROPOSE_SAID" ]]; then
+        printf '%s\n' "$PROPOSE_SAID" | sed 's/^/  claude said: /'
+      else
+        echo "  claude said: nothing at all"
+      fi
     fi
   done
 
@@ -287,7 +298,7 @@ $COVERED"
     if [[ $PROPOSE_RC -eq 124 ]]; then
       WHY="every attempt was still running after $(( PROPOSE_TIMEOUT / 60 )) minutes and had to be killed. That is the 2026-09-05 failure: the CLI hangs during startup, before its first model turn, and writes nothing at all"
     else
-      WHY="the last attempt exited $PROPOSE_RC with no JSON anywhere in its output"
+      WHY="the last attempt exited $PROPOSE_RC with no JSON anywhere in its output. It said: ${PROPOSE_SAID:-nothing at all}"
     fi
     notify "⚠️ Weekly article: no topics after $PROPOSE_ATTEMPTS attempts — $WHY.
 
