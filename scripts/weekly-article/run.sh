@@ -2,15 +2,19 @@
 #
 # Weekly article pipeline — fires Saturdays 14:00 via launchd.
 #
-#   1. Claude proposes 4 topics (web-researched, checked against what is already published)
+#   1. Fable proposes 4 topics (web-researched, checked against what is already published)
 #   2. Telegram asks Enver: tap a proposal, or type a topic of his own
-#   3. Claude researches and writes the article on a local branch, in ultracode
+#   3. Fable orchestrates subagents that research, write and review the article
+#      on a local branch
 #   4. `npm run verify` is a hard gate
 #   5. `vercel deploy` publishes a PREVIEW from the local tree — nothing reaches
 #      GitHub, and nothing reaches production, before Enver has seen it
 #   6. Telegram asks for approval, with the preview link
 #   7. On "Publish" the article is SCHEDULED, not published: a one-shot job goes
 #      live the following Friday 19:00-21:00 or Saturday 10:00-13:00, at random
+#
+# The model runs in the local Claude Code CLI on the subscription login, never on
+# an API key — see lib/model.sh.
 #
 # Anything that fails sends a Telegram message and stops. The working tree is
 # never touched unless it was clean to begin with.
@@ -95,6 +99,8 @@ source "$HERE/lib/approval.sh"
 source "$HERE/lib/repo_lock.sh"
 # shellcheck source=lib/arm_job.sh
 source "$HERE/lib/arm_job.sh"
+# shellcheck source=lib/model.sh
+source "$HERE/lib/model.sh"
 
 mkdir -p "$LOG_DIR"
 exec > >(tee -a "$LOG") 2>&1
@@ -169,21 +175,18 @@ if [[ -z "$RESUME_BRANCH" ]]; then
   fi
 fi
 
-CLAUDE_FLAGS=(--model opus --permission-mode acceptEdits
-  --allowed-tools "Bash,Read,Write,Edit,Glob,Grep,WebSearch,WebFetch,Task,Workflow,TodoWrite,TaskCreate,TaskUpdate")
+# A resume needs no model. Everything else does, and a login that is gone must be
+# found before Enver is asked for a topic, not after: on 2026-09-12 the OAuth
+# session had expired and the run spent both propose attempts finding that out.
+if [[ -z "$RESUME_BRANCH" ]] && LOGIN_PROBLEM="$(model_login_problem)"; then
+  notify "⚠️ Weekly article did not start: $LOGIN_PROBLEM, so nobody was asked anything.
 
-# On 2026-09-05 `claude -p` hung for thirty fully awake minutes and was killed at
-# the ceiling. It left a session directory, its two SessionStart hook env files
-# and a touched plugin-cache directory — and no transcript at all, so it never
-# reached its first model turn. Startup hung, not research: the CLI refreshes
-# plugin marketplaces and checks for updates before it begins, and those are
-# network calls this pipeline gains nothing from. Turn off what can be turned
-# off; the retry below covers whatever cannot.
-CLAUDE_ENV=(env
-  CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC=1
-  DISABLE_AUTOUPDATER=1
-  DISABLE_TELEMETRY=1
-  DISABLE_ERROR_REPORTING=1)
+$MODEL_LOGIN_FIX. Then start it again:
+$REPO/scripts/weekly-article/run.sh${TOPICS_FILE:+ --topics $TOPICS_FILE}
+
+Log: $LOG"
+  exit 1
+fi
 
 if [[ -n "$RESUME_BRANCH" ]]; then
   # --- Resume -------------------------------------------------------------------
@@ -269,7 +272,7 @@ $COVERED"
   TOPICS_JSON=""
   PROPOSE_ATTEMPTS="${ENVERCETIN_PROPOSE_ATTEMPTS:-2}"
   for ATTEMPT in $(seq 1 "$PROPOSE_ATTEMPTS"); do
-    if PROPOSE_OUT="$(with_timeout "$PROPOSE_TIMEOUT" "${CLAUDE_ENV[@]}" "$CLAUDE_BIN" -p "$PROPOSE_PROMPT" "${CLAUDE_FLAGS[@]}" < /dev/null)"; then
+    if PROPOSE_OUT="$(with_timeout "$PROPOSE_TIMEOUT" model_run "$PROPOSE_PROMPT")"; then
       PROPOSE_RC=0
     else
       PROPOSE_RC=$?
@@ -291,16 +294,22 @@ $COVERED"
       else
         echo "  claude said: nothing at all"
       fi
+      # A dead login or a spent limit fails every attempt the same way, and the
+      # retry exists for hangs, not for those.
+      PROPOSE_KIND="$(model_failure_kind "$PROPOSE_OUT")"
+      [[ "$PROPOSE_KIND" == other ]] || break
     fi
   done
 
   if [[ -z "$TOPICS_JSON" ]]; then
     if [[ $PROPOSE_RC -eq 124 ]]; then
       WHY="every attempt was still running after $(( PROPOSE_TIMEOUT / 60 )) minutes and had to be killed. That is the 2026-09-05 failure: the CLI hangs during startup, before its first model turn, and writes nothing at all"
+    elif [[ "${PROPOSE_KIND:-other}" != other ]]; then
+      WHY="$(model_failure_line "$PROPOSE_KIND" "$PROPOSE_OUT")"
     else
       WHY="the last attempt exited $PROPOSE_RC with no JSON anywhere in its output. It said: ${PROPOSE_SAID:-nothing at all}"
     fi
-    notify "⚠️ Weekly article: no topics after $PROPOSE_ATTEMPTS attempts — $WHY.
+    notify "⚠️ Weekly article: no topics after $ATTEMPT attempt$([[ $ATTEMPT -eq 1 ]] || echo s) — $WHY.
 
 Nothing was written. To try again by hand:
 $REPO/scripts/weekly-article/run.sh
@@ -479,7 +488,7 @@ Log: $LOG"
   PROMPT="$(sed "s|{{TOPIC}}|$TOPIC_BRIEF|" scripts/weekly-article/prompts/write-article.md)"
   # `if`, not `set +e`: the trap fires regardless of errexit, and a writer that
   # times out is a case this block handles rather than a failure to announce.
-  if WRITE_OUT="$(with_timeout "$WRITE_TIMEOUT" "${CLAUDE_ENV[@]}" "$CLAUDE_BIN" -p "$PROMPT" "${CLAUDE_FLAGS[@]}" < /dev/null)"; then
+  if WRITE_OUT="$(with_timeout "$WRITE_TIMEOUT" model_run "$PROMPT")"; then
     WRITE_RC=0
   else
     WRITE_RC=$?
@@ -499,7 +508,9 @@ Log: $LOG"
   # The writer prints SLUG last. If it dies after writing the article but before
   # printing — a crash, a spend limit — the article is on disk and only this line
   # is missing. Say so, so the work can be resumed instead of rewritten.
-  SLUG="$(printf '%s\n' "$WRITE_OUT" | grep '^SLUG: ' | tail -1 | sed 's/^SLUG: //' | tr -d '[:space:]')"
+  # sed, not grep: on 2026-09-09 the writer printed only its usage-limit line,
+  # grep exited 1, and the run died right here instead of in the handler below.
+  SLUG="$(printf '%s\n' "$WRITE_OUT" | sed -n 's/^SLUG: //p' | tail -1 | tr -d '[:space:]')"
   if [[ -z "$SLUG" || ! -f "src/content/writing/en/$SLUG.mdx" ]]; then
     DRAFT="$(git status --porcelain --untracked-files=all -- src/content/writing/en/ | grep -c '\.mdx' || true)"
     if [[ "$DRAFT" -gt 0 ]]; then
@@ -509,8 +520,19 @@ Resume it with:
 scripts/weekly-article/run.sh --resume $BRANCH
 
 Log: $LOG"
+    elif [[ -z "$(git status --porcelain --untracked-files=all)" && -z "$(git rev-list main..HEAD)" ]]; then
+      # Nothing at all on the branch. Leaving it made the watchdog report
+      # `article/2026-09-09` as "written and stuck" for a week.
+      git checkout main --quiet
+      git branch -d "$BRANCH" --quiet
+      notify "⚠️ Weekly article: nothing was written — $(model_failure_line "$(model_failure_kind "$WRITE_OUT")" "$WRITE_OUT").
+
+To write \"$TOPIC\" later, pick it again with:
+$REPO/scripts/weekly-article/run.sh --topics $LOG_DIR/$STAMP-topics.json
+
+Log: $LOG"
     else
-      notify "⚠️ Weekly article: no usable article was produced. Branch $BRANCH kept locally. Log: $LOG"
+      notify "⚠️ Weekly article: no usable article was produced — $(model_failure_line "$(model_failure_kind "$WRITE_OUT")" "$WRITE_OUT"). Branch $BRANCH kept locally. Log: $LOG"
     fi
     exit 1
   fi

@@ -1,5 +1,3 @@
-ultracode
-
 Write one new article for envercetin.de on this topic:
 
 TOPIC: {{TOPIC}}
@@ -16,18 +14,41 @@ call and keep going. Do not ask for confirmation.
 3. Read `src/components/PiiFlowDiagram.astro` and `src/lib/rough.ts` to see how
    figures are built.
 
-## Research
+## How you work: you orchestrate, subagents do the work
 
-Use a Workflow to fan out research across the dimensions the topic needs, then
-adversarially fact-check every number, date, case reference and version string
-against a PRIMARY source before it reaches the draft. Secondary blogs do not
-confirm a statistic — this has already burned us once, on a widely repeated "81%
-of CIOs" figure that turned out not to be in the source it was attributed to.
+You are the editor-in-chief of this run. Delegate the substantive work to
+subagents with the Agent tool (`subagent_type: general-purpose`) and keep your
+own context for planning, judging and integrating.
 
-If the topic makes a behavioural claim about software, install it and run it.
-Quote real output verbatim. Local models are available via Ollama if useful.
-Report what you actually observed, including the results that do not flatter the
-argument.
+Subagents do not see this prompt. Every brief you write must carry the topic,
+the files the subagent needs to read, the rules from this prompt that apply to
+its job — always including the **Hard boundary** section below, verbatim — and
+exactly what it must return.
+
+1. **Research.** One subagent per dimension the topic needs, launched in
+   parallel (several Agent calls in one message). Each returns its claims, and
+   for every claim the primary-source URL and the exact passage that supports it.
+2. **Fact-check.** A separate subagent, briefed as an adversary whose job is to
+   find what is wrong, re-verifies every number, date, case reference and version
+   string against the PRIMARY source. Secondary blogs do not confirm a statistic
+   — this has already burned us once, on a widely repeated "81% of CIOs" figure
+   that turned out not to be in the source it was attributed to. Whatever it
+   cannot confirm is dropped, not softened.
+3. **Experiment.** If the topic makes a behavioural claim about software, one
+   subagent installs it and runs it, and returns the real output verbatim. Local
+   models are available via Ollama if useful. It reports what it actually
+   observed, including the results that do not flatter the argument.
+4. **Draft and figure, in parallel.** A writer subagent writes the article from
+   the verified brief only — hand it the brief, the house style and the
+   reference article. A figure subagent builds the figure component at the same
+   time. Give each the exact file it owns.
+5. **Review.** A fresh subagent reads the draft cold against the house style's
+   non-negotiables and the verified brief, and returns every problem it finds.
+   Send the fixes back to the writer, or make small ones yourself.
+
+One owner per file: the writer owns the `.mdx`, the figure subagent owns the
+component, and you own `tests/e2e/site.spec.ts`. Never let two agents edit the
+same file at the same time.
 
 ### Hard boundary on what you may touch
 
@@ -68,6 +89,8 @@ Anything you cannot verify does not go in the article.
 - Add the new route to `tests/e2e/site.spec.ts` with `hreflang: 2`.
 
 ## Verify before you finish
+
+You run these yourself; do not delegate the final check.
 
 - `npm run verify` must pass. Fix what it reports; do not weaken a test to make
   it pass.

@@ -33,6 +33,7 @@ mkdir -p "$BIN" "$FAKE_OS" "$AGENTS" "$TMP/logs"
 # --- Fakes --------------------------------------------------------------------
 cat > "$BIN/claude" <<'FAKE'
 #!/usr/bin/env bash
+if [[ "${1:-}" == "auth" ]]; then echo '{"loggedIn": true, "authMethod": "claude.ai"}'; exit 0; fi
 # Two calls: propose (prompt carries the ALREADY COVERED list) and write.
 prompt=""
 while [[ $# -gt 0 ]]; do

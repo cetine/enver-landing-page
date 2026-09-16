@@ -47,6 +47,7 @@ mkdir -p "$BIN" "$FAKE_OS" "$AGENTS" "$LOGS"
 # call it and that a retry DID.
 cat > "$BIN/claude" <<'FAKE'
 #!/usr/bin/env bash
+if [[ "${1:-}" == "auth" ]]; then echo '{"loggedIn": true, "authMethod": "claude.ai"}'; exit 0; fi
 prompt=""
 while [[ $# -gt 0 ]]; do
   [[ "$1" == "-p" ]] && { prompt="$2"; shift 2; continue; }

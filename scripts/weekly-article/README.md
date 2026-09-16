@@ -1,15 +1,15 @@
 # Weekly article automation
 
-Saturdays at 14:00, Claude proposes topics over Telegram, writes the chosen
-article, and publishes it only after you approve a preview.
+Saturdays at 14:00, Fable proposes topics over Telegram, has subagents write
+the chosen article, and publishes it only after you approve a preview.
 
 ## The flow
 
 | Step | What happens | Can it touch the live site? |
 |---|---|---|
-| 1 | Claude web-researches and proposes 4 topics | no |
+| 1 | Fable web-researches (via subagents) and proposes 4 topics | no |
 | 2 | Telegram asks you: tap a proposal, or type your own | no |
-| 3 | Claude researches and writes the article on a local branch, in ultracode | no |
+| 3 | Fable orchestrates subagents that research, fact-check, write and review the article on a local branch | no |
 | 4 | `npm run verify` runs as a hard gate | no |
 | 5 | `vercel deploy` publishes a **preview** from the local working tree | no — preview URL only, nothing pushed to GitHub |
 | 6 | Telegram sends you the preview link and asks | no |
@@ -37,6 +37,23 @@ watchdog stops reporting a branch with no schedule as stuck. Add
 `--delete-branch` to throw the article away, or `--keep-branch` to leave it where
 it is because you mean to reschedule. Undo a rename with
 `git branch -m draft/<name> article/<name>`.
+
+## The model
+
+Both model steps run `claude -p --model fable` in the local Claude Code CLI, on
+the **subscription login** — no API key, no API billing. `lib/model.sh` strips
+`ANTHROPIC_API_KEY`, `ANTHROPIC_BASE_URL` and friends from the call, so neither a
+stray key nor the `claude-local` LM Studio backend in `~/.zshrc` can take over.
+Override the model with `ENVERCETIN_CLAUDE_MODEL` if you ever need to.
+
+Before anyone is asked for a topic, `claude auth status` must report a
+subscription login; otherwise the run stops and tells you to `/login`. A model
+call that fails because the login expired or the usage limit is spent is not
+retried, and the Telegram message says which of the two it was.
+
+The subscription's usage limit is shared with your interactive sessions. A
+heavy day at the keyboard before 14:00 on a Saturday can leave the writer
+without budget — the message then names the reset time.
 
 ## Activation
 
@@ -120,6 +137,7 @@ silent one.
 | `deploy.test.sh` | a rejected push leaves the repo exactly as it was, and success is confirmed against the remote before it is claimed |
 | `cancel-publish.test.sh` | the plist is deleted rather than merely unloaded, and the watchdog stops nagging |
 | `watchdog.test.sh` | each broken state is reported, and a healthy one is silent |
+| `model.test.sh` | Fable on the subscription only, no API key reaching the call; logged-out, expired and rate-limited runs named for what they are, and no empty branch left behind |
 
 The guard tests drive the real guard through real launchd jobs, because the bugs
 worth catching there only exist under launchd — a self-`bootout` cannot be

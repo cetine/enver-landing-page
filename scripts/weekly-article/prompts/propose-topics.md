@@ -17,6 +17,11 @@ Search the web for what has actually happened in the last ~3 weeks in: enterpris
 AI engineering, EU AI regulation and enforcement, agentic systems, LLM cost and
 evaluation, and open-source tooling relevant to enterprise deployments.
 
+Delegate that search: launch one subagent per area in parallel with the Agent
+tool (`subagent_type: general-purpose`), each told to return dated developments
+with their primary-source URLs and to read or write nothing outside this
+repository. You judge what comes back and choose.
+
 Propose **exactly 4 topics**. Each must satisfy the house style's thesis rule:
 it must contain a claim a competent reader could disagree with, ideally a
 correction of something widely believed. Prefer topics where Enver can *run
