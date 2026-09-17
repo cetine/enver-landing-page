@@ -48,12 +48,25 @@ Override the model with `ENVERCETIN_CLAUDE_MODEL` if you ever need to.
 
 Before anyone is asked for a topic, `claude auth status` must report a
 subscription login; otherwise the run stops and tells you to `/login`. A model
-call that fails because the login expired or the usage limit is spent is not
-retried, and the Telegram message says which of the two it was.
+call that fails because the login expired is not retried — no retry can fix it,
+only you can — and the Telegram message says so.
 
-The subscription's usage limit is shared with your interactive sessions. A
-heavy day at the keyboard before 14:00 on a Saturday can leave the writer
-without budget — the message then names the reset time.
+The subscription's usage limit is shared with your interactive sessions. A heavy
+day at the keyboard before 14:00 on a Saturday can leave the writer without
+budget. That is **not** treated as a failed week: the CLI prints the minute the
+limit lifts, and the run exits 75, leaving that minute behind in
+`retry-at`. The guard reads it and arms a one-shot job for then, so the article
+comes back on its own a few hours later instead of next Saturday.
+
+If the limit hit *after* you had already chosen a topic, the retry carries the
+choice with it — `--resume <branch>` when a draft exists, `--topics <file>`
+otherwise — so you are never asked the same question twice. After
+`ENVERCETIN_LIMIT_MAX_ATTEMPTS` (default 6) waits in a row it stops re-arming and
+says so, rather than retrying until the heat death of the universe.
+
+This is what three lost Saturdays were made of: 2026-09-09 the writer hit the
+limit mid-article, 2026-09-12 the OAuth login had expired, 2026-09-16 the
+proposer hit the limit. Each printed its reason, and each then waited a week.
 
 ## Activation
 

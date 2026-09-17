@@ -35,12 +35,13 @@ if [[ -z "$JOB" || -z "$SCRIPT" ]]; then
   exit 64
 fi
 ORIG_ARGV=("$JOB" "$SCRIPT" "${@:3}")
+RETRY_ARGV=("${ORIG_ARGV[@]}")
 shift 2
 
 PERSONAL_OS="$HOME/Projects/personal-os"
 TG="$PERSONAL_OS/tg.py"
 ASK_LOCK="$PERSONAL_OS/data/ask-active.lock"
-LOG_DIR="$HOME/Library/Logs/envercetin-weekly-article"
+LOG_DIR="${ENVERCETIN_LOG_DIR:-$HOME/Library/Logs/envercetin-weekly-article}"
 LOG="$LOG_DIR/guard-$JOB-$(date +%Y-%m-%d-%H%M).log"
 LOCK_ROOT="$HOME/Library/Caches/envercetin-guard"
 LOCK_DIR="$LOCK_ROOT/$JOB.lock"
@@ -247,13 +248,20 @@ online() {
 # Re-arm this exact invocation a little later. Date-pinned and one-shot; the
 # guard clears any leftover retry for the job as soon as a run gets going.
 arm_retry() {
-  local when label plist args
-  when="$(date -v "+${RETRY_IN_MIN}M" "+%Y %m %d %H %M")"
+  local when label plist args at="${1:-}"
+  # An absolute epoch when the caller knows exactly when to come back — a usage
+  # limit prints the minute it lifts — and a fixed delay when it does not.
+  if [[ -n "$at" ]]; then
+    when="$(date -r "$at" "+%Y %m %d %H %M")"
+  else
+    when="$(date -v "+${RETRY_IN_MIN}M" "+%Y %m %d %H %M")"
+  fi
   set -- $when
   label="com.enver.envercetin.retry-$JOB"
-  plist="$HOME/Library/LaunchAgents/$label.plist"
+  plist="${ENVERCETIN_AGENTS_DIR:-$HOME/Library/LaunchAgents}/$label.plist"
+  mkdir -p "$(dirname "$plist")"
   args=""
-  for a in "${ORIG_ARGV[@]}"; do
+  for a in "${RETRY_ARGV[@]}"; do
     args="$args    <string>$a</string>
 "
   done
@@ -289,9 +297,13 @@ $args  </array>
 </dict>
 </plist>
 PLIST
+  if [[ -n "${ENVERCETIN_TEST_NO_LAUNCHCTL:-}" ]]; then
+    echo "retry armed for $3.$2. $4:$5 (label $label, not loaded — test)"
+    return 0
+  fi
   launchctl bootout "gui/$(id -u)/$label" 2>/dev/null
   launchctl bootstrap "gui/$(id -u)" "$plist" 2>/dev/null
-  echo "retry armed for $4:$5 (label $label)"
+  echo "retry armed for $3.$2. $4:$5 (label $label)"
 }
 
 # A run that is actually starting supersedes any retry waiting for this job —
@@ -305,7 +317,7 @@ PLIST
 #
 # launchd sets XPC_SERVICE_NAME to the running job's own label, and arm_retry also
 # stamps ENVERCETIN_RETRY_OF into the plist it writes; either identifies us.
-RETRY_PLIST="$HOME/Library/LaunchAgents/$RETRY_LABEL.plist"
+RETRY_PLIST="${ENVERCETIN_AGENTS_DIR:-$HOME/Library/LaunchAgents}/$RETRY_LABEL.plist"
 if [[ -f "$RETRY_PLIST" ]]; then
   if [[ "${XPC_SERVICE_NAME:-}" == "$RETRY_LABEL" || "${ENVERCETIN_RETRY_OF:-}" == "$JOB" ]]; then
     # Deleting the plist is enough, and is the only safe half. The job is one-shot
@@ -338,7 +350,7 @@ fi
 # and do not refuse to start inside their own guard.
 export ENVERCETIN_REPO_LOCK="$REPO_LOCK"
 
-if ! online; then
+if [[ -z "${ENVERCETIN_SKIP_NET_CHECK:-}" ]] && ! online; then
   echo "offline at start — waiting for up to ${NET_WAIT_MIN} min of awake time"
 
   # The budget is AWAKE time, not wall-clock. A closed MacBook wakes for a few
@@ -409,6 +421,63 @@ if [[ "$ASK_LOCK_PRE_EXISTING" == "no" && -e "$ASK_LOCK" ]]; then
   rm -f "$ASK_LOCK"
 fi
 release_locks
+
+# --- Exit 75: the run asked to be resumed, it did not fail ---------------------
+# run.sh exits 75 (EX_TEMPFAIL) when the Claude subscription's usage limit is
+# spent, and leaves the minute it lifts in retry-at. Before this existed, that
+# exit was a plain 1: the run reported "nothing was written" and the next attempt
+# was the following Saturday. 2026-09-09 and 2026-09-16 both died that way, and
+# in both cases the limit had lifted within hours.
+#
+# The counter is what keeps a limit that never lifts from re-arming forever.
+LIMIT_ATTEMPTS_FILE="$LOG_DIR/$JOB-limit-attempts"
+RETRY_AT_FILE="$LOG_DIR/retry-at"
+RETRY_ARGS_FILE="$LOG_DIR/retry-args"
+LIMIT_MAX="${ENVERCETIN_LIMIT_MAX_ATTEMPTS:-6}"
+
+if [[ $RC -eq 75 ]]; then
+  ATTEMPT=$(( $(cat "$LIMIT_ATTEMPTS_FILE" 2>/dev/null || echo 0) + 1 ))
+  if (( ATTEMPT > LIMIT_MAX )); then
+    echo "giving up: $LIMIT_MAX deferrals in a row and the limit is still spent"
+    rm -f "$LIMIT_ATTEMPTS_FILE" "$RETRY_AT_FILE" "$RETRY_ARGS_FILE"
+    [[ -n "${ENVERCETIN_TEST_NO_LAUNCHCTL:-}" ]] || launchctl bootout "gui/$(id -u)/$RETRY_LABEL" 2>/dev/null
+    rm -f "$RETRY_PLIST"
+    notify "🛑 $JOB has now waited $LIMIT_MAX times for the Claude limit to lift and it is still spent, so I stopped re-arming it.
+
+Nothing was published and nothing was lost. Start it again by hand when there is budget:
+$REPO_DIR/scripts/weekly-article/run.sh
+
+Log: $LOG"
+    echo "=== guard done $(date) ==="
+    exit 1
+  fi
+  printf '%s' "$ATTEMPT" > "$LIMIT_ATTEMPTS_FILE"
+
+  RETRY_AT="$(cat "$RETRY_AT_FILE" 2>/dev/null || true)"
+  [[ "$RETRY_AT" =~ ^[0-9]+$ ]] || RETRY_AT=$(( $(date +%s) + RETRY_IN_MIN * 60 ))
+  # A time already gone fires the job the instant it is loaded, straight back
+  # into the same spent limit. Never schedule into the past.
+  (( RETRY_AT <= $(date +%s) )) && RETRY_AT=$(( $(date +%s) + 300 ))
+
+  # Resume arguments, when the run knows how to carry on rather than start over.
+  if [[ -s "$RETRY_ARGS_FILE" ]]; then
+    RETRY_ARGV=("$JOB" "$SCRIPT")
+    while IFS= read -r resume_arg; do
+      [[ -n "$resume_arg" ]] && RETRY_ARGV+=("$resume_arg")
+    done < "$RETRY_ARGS_FILE"
+  fi
+
+  arm_retry "$RETRY_AT"
+  # run.sh has already said what happened and when it will be back. A second
+  # message from the guard would turn one wait into two alarms.
+  echo "attempt $ATTEMPT of $LIMIT_MAX — deferred, not failed"
+  echo "=== guard done $(date) ==="
+  exit 0
+fi
+
+# A run that got through clears the ledger: otherwise the first limit of the next
+# month inherits the last one's exhausted budget and gives up on the first try.
+[[ $RC -eq 0 ]] && rm -f "$LIMIT_ATTEMPTS_FILE"
 
 # The scripts report their own handled failures. This catches everything they
 # could not: a crash, a kill, an exit path with no message of its own.

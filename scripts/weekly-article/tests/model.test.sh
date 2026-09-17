@@ -225,10 +225,10 @@ fi
 
 # --- 6. Usage limit on the writer: no empty branch left behind -----------------
 run_pipeline WRITE_SAYS="You've hit your session limit · resets 2:30pm (Europe/Berlin)"
-if [[ $RUN_RC -ne 0 ]] && notified "usage limit"; then
-  ok "a writer that hits the usage limit says so"
+if [[ $RUN_RC -eq 75 ]] && notified "usage limit"; then
+  ok "a writer that hits the usage limit says so, and asks to be resumed"
 else
-  bad "a writer that hits the usage limit says so" "rc=$RUN_RC $(tail -5 "$TMP/run.log")"
+  bad "a writer that hits the usage limit says so, and asks to be resumed" "rc=$RUN_RC $(tail -5 "$TMP/run.log")"
 fi
 if [[ -z "$(git -C "$FIXTURE" for-each-ref 'refs/heads/article/*')" ]] \
    && [[ "$(git -C "$FIXTURE" symbolic-ref --short HEAD)" == "main" ]]; then
@@ -236,10 +236,13 @@ if [[ -z "$(git -C "$FIXTURE" for-each-ref 'refs/heads/article/*')" ]] \
 else
   bad "an empty article branch is removed, so the watchdog does not call it stuck" "$(git -C "$FIXTURE" branch)"
 fi
-if notified "run.sh --topics"; then
-  ok "and the message says how to write the chosen topic later"
+# It used to end here with "pick the topic again by hand". Nobody ever did, and
+# the week was gone — so the run now re-arms itself and resumes with the topic
+# already chosen. See limit-retry.test.sh for the guard half of that.
+if notified "try again automatically" && grep -q -- '--topics' "$LOGS/retry-args"; then
+  ok "and it comes back by itself, with the chosen topic, instead of asking you to"
 else
-  bad "and the message says how to write the chosen topic later" "$(tail -4 "$TMP/run.log")"
+  bad "and it comes back by itself, with the chosen topic, instead of asking you to" "$(tail -4 "$TMP/run.log") args=$(cat "$LOGS/retry-args" 2>/dev/null)"
 fi
 
 echo

@@ -121,6 +121,36 @@ notify() {
   fi
 }
 
+# --- A spent usage limit is a wait, not a failure ------------------------------
+# The subscription's limit is shared with every interactive session, so a heavy
+# day at the keyboard before 14:00 on a Saturday leaves the writer with nothing.
+# That happened on 2026-09-09 and again on 2026-09-16, and both times the run
+# said "nothing was written" and waited a full week — while the CLI had printed
+# the exact minute the limit would lift, three hours later.
+#
+# So: leave that minute where the guard can find it and exit 75. The guard arms a
+# one-shot job for then and the run picks up where it stopped. 75 is EX_TEMPFAIL,
+# and the guard treats it as "come back", never as "something broke".
+RETRY_AT_FILE="$LOG_DIR/retry-at"
+RETRY_ARGS_FILE="$LOG_DIR/retry-args"
+rm -f "$RETRY_AT_FILE" "$RETRY_ARGS_FILE"
+
+# defer_until_limit_lifts <model-output> [resume-arg...] — prints when it will
+# come back, in words fit for a message.
+defer_until_limit_lifts() {
+  local out="$1" epoch
+  shift
+  epoch="$(model_limit_reset_epoch "$out")"
+  # No time in the line is not a reason to give up for a week. A fixed hour is a
+  # worse guess than the CLI's own answer and a far better one than next Saturday.
+  [[ -n "$epoch" ]] || epoch=$(( $(date +%s) + ${ENVERCETIN_LIMIT_FALLBACK_MIN:-60} * 60 ))
+  printf '%s' "$epoch" > "$RETRY_AT_FILE"
+  # Resuming with the topic already chosen, rather than asking a second time for
+  # something that was answered before the limit hit.
+  [[ $# -gt 0 ]] && printf '%s\n' "$@" > "$RETRY_ARGS_FILE"
+  date -r "$epoch" '+%d.%m. at %H:%M'
+}
+
 # `set +e` turns off errexit but NOT this trap. Every handled non-zero therefore
 # used to fire it: on the night of 2026-08-29 a topic question nobody answered —
 # the designed, fully handled path — sent Enver three "⚠️ Weekly article failed
@@ -308,6 +338,13 @@ $COVERED"
       WHY="$(model_failure_line "$PROPOSE_KIND" "$PROPOSE_OUT")"
     else
       WHY="the last attempt exited $PROPOSE_RC with no JSON anywhere in its output. It said: ${PROPOSE_SAID:-nothing at all}"
+    fi
+    if [[ "${PROPOSE_KIND:-other}" == limit ]]; then
+      RETRY_WHEN="$(defer_until_limit_lifts "$PROPOSE_OUT")"
+      notify "⏳ Weekly article: $WHY.
+
+Nothing is lost — I'll try again automatically on $RETRY_WHEN, once the limit has lifted. Log: $LOG"
+      exit 75
     fi
     notify "⚠️ Weekly article: no topics after $ATTEMPT attempt$([[ $ATTEMPT -eq 1 ]] || echo s) — $WHY.
 
@@ -513,6 +550,26 @@ Log: $LOG"
   SLUG="$(printf '%s\n' "$WRITE_OUT" | sed -n 's/^SLUG: //p' | tail -1 | tr -d '[:space:]')"
   if [[ -z "$SLUG" || ! -f "src/content/writing/en/$SLUG.mdx" ]]; then
     DRAFT="$(git status --porcelain --untracked-files=all -- src/content/writing/en/ | grep -c '\.mdx' || true)"
+    WRITE_KIND="$(model_failure_kind "$WRITE_OUT")"
+    # The 2026-09-09 case: the limit ran out mid-article. The topic is chosen and
+    # the research is done, so coming back to it is worth far more than asking a
+    # fresh question next Saturday — resume the branch if there is a draft on it,
+    # otherwise re-enter with the same proposals.
+    if [[ "$WRITE_KIND" == limit ]]; then
+      if [[ "$DRAFT" -gt 0 ]]; then
+        RETRY_WHEN="$(defer_until_limit_lifts "$WRITE_OUT" --resume "$BRANCH")"
+        RETRY_WHAT="picks \`$BRANCH\` up where it stopped"
+      else
+        git checkout main --quiet
+        git branch -d "$BRANCH" --quiet 2>/dev/null || true
+        RETRY_WHEN="$(defer_until_limit_lifts "$WRITE_OUT" --topics "$LOG_DIR/$STAMP-topics.json")"
+        RETRY_WHAT="writes \"$TOPIC\" without asking you again"
+      fi
+      notify "⏳ Weekly article: $(model_failure_line limit "$WRITE_OUT").
+
+Nothing is lost — I'll try again automatically on $RETRY_WHEN and $RETRY_WHAT. Log: $LOG"
+      exit 75
+    fi
     if [[ "$DRAFT" -gt 0 ]]; then
       notify "⚠️ Weekly article: the writer stopped before naming its article, but a draft IS on \`$BRANCH\`.
 

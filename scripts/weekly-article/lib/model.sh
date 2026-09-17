@@ -85,3 +85,57 @@ model_failure_line() {
     *)     echo "it said: ${said:-nothing at all}" ;;
   esac
 }
+
+# model_limit_reset_epoch <output> — the epoch second at which a spent usage
+# limit lifts, read out of what the CLI printed. Prints nothing when the output
+# names no time.
+#
+# The CLI is the only thing that knows this: "You've hit your session limit ·
+# resets 2:20pm (Europe/Copenhagen)". Three Saturdays in a row were lost because
+# that line was printed, logged, and then thrown away — the run reported that
+# nothing had been written and waited a week, when the limit lifted three hours
+# later.
+#
+# Deliberately strict. A guess here is worse than no answer: too early burns an
+# attempt against a limit that is still spent, too late parks the article for a
+# day. If the line does not carry a time in a shape we recognise, say nothing and
+# let the caller fall back to a fixed delay.
+model_limit_reset_epoch() {
+  python3 - "$1" <<'PY' 2>/dev/null
+import re, sys
+from datetime import datetime, timedelta
+from zoneinfo import ZoneInfo, ZoneInfoNotFoundError
+
+text = sys.argv[1] if len(sys.argv) > 1 else ""
+m = re.search(
+    r"reset[s]?(?:\s+at)?\s+(\d{1,2})(?::(\d{2}))?\s*([ap]\.?m\.?)?"
+    r"(?:\s*\(([A-Za-z_]+/[A-Za-z_+\-]+)\))?",
+    text, re.IGNORECASE)
+if not m:
+    raise SystemExit(1)
+
+hour, minute, meridiem, zone = m.group(1), m.group(2), m.group(3), m.group(4)
+hour, minute = int(hour), int(minute or 0)
+if meridiem:
+    meridiem = meridiem.lower().replace(".", "")
+    if meridiem == "pm" and hour != 12:
+        hour += 12
+    elif meridiem == "am" and hour == 12:
+        hour = 0
+if not (0 <= hour <= 23 and 0 <= minute <= 59):
+    raise SystemExit(1)
+
+try:
+    tz = ZoneInfo(zone) if zone else datetime.now().astimezone().tzinfo
+except ZoneInfoNotFoundError:
+    tz = datetime.now().astimezone().tzinfo
+
+now = datetime.now(tz)
+reset = now.replace(hour=hour, minute=minute, second=0, microsecond=0)
+# "resets 2:20pm" said at 3pm means tomorrow. Anything not strictly ahead of now
+# would fire immediately into the same spent limit.
+if reset <= now:
+    reset += timedelta(days=1)
+print(int(reset.timestamp()))
+PY
+}
