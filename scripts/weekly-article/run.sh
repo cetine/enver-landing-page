@@ -74,7 +74,13 @@ export PATH="$HOME/.local/bin:/opt/homebrew/bin:/usr/local/bin:$PATH"
 # the repo lock, and from then on every Saturday is skipped with "a previous run
 # is still going". These are ceilings, not expectations: a real writing run takes
 # about 25 minutes.
-PROPOSE_TIMEOUT="${ENVERCETIN_PROPOSE_TIMEOUT_SEC:-1800}"
+# 3600, not 1800. Raised on 2026-09-18 after three attempts in a row died at the
+# ceiling: the proposer fans out five research subagents, waits for all of them,
+# and then judges four candidates against the thesis rule and the reach rule.
+# Thirty minutes was a number from when it did less. Confining the CLI to this
+# repo (lib/model.sh) cut the startup weight from 19 MCP servers and 166 tools to
+# none, and it still was not enough — so the ceiling was simply too low.
+PROPOSE_TIMEOUT="${ENVERCETIN_PROPOSE_TIMEOUT_SEC:-3600}"
 WRITE_TIMEOUT="${ENVERCETIN_WRITE_TIMEOUT_SEC:-7200}"
 VERIFY_TIMEOUT="${ENVERCETIN_VERIFY_TIMEOUT_SEC:-2700}"
 DEPLOY_TIMEOUT="${ENVERCETIN_DEPLOY_TIMEOUT_SEC:-900}"
@@ -302,11 +308,13 @@ $COVERED"
   TOPICS_JSON=""
   PROPOSE_ATTEMPTS="${ENVERCETIN_PROPOSE_ATTEMPTS:-2}"
   for ATTEMPT in $(seq 1 "$PROPOSE_ATTEMPTS"); do
+    PROPOSE_STARTED=$(date +%s)
     if PROPOSE_OUT="$(with_timeout "$PROPOSE_TIMEOUT" model_run "$PROPOSE_PROMPT")"; then
       PROPOSE_RC=0
     else
       PROPOSE_RC=$?
     fi
+    echo "propose attempt $ATTEMPT took $(( ( $(date +%s) - PROPOSE_STARTED ) / 60 )) min (ceiling $(( PROPOSE_TIMEOUT / 60 )))"
     TOPICS_JSON="$(printf '%s\n' "$PROPOSE_OUT" | sed -n '/\[/,/\]/p')"
     [[ -n "$TOPICS_JSON" ]] && break
     if [[ $PROPOSE_RC -eq 124 ]]; then
