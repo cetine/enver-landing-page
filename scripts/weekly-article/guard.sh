@@ -435,6 +435,7 @@ ASK_LOCK_PRE_EXISTING=no
 
 # --- Run ----------------------------------------------------------------------
 cd "$REPO_DIR" || true
+rm -f "$LOG_DIR/reported"
 /bin/bash "$SCRIPT" "$@"
 RC=$?
 echo "--- $JOB exited with $RC"
@@ -504,9 +505,20 @@ fi
 
 # The scripts report their own handled failures. This catches everything they
 # could not: a crash, a kill, an exit path with no message of its own.
+#
+# "Could not" is the point, and it used to be guesswork: every handled failure
+# arrived twice, the run's own account and then this one. On 2026-09-18 Enver got
+# "no topics after 2 attempts" and, sixty seconds later, "weekly-article exited
+# with code 1" — the same event, reading like two. run.sh now leaves a marker the
+# moment it notifies, so this fires only for a run that died without a word.
 if [[ $RC -ne 0 ]]; then
-  notify "⚠️ $JOB exited with code $RC. Check whether anything was left half-done. Log: $LOG"
+  if [[ -f "$LOG_DIR/reported" ]]; then
+    echo "$JOB exited $RC and had already reported it — not sending a second message"
+  else
+    notify "⚠️ $JOB exited with code $RC and said nothing about why. Check whether anything was left half-done. Log: $LOG"
+  fi
 fi
+rm -f "$LOG_DIR/reported"
 
 echo "=== guard done $(date) ==="
 exit $RC

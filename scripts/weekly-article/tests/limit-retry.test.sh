@@ -272,6 +272,60 @@ else
   bad "and it does not also send the generic \"something broke\" alarm" "$(grep 'would notify' "$TMP/guard.log")"
 fi
 
+# --- 3b. One event, one message -----------------------------------------------
+# On 2026-09-18 a handled failure arrived twice: run.sh's own account of what
+# happened, and then the guard's "exited with code 1" sixty seconds later. Two
+# notifications for one event read like two problems.
+rm -rf "$HOME/Library/Caches/envercetin-guard/limittest.lock"
+cat > "$LIMIT_TARGET" <<EOF
+#!/usr/bin/env bash
+: > "$LOGS/reported"
+echo "I told him myself"
+exit 1
+EOF
+chmod +x "$LIMIT_TARGET"
+env ENVERCETIN_TEST_SILENT=1 ENVERCETIN_TEST_NO_LAUNCHCTL=1 \
+    ENVERCETIN_AGENTS_DIR="$AGENTS" ENVERCETIN_LOG_DIR="$LOGS" \
+    ENVERCETIN_SKIP_NET_CHECK=1 \
+    /bin/bash "$GUARD" limittest "$LIMIT_TARGET" > "$TMP/guard.log" 2>&1
+if ! grep -q "would notify" "$TMP/guard.log"; then
+  ok "a run that reported its own failure is not announced a second time"
+else
+  bad "a run that reported its own failure is not announced a second time" "$(grep 'would notify' "$TMP/guard.log")"
+fi
+
+# The other half, and the reason the guard exists at all: a run that dies with
+# nothing to say must still reach Telegram.
+rm -rf "$HOME/Library/Caches/envercetin-guard/limittest.lock"
+rm -f "$LOGS/reported"
+cat > "$LIMIT_TARGET" <<'EOF'
+#!/usr/bin/env bash
+exit 9
+EOF
+chmod +x "$LIMIT_TARGET"
+env ENVERCETIN_TEST_SILENT=1 ENVERCETIN_TEST_NO_LAUNCHCTL=1 \
+    ENVERCETIN_AGENTS_DIR="$AGENTS" ENVERCETIN_LOG_DIR="$LOGS" \
+    ENVERCETIN_SKIP_NET_CHECK=1 \
+    /bin/bash "$GUARD" limittest "$LIMIT_TARGET" > "$TMP/guard.log" 2>&1
+if grep -q "would notify.*said nothing about why" "$TMP/guard.log"; then
+  ok "a run that died without a word is still reported by the guard"
+else
+  bad "a run that died without a word is still reported by the guard" "$(tail -4 "$TMP/guard.log")"
+fi
+
+# A marker left by a previous run must not silence the next one.
+rm -rf "$HOME/Library/Caches/envercetin-guard/limittest.lock"
+: > "$LOGS/reported"
+env ENVERCETIN_TEST_SILENT=1 ENVERCETIN_TEST_NO_LAUNCHCTL=1 \
+    ENVERCETIN_AGENTS_DIR="$AGENTS" ENVERCETIN_LOG_DIR="$LOGS" \
+    ENVERCETIN_SKIP_NET_CHECK=1 \
+    /bin/bash "$GUARD" limittest "$LIMIT_TARGET" > "$TMP/guard.log" 2>&1
+if grep -q "would notify.*said nothing about why" "$TMP/guard.log"; then
+  ok "a stale marker from an earlier run does not silence this one"
+else
+  bad "a stale marker from an earlier run does not silence this one" "$(tail -4 "$TMP/guard.log")"
+fi
+
 # --- 4. A limit that never lifts must not retry until the heat death ------------
 rm -f "$LOGS/limittest-limit-attempts"
 LAST_RC=0

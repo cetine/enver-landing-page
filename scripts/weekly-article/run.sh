@@ -115,7 +115,17 @@ echo "=== weekly-article $STAMP $(date +%H:%M:%S) ==="
 # Goes through envercetin-notify, which queues what it cannot send: the most
 # likely reason a run fails is that there is no network, and that is exactly when
 # a direct tg.py send drops the message telling you so.
+# REPORTED_FILE is how the guard knows this run has already spoken for itself.
+# Without it every handled failure arrives twice: the run's own account of what
+# happened, and then the guard's "exited with code 1", which adds nothing and
+# reads like a second, separate problem. The guard still speaks up for a run that
+# died without a word — that is the whole reason it exists.
+REPORTED_FILE="$LOG_DIR/reported"
+
 notify() {
+  # Marked before sending, not after: a notifier that fails still means this run
+  # tried to account for itself, and a duplicate is better than a lie.
+  : > "$REPORTED_FILE" 2>/dev/null || true
   if [[ -n "${ENVERCETIN_TEST_SILENT:-}" ]]; then
     echo "[test-silent] would notify: $1"
     return 0
@@ -341,7 +351,13 @@ $COVERED"
 
   if [[ -z "$TOPICS_JSON" ]]; then
     if [[ $PROPOSE_RC -eq 124 ]]; then
-      WHY="every attempt was still running after $(( PROPOSE_TIMEOUT / 60 )) minutes and had to be killed. That is the 2026-09-05 failure: the CLI hangs during startup, before its first model turn, and writes nothing at all"
+      # This used to assert "that is the 2026-09-05 failure: the CLI hangs during
+      # startup". On 2026-09-18 it said exactly that three times while the CLI
+      # was demonstrably fine — the same binary answered a one-line prompt in
+      # ten seconds, and the proposer was working, just slower than a ceiling
+      # set when it did less. A message that names a cause it cannot know sends
+      # you hunting the wrong thing; this one reports what was observed.
+      WHY="every attempt was still running after $(( PROPOSE_TIMEOUT / 60 )) minutes and was killed at the ceiling. That is a deadline, not a diagnosis — it does not say whether the CLI was stuck or simply slower than the ceiling allows. The log records how long each attempt actually ran; if they died at the ceiling rather than before it, raise ENVERCETIN_PROPOSE_TIMEOUT_SEC before assuming a hang"
     elif [[ "${PROPOSE_KIND:-other}" != other ]]; then
       WHY="$(model_failure_line "$PROPOSE_KIND" "$PROPOSE_OUT")"
     else

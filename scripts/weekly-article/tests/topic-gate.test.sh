@@ -289,13 +289,19 @@ else
   bad "the retry's topics carry the run through to the writer" "$(tail -8 "$TMP/run.log")"
 fi
 
-# --- 7. Every attempt failing is reported as the hang it is -------------------
+# --- 7. A deadline is reported as a deadline, not as a diagnosis --------------
+# This case used to require the words "hangs during startup". On 2026-09-18 that
+# sentence went out three times while the CLI was demonstrably healthy — it
+# answered a one-line prompt in ten seconds — and sent the morning after the
+# wrong bug. The ceiling knows one thing: time ran out.
 answers "2:"
 run_gate PROPOSE_FAIL_UNTIL=99 PROPOSE_FAIL_RC=124 --
-if grep -q "no topics after" "$TMP/run.log" && grep -q "hangs during startup" "$TMP/run.log"; then
-  ok "a proposer that never answers is named for what it did"
+if grep -q "no topics after" "$TMP/run.log" \
+   && grep -q "deadline, not a diagnosis" "$TMP/run.log" \
+   && ! grep -q "hangs during startup" "$TMP/run.log"; then
+  ok "a proposer that ran out of time is reported as that, and not as a hang"
 else
-  bad "a proposer that never answers is named for what it did" "$(tail -6 "$TMP/run.log")"
+  bad "a proposer that ran out of time is reported as that, and not as a hang" "$(tail -6 "$TMP/run.log")"
 fi
 if [[ $RUN_RC -ne 0 ]]; then
   ok "and the run fails rather than pretending it published"

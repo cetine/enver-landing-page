@@ -60,6 +60,20 @@ trap cleanup EXIT
 ok()  { PASS=$((PASS+1)); printf '  ok   — %s\n' "$1"; }
 bad() { FAIL=$((FAIL+1)); printf '  FAIL — %s\n' "$1"; [[ -n "${2:-}" ]] && printf '         %s\n' "$2"; return 0; }
 
+# This suite drives real guards against the real repo, so it needs the working
+# tree to itself. With a weekly run in progress every case defers on the repo
+# lock instead of reaching its target, and the suite reports six failures that
+# have nothing to do with the code — a red that is not red, which is worse than
+# no run at all. On 2026-09-18 it did exactly that twice in a row.
+REPO_KEY="$(printf '%s' "$(cd "$REPO" && pwd -P)" | shasum | cut -c1-12)"
+BUSY_LOCK="$CACHE/repo-$REPO_KEY.lock"
+if [[ -d "$BUSY_LOCK" ]]; then
+  echo "  SKIPPED — an article job is working in this repo right now:" \
+       "$(cat "$BUSY_LOCK/job" 2>/dev/null) (pid $(cat "$BUSY_LOCK/pid" 2>/dev/null))."
+  echo "  This suite needs the working tree to itself. Re-run it when the job is done."
+  exit 0
+fi
+
 cat > "$TARGET" <<'EOF'
 #!/usr/bin/env bash
 echo "test-target ran with args: $*"
