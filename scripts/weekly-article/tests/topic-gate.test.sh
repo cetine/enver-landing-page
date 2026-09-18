@@ -260,6 +260,31 @@ else
   bad "--topics carries the chosen topic through to the writer" "$(tail -6 "$TMP/run.log")"
 fi
 
+# --- 4b. --topic skips proposing AND asking -----------------------------------
+# For the case the question cannot serve: a draft wanted by morning with nobody
+# awake to tap a button. Neither the proposer nor the civil window applies when
+# the topic is already decided.
+answers "0:Keep as draft"
+run_gate -- --topic "A topic decided by hand"
+if ! grep -q propose "$TMP/claude-calls" && grep -q "^write$" "$TMP/claude-calls"; then
+  ok "--topic writes without proposing"
+else
+  bad "--topic writes without proposing" "$(cat "$TMP/claude-calls")"
+fi
+if grep -q "topic given on the command line: A topic decided by hand" "$TMP/run.log"; then
+  ok "--topic carries the exact wording through to the writer"
+else
+  bad "--topic carries the exact wording through to the writer" "$(tail -6 "$TMP/run.log")"
+fi
+# The closed window must not park a run that has nothing to ask.
+answers "0:Keep as draft"
+run_gate ENVERCETIN_ASK_FROM_HOUR=23 ENVERCETIN_ASK_UNTIL_HOUR=23 -- --topic "A topic decided by hand"
+if grep -q "^write$" "$TMP/claude-calls" && ! grep -q "would notify: 🌙" "$TMP/run.log"; then
+  ok "--topic is not deferred by the civil window — there is no question to postpone"
+else
+  bad "--topic is not deferred by the civil window — there is no question to postpone" "$(tail -5 "$TMP/run.log")"
+fi
+
 # --- 5. The last deferral gives up cleanly ------------------------------------
 answers "2:" "2:" "2:"
 run_gate ENVERCETIN_MAX_DEFERRALS=0 --

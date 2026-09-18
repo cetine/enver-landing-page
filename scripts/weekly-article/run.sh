@@ -37,13 +37,22 @@ set -euo pipefail
 # minutes. On 2026-08-29 that is exactly how a week was lost — the questions
 # went out at 21:39, 00:09 and 02:39, nobody was awake, and four researched
 # topics were discarded. This skips the proposer and asks straight away.
+#
+# --topic "<text>" is the third of the same family, one step earlier again: the
+# topic is already decided, so skip both the proposer and the question and go
+# straight to writing. It exists for the case the question cannot serve — a
+# draft wanted by morning, with nobody awake to tap a button. The civil window
+# and the deferral ladder are about not asking at a bad time; when there is
+# nothing to ask, neither applies.
 RESUME_BRANCH=""
 TOPICS_FILE=""
+TOPIC_GIVEN=""
 case "${1:-}" in
   --resume) RESUME_BRANCH="${2:?usage: run.sh --resume <branch>}" ;;
   --topics) TOPICS_FILE="${2:?usage: run.sh --topics <topics.json>}" ;;
+  --topic)  TOPIC_GIVEN="${2:?usage: run.sh --topic \"<topic>\"}" ;;
   "")       ;;
-  *)        echo "usage: run.sh [--resume <branch> | --topics <topics.json>]" >&2; exit 2 ;;
+  *)        echo "usage: run.sh [--resume <branch> | --topics <topics.json> | --topic \"<topic>\"]" >&2; exit 2 ;;
 esac
 
 # Derived from this script's own location, never hardcoded: moving the repo must
@@ -259,6 +268,14 @@ if [[ -n "$RESUME_BRANCH" ]]; then
   fi
   echo "resuming $BRANCH at the verify gate — slug: $SLUG"
 else
+  if [[ -n "$TOPIC_GIVEN" ]]; then
+    # Decided elsewhere: nothing to propose, nobody to ask. The civil window and
+    # the deferral ladder exist so a question is not asked at a bad time; when
+    # there is no question they do not apply.
+    TOPIC="$TOPIC_GIVEN"
+    TOPIC_BRIEF="$TOPIC_GIVEN"
+    echo "topic given on the command line: $TOPIC"
+  else
   # --- 1. Propose topics --------------------------------------------------------
   # ...unless a previous run already did, and nobody was awake to answer it.
   # `--topics` hands those proposals straight back to the question below.
@@ -548,6 +565,8 @@ Log: $LOG"
 
   # If Enver tapped a button, hand the full proposal to the writer, not just the label.
   TOPIC_BRIEF="$(python3 "$LIB" brief "$LOG_DIR/$STAMP-topics.json" "$TOPIC")"
+
+  fi
 
   # --- 3. Write -----------------------------------------------------------------
   # `checkout -b` fails outright if the branch exists, and under the ERR trap
