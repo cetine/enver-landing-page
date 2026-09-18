@@ -9,7 +9,24 @@ MODEL_NAME="${ENVERCETIN_CLAUDE_MODEL:-fable}"
 
 # `Agent` is the subagent tool; `Task` is its older name, kept so an older CLI
 # can still delegate.
+#
+# `--strict-mcp-config` and `--setting-sources project,local` cut the CLI down to
+# this repository. Without them a headless run inherits Enver's whole personal
+# setup, and on 2026-09-18 that was 19 MCP servers, 166 tools and 9 SessionStart
+# hooks — Gmail, Google Drive, Stripe, Strava, four travel booking sites — loaded
+# into the proposer and into every subagent it spawns. Two 30-minute attempts in
+# a row died at the ceiling having managed a single `Read` in five minutes. With
+# the flags it is 0 servers, 23 tools, 0 hooks.
+#
+# It is also the right boundary on its own merits: this runs unattended on a
+# personal machine and has no business holding a mail or a payments tool.
+#
+# NOT `--bare`, which looks made for this and is not: it reads authentication
+# strictly from ANTHROPIC_API_KEY and never touches OAuth or the keychain, so it
+# cannot run on the subscription at all — the one thing this pipeline requires.
 MODEL_FLAGS=(--model "$MODEL_NAME" --permission-mode acceptEdits
+  --strict-mcp-config
+  --setting-sources project,local
   --allowed-tools "Bash,Read,Write,Edit,Glob,Grep,WebSearch,WebFetch,Agent,Task,TodoWrite,TaskCreate,TaskUpdate")
 
 # `env -u` removes anything that would route the CLI past the subscription. The

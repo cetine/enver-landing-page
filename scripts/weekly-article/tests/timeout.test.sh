@@ -115,12 +115,20 @@ LEAK_OUT="$(mktemp -t envercetin-timeout-leak)"
 (
   # The inner bash exits at once; the subshell it backgrounded inherits stdout
   # and lives on. That is the shape of `claude -p` spawning a child and dying.
+  #
+  # The grace period is pinned, because the deadline below has to sit above the
+  # cleanup's OWN worst case — TERM, settle, KILL — and the default 10s put it
+  # within a second or two of it. This case passed alone and failed inside the
+  # full suite, which is a harness that measures too tightly, not a race.
+  WITH_TIMEOUT_GRACE_SEC=2 \
   RESULT="$(with_timeout 30 bash -c '( sleep 45 ) & echo done; exit 0')"
   printf '%s' "$RESULT" > "$LEAK_OUT"
 ) & LEAK_PID=$!
 
+# 25s: comfortably past a cleanup that takes at most ~4s, and comfortably short
+# of the 45s a regression would block for.
 LEAK_WAITED=0
-while (( LEAK_WAITED < 15 )) && kill -0 "$LEAK_PID" 2>/dev/null; do
+while (( LEAK_WAITED < 25 )) && kill -0 "$LEAK_PID" 2>/dev/null; do
   sleep 1
   LEAK_WAITED=$(( LEAK_WAITED + 1 ))
 done

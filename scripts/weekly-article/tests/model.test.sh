@@ -172,6 +172,16 @@ else
   bad "the writer may delegate to subagents" "$CALLS"
 fi
 
+# The startup surface is part of the contract, not a detail: on 2026-09-18 the
+# inherited personal config (19 MCP servers, 166 tools, 9 hooks) was what made
+# two 30-minute propose attempts die at the ceiling.
+if printf '%s\n' "$CALLS" | grep -q -- '--strict-mcp-config' \
+   && printf '%s\n' "$CALLS" | grep -q -- '--setting-sources project,local'; then
+  ok "the model runs confined to this repo — no personal MCP servers, no hooks"
+else
+  bad "the model runs confined to this repo — no personal MCP servers, no hooks" "$CALLS"
+fi
+
 if ! grep -q 'api_key=sk-ant' "$TMP/claude-calls" \
    && ! grep -q 'base_url=http' "$TMP/claude-calls"; then
   ok "an API key or foreign backend in the environment never reaches the model"
