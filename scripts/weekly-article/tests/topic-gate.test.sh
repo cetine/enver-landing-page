@@ -20,6 +20,13 @@
 
 set -uo pipefail
 
+# run.sh only asks between 09:00 and 21:00, and a suite whose result depends on
+# the hour it is run is not a test. The one case below that exercises the closed
+# window sets its own hours explicitly.
+: "${ENVERCETIN_ASK_FROM_HOUR:=0}"
+: "${ENVERCETIN_ASK_UNTIL_HOUR:=24}"
+export ENVERCETIN_ASK_FROM_HOUR ENVERCETIN_ASK_UNTIL_HOUR
+
 REPO="$(cd "$(dirname "${BASH_SOURCE[0]}")/../../.." && pwd)"
 WA="$REPO/scripts/weekly-article"
 RUN="$WA/run.sh"
@@ -197,6 +204,45 @@ if [[ -f "$LOGS/$STAMP-topics.json" ]]; then
   ok "the research is kept for the morning"
 else
   bad "the research is kept for the morning"
+fi
+
+# --- 3b. A window that has not opened yet costs an hour, not a day -------------
+# 2026-09-18: a hand-started run finished its proposals at 07:51, an hour and
+# nine minutes before the window opened, and parked the question until 10:00 the
+# NEXT day — in a week that had already lost three Saturdays to the usage limit.
+# "Not yet" and "not any more" are different silences.
+# arm_job writes key and value on one line, so -A1 would also pick up the Hour.
+plist_day() {
+  sed -n 's|.*<key>Day</key><integer>\([0-9]*\)</integer>.*|\1|p' \
+    "$AGENTS/com.enver.envercetin.topics-retry.plist" 2>/dev/null | head -1
+}
+
+answers "0:A test topic"
+rm -f "$AGENTS/com.enver.envercetin.topics-retry.plist"
+# from=23 means the window opens tonight — unless the suite is itself run at
+# 23:xx, in which case it has already shut and tomorrow is the right answer.
+run_gate ENVERCETIN_ASK_FROM_HOUR=23 ENVERCETIN_ASK_UNTIL_HOUR=23 --
+NOW_HOUR="$(date +%H)"; NOW_HOUR="${NOW_HOUR#0}"; NOW_HOUR="${NOW_HOUR:-0}"
+if (( NOW_HOUR < 23 )); then
+  if [[ "$(plist_day)" == "$(date +%-d)" ]] && grep -q "later today at 23:00" "$TMP/run.log"; then
+    ok "a window that opens later today is waited out today, not slept off"
+  else
+    bad "a window that opens later today is waited out today, not slept off" \
+        "armed for day $(plist_day), today is $(date +%-d): $(grep -o 'I will ask again [a-z ]*at [0-9:]*' "$TMP/run.log" | head -1)"
+  fi
+else
+  ok "a window that opens later today is waited out today, not slept off (skipped: run at 23:xx)"
+fi
+
+answers "0:A test topic"
+rm -f "$AGENTS/com.enver.envercetin.topics-retry.plist"
+# from=0 means the window opened long ago and has already shut for the evening.
+run_gate ENVERCETIN_ASK_FROM_HOUR=0 ENVERCETIN_ASK_UNTIL_HOUR=0 --
+if [[ "$(plist_day)" == "$(date -v+1d +%-d)" ]] && grep -q "tomorrow at" "$TMP/run.log"; then
+  ok "a window that has shut for the evening still waits for tomorrow morning"
+else
+  bad "a window that has shut for the evening still waits for tomorrow morning" \
+      "armed for day $(plist_day), tomorrow is $(date -v+1d +%-d)"
 fi
 
 # --- 4. --topics asks without researching again -------------------------------

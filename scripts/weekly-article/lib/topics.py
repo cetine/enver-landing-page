@@ -32,7 +32,11 @@ def question(topics: list) -> str:
         for i, t in enumerate(topics, 1):
             lines.append(f"{i}. {label_of(t)} — {t['thesis']}")
             if verbose:
-                lines.append(f"   why now: {t['why_now']}")
+                lines.append(f"   why now: {t.get('why_now', '')}")
+                # Added later than the other fields, and `--topics` can replay a
+                # file written before it existed — so absent, not empty.
+                if t.get("who_forwards_it"):
+                    lines.append(f"   who passes it on: {t['who_forwards_it']}")
         lines += ["", FOOTER]
         return "\n".join(lines)
 
@@ -46,8 +50,13 @@ def brief(topics: list, pick: str) -> str:
     pick = pick.strip()
     for t in topics:
         if label_of(t) == pick:
-            return (f"{t['label']} — {t['thesis']} "
-                    f"(why now: {t['why_now']}; measurable angle: {t['can_measure']})")
+            parts = [f"{t['label']} — {t['thesis']}",
+                     f"(why now: {t.get('why_now', 'n/a')};"
+                     f" measurable angle: {t.get('can_measure', 'n/a')}"]
+            if t.get("who_forwards_it"):
+                parts.append(f"; who passes it on: {t['who_forwards_it']}")
+            parts.append(")")
+            return " ".join(parts[:1]) + " " + "".join(parts[1:])
     return pick
 
 

@@ -19,6 +19,14 @@
 
 set -uo pipefail
 
+# run.sh only asks between 09:00 and 21:00, and a suite whose result depends on
+# the hour it is run is not a test. Pinned here rather than in run-all.sh so a
+# single suite run by hand behaves the same. Cases that test the window itself
+# override these per case.
+: "${ENVERCETIN_ASK_FROM_HOUR:=0}"
+: "${ENVERCETIN_ASK_UNTIL_HOUR:=24}"
+export ENVERCETIN_ASK_FROM_HOUR ENVERCETIN_ASK_UNTIL_HOUR
+
 REPO="$(cd "$(dirname "${BASH_SOURCE[0]}")/../../.." && pwd)"
 GUARD="$REPO/scripts/weekly-article/guard.sh"
 LOCK_ROOT="$HOME/Library/Caches/envercetin-guard"
@@ -131,7 +139,9 @@ run_guard "$JOB"
 grep -q "another article job is working in this repo" "$GUARD_LOG" \
   && ok "the log names the job that has the repo" \
   || bad "the log names the job that has the repo" "last line: $(tail -1 "$GUARD_LOG")"
-[[ -f "$AGENTS/com.enver.envercetin.retry-$JOB.plist" ]] \
+# One label per arming — a retry that re-armed under its own name boot-ed itself
+# out mid-arm (guard.test.sh case 4), so the name now carries a timestamp.
+compgen -G "$AGENTS/com.enver.envercetin.retry-$JOB-*.plist" > /dev/null \
   && ok "a run that found the repo busy arms a retry instead of losing the work" \
   || bad "a run that found the repo busy arms a retry instead of losing the work" "no retry plist"
 grep -q "would notify:" "$GUARD_LOG" \

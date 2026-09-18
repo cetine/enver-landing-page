@@ -393,7 +393,7 @@ Log: $LOG"
   # the network and keeps the Mac awake — with `--topics`, so it asks rather
   # than researches.
   defer_topic_question() {
-    local why="$1" next_label mm dd
+    local why="$1" next_label mm dd next_hour
     if [[ "$DEFERRALS" -ge "$MAX_DEFERRALS" ]]; then
       # The marker is what tells the watchdog a question is still outstanding.
       # Leaving it here would have the watchdog report a dead chain every day
@@ -409,14 +409,31 @@ Otherwise I will research fresh ones next Saturday."
     fi
 
     next_label="com.enver.envercetin.topics-retry"
-    mm="$(date -v+1d +%m)"; dd="$(date -v+1d +%d)"
-    if arm_job "$next_label" "${mm#0}" "${dd#0}" "$ASK_DEFER_HOUR" 0 \
+
+    # Two different silences. If the window has not OPENED yet — a hand-started
+    # run at 07:51, which is how 2026-09-18 went — the wait is one hour, and
+    # jumping to tomorrow morning for it threw away a whole day of a week that
+    # had already lost three. If the window has SHUT for the evening, tomorrow
+    # is genuinely the next civil moment.
+    local now_hour when_word
+    now_hour="$(date +%H)"; now_hour="${now_hour#0}"; now_hour="${now_hour:-0}"
+    if (( now_hour < ASK_FROM_HOUR )); then
+      mm="$(date +%m)"; dd="$(date +%d)"
+      next_hour="$ASK_FROM_HOUR"
+      when_word="later today at $(printf '%02d' "$ASK_FROM_HOUR"):00"
+    else
+      mm="$(date -v+1d +%m)"; dd="$(date -v+1d +%d)"
+      next_hour="$ASK_DEFER_HOUR"
+      when_word="tomorrow at $(printf '%02d' "$ASK_DEFER_HOUR"):00"
+    fi
+
+    if arm_job "$next_label" "${mm#0}" "${dd#0}" "$next_hour" 0 \
          "$HOME/.local/bin/envercetin-guard" weekly-article \
          "$REPO/scripts/weekly-article/run.sh" --topics "$TOPICS_KEPT"; then
       echo $(( DEFERRALS + 1 )) > "$DEFERRALS_FILE"
       notify "🌙 $why — so I did not burn this week's question on it.
 
-The four topics are researched and waiting. I will ask again tomorrow at $(printf '%02d' "$ASK_DEFER_HOUR"):00.
+The four topics are researched and waiting. I will ask again $when_word.
 
 To pick one right now instead:
 $REPO/scripts/weekly-article/run.sh --topics $TOPICS_KEPT"

@@ -11,6 +11,14 @@
 
 set -uo pipefail
 
+# run.sh only asks between 09:00 and 21:00, and a suite whose result depends on
+# the hour it is run is not a test. Pinned here rather than in run-all.sh so a
+# single suite run by hand behaves the same. Cases that test the window itself
+# override these per case.
+: "${ENVERCETIN_ASK_FROM_HOUR:=0}"
+: "${ENVERCETIN_ASK_UNTIL_HOUR:=24}"
+export ENVERCETIN_ASK_FROM_HOUR ENVERCETIN_ASK_UNTIL_HOUR
+
 REPO="$(cd "$(dirname "${BASH_SOURCE[0]}")/../../.." && pwd)"
 WA="$REPO/scripts/weekly-article"
 RUN="$WA/run.sh"

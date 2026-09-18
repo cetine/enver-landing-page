@@ -242,14 +242,23 @@ EOF
 
 rm -rf "$HOME/Library/Caches/envercetin-guard/limittest.lock"
 guard_run 75 reset
-PLIST="$AGENTS/com.enver.envercetin.retry-limittest.plist"
+# One label per arming — see guard.test.sh case 4 for why a fixed name kills the
+# retry that writes it. So the armed job is found by shape, not by name.
+armed() {
+  local hit
+  shopt -s nullglob
+  for hit in "$AGENTS/com.enver.envercetin.retry-limittest-"*.plist; do printf '%s' "$hit"; break; done
+  shopt -u nullglob
+}
+PLIST="$(armed)"
 if [[ $GUARD_RC -eq 0 ]]; then
   ok "the guard treats exit 75 as deferred work, not as a failed run"
 else
   bad "the guard treats exit 75 as deferred work, not as a failed run" "rc=$GUARD_RC $(tail -5 "$TMP/guard.log")"
 fi
 
-if [[ -f "$PLIST" ]] \
+PLIST="$(armed)"
+if [[ -n "$PLIST" ]] \
    && grep -q "<integer>$(date -r "$RESET_AT" +%-H)</integer>" "$PLIST" \
    && grep -q "<integer>$(date -r "$RESET_AT" +%-d)</integer>" "$PLIST"; then
   ok "it arms a one-shot job pinned to the hour the limit lifts"
@@ -272,7 +281,7 @@ for i in 1 2 3 4 5 6 7 8; do
   LAST_RC=$GUARD_RC
   grep -q "giving up" "$TMP/guard.log" && break
 done
-if grep -q "giving up" "$TMP/guard.log" && [[ ! -f "$PLIST" ]]; then
+if grep -q "giving up" "$TMP/guard.log" && [[ -z "$(armed)" ]]; then
   ok "after the cap it stops re-arming and leaves no job behind"
 else
   bad "after the cap it stops re-arming and leaves no job behind" "attempts=$(cat "$LOGS/limittest-limit-attempts" 2>/dev/null) $(tail -4 "$TMP/guard.log")"

@@ -7,7 +7,7 @@ the chosen article, and publishes it only after you approve a preview.
 
 | Step | What happens | Can it touch the live site? |
 |---|---|---|
-| 1 | Fable web-researches (via subagents) and proposes 4 topics | no |
+| 1 | Fable web-researches (via subagents) and proposes 4 topics, judged on reach as well as truth | no |
 | 2 | Telegram asks you: tap a proposal, or type your own | no |
 | 3 | Fable orchestrates subagents that research, fact-check, write and review the article on a local branch | no |
 | 4 | `npm run verify` runs as a hard gate | no |
@@ -21,6 +21,27 @@ sets the date; you get a Telegram message naming the exact time and the command
 to cancel it. If you decline, the work stays on a local branch and the preview
 URL remains readable — and if the question never reaches you, or you never
 answer, that is reported as undecided rather than filed as a No.
+
+## What gets proposed
+
+`prompts/propose-topics.md` asks for four topics that each carry a claim a
+competent reader could disagree with — and, since 2026-09-18, that each pass a
+reach test: someone is wrong about this *right now*, it changes a decision
+somebody is making this quarter, it survives compression to one sentence and one
+number, and the measured result could embarrass the obvious answer. Every
+proposal names **who forwards it to whom**; "AI practitioners" is not an answer.
+
+This is not a licence to oversell — the house style still forbids superlatives,
+listicles and calls to action, and the pieces that travel in this audience are
+the ones someone can paste into a team channel with one line of commentary.
+
+## When it asks
+
+Only between 09:00 and 21:00. Outside that the proposals are kept and the
+question is re-armed: **later the same day** if the window has not opened yet,
+tomorrow morning if it has already shut. Before 2026-09-18 both cases went to
+tomorrow, so a run started at 07:51 — an hour and nine minutes early — parked its
+question for a full day.
 
 ### Calling off a scheduled publish
 

@@ -27,9 +27,36 @@ it must contain a claim a competent reader could disagree with, ideally a
 correction of something widely believed. Prefer topics where Enver can *run
 something and measure it*, because that is what makes his articles worth reading.
 
+## Reach: what gets forwarded
+
+An article nobody passes on was not worth the Saturday. Reach here is not
+clickbait — the house style forbids superlatives, listicles and calls to action,
+and a piece that oversells is the one that gets quietly dropped. What actually
+travels in this audience is a **specific, defensible correction someone can
+paste into a team channel with one line of commentary**.
+
+Judge every candidate against all four:
+
+1. **Someone is wrong about this right now.** Not "a thing happened" but "a
+   thing happened and the common reading of it is mistaken". A topic where
+   everyone already agrees has nowhere to go.
+2. **It changes a decision someone is making this quarter** — an enforcement
+   date, a version bump, a budget line, an architecture about to be committed
+   to. Timeliness is about the reader's calendar, not the news cycle.
+3. **It survives compression to one sentence and one number.** If the forwarder
+   cannot state the finding in a sentence, they will not forward it. The number
+   has to be one Enver can actually produce, not one he quotes.
+4. **The measured result could embarrass the obvious answer.** The house style
+   demands a finding against its own recommendation; that finding is usually the
+   reason the piece spreads at all.
+
+Say, for each topic, who forwards it to whom. "An EU enterprise architect sends
+it to their legal counterpart" is a real answer; "AI practitioners" is not.
+
 Reject topics that are: explainers, listicles, vendor comparisons, anything
-requiring access he does not have, or anything whose central claim cannot be
-verified against a primary source.
+requiring access he does not have, anything whose central claim cannot be
+verified against a primary source, and anything whose honest summary is "here is
+a recent thing, and it is broadly as reported".
 
 Output ONLY a JSON array, no prose, no code fence:
 
@@ -37,5 +64,6 @@ Output ONLY a JSON array, no prose, no code fence:
   {"label": "<max 28 chars, for a Telegram button>",
    "thesis": "<one sentence: the claim the article would argue>",
    "why_now": "<one sentence: the recent development that makes it timely>",
-   "can_measure": "<one sentence: what could actually be run and measured>"}
+   "can_measure": "<one sentence: what could actually be run and measured>",
+   "who_forwards_it": "<one sentence: who sends this to whom, and what they say>"}
 ]

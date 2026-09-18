@@ -42,6 +42,15 @@ cleanup() {
     launchctl bootout "gui/$UID_NUM/$l" 2>/dev/null
     rm -f "$AGENTS/$l.plist"
   done
+  # Each arming now writes its own timestamped label, so the fixed names above
+  # are not enough to leave the machine as we found it.
+  local stray
+  shopt -s nullglob
+  for stray in "$AGENTS"/com.enver.envercetin.retry-guardtest-*.plist; do
+    launchctl bootout "gui/$UID_NUM/$(basename "$stray" .plist)" 2>/dev/null
+    rm -f "$stray"
+  done
+  shopt -u nullglob
   for l in ${JOBS+"${JOBS[@]}"}; do
     rm -rf "$CACHE/$l.lock"
   done
@@ -217,23 +226,72 @@ grep -q "min awake" "$LOG3" 2>/dev/null \
   && ok "the network budget is counted in awake time, not wall-clock" \
   || bad "the network budget is counted in awake time, not wall-clock" "no 'min awake' in the log"
 
-if [[ -f "$AGENTS/$RETRY_LABEL3.plist" ]]; then
+# Each arming carries its own timestamp in the label, so find it by shape.
+armed_plist() {
+  local hit
+  shopt -s nullglob
+  for hit in "$AGENTS/com.enver.envercetin.retry-$1-"*.plist; do printf '%s' "$hit"; break; done
+  shopt -u nullglob
+}
+ARMED3="$(armed_plist "$JOB3")"
+if [[ -n "$ARMED3" && -f "$ARMED3" ]]; then
   ok "an offline run leaves a retry plist behind"
-  plutil -lint "$AGENTS/$RETRY_LABEL3.plist" >/dev/null 2>&1 \
+  plutil -lint "$ARMED3" >/dev/null 2>&1 \
     && ok "the armed retry plist is valid XML" \
     || bad "the armed retry plist is valid XML" "plutil rejected it — check argv escaping"
-  grep -q "ENVERCETIN_RETRY_OF" "$AGENTS/$RETRY_LABEL3.plist" \
+  grep -q "ENVERCETIN_RETRY_OF" "$ARMED3" \
     && ok "the armed retry stamps itself so it will not boot itself out" \
     || bad "the armed retry stamps itself so it will not boot itself out" "no ENVERCETIN_RETRY_OF in the plist"
+  launchctl print "gui/$UID_NUM/$(basename "$ARMED3" .plist)" >/dev/null 2>&1 \
+    && ok "and the armed retry is actually LOADED, not just written to disk" \
+    || bad "and the armed retry is actually LOADED, not just written to disk" "$(basename "$ARMED3") is on disk but launchd does not know it"
 else
-  bad "an offline run leaves a retry plist behind" "$AGENTS/$RETRY_LABEL3.plist missing"
+  bad "an offline run leaves a retry plist behind" "no com.enver.envercetin.retry-$JOB3-*.plist"
   bad "the armed retry plist is valid XML" "no plist to check"
   bad "the armed retry stamps itself so it will not boot itself out" "no plist to check"
+  bad "and the armed retry is actually LOADED, not just written to disk" "no plist to check"
 fi
 
 [[ ! -d "$CACHE/$JOB3.lock" ]] \
   && ok "an offline run releases its lock before exiting" \
   || bad "an offline run releases its lock before exiting" "stale lock at $CACHE/$JOB3.lock"
+
+# --- 4. A retry that has to defer AGAIN must survive arming the next one -------
+# The 2026-09-17 bug, and the one the case above cannot see: there the guard ran
+# under `retry-guardtest-offrun` while arming `retry-guardtest-offline`, so the
+# bootout inside arm_retry was never aimed at the running label. In real life it
+# always is — the retry for a job re-arms the retry for that same job — and
+# `launchctl bootout` on your own label kills the process executing it. The 14:00
+# run wrote its 19:00 plist and died one line later, so 19:00 never came.
+#
+# So: run the guard under EXACTLY the label its own arm_retry would target.
+JOB4=guardtest-rearm
+rm -f "$AGENTS"/com.enver.envercetin.retry-$JOB4-*.plist
+EXTRA_ENV="    <key>ENVERCETIN_PROBE_URL</key><string>http://127.0.0.1:9/offline-probe</string>
+    <key>ENVERCETIN_NET_WAIT_MIN</key><string>0</string>
+    <key>ENVERCETIN_NET_POLL_SEC</key><string>1</string>
+    <key>ENVERCETIN_RETRY_IN_MIN</key><string>45</string>
+"
+run_guard_as_job "com.enver.envercetin.retry-$JOB4" "$JOB4"
+LOG4="$GUARD_LOG"
+EXTRA_ENV=""
+
+grep -q "retry armed" "$LOG4" 2>/dev/null \
+  && ok "a retry that defers again lives long enough to arm the next one" \
+  || bad "a retry that defers again lives long enough to arm the next one" \
+         "guard died inside arm_retry. Last line: $(tail -1 "$LOG4" 2>/dev/null || echo '<no log>')"
+
+ARMED4="$(armed_plist "$JOB4")"
+if [[ -n "$ARMED4" ]] && launchctl print "gui/$UID_NUM/$(basename "$ARMED4" .plist)" >/dev/null 2>&1; then
+  ok "and the job it armed is loaded, so the chain actually continues"
+else
+  ok_msg="and the job it armed is loaded, so the chain actually continues"
+  bad "$ok_msg" "armed=${ARMED4:-<none>} — a plist on disk that launchd never loaded is exactly the 17.09. failure"
+fi
+
+[[ ! -d "$CACHE/$JOB4.lock" ]] \
+  && ok "a re-arming retry still releases its lock" \
+  || bad "a re-arming retry still releases its lock" "stale lock at $CACHE/$JOB4.lock"
 
 echo
 echo "$PASS passed, $FAIL failed"

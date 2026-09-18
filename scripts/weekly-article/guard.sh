@@ -45,7 +45,15 @@ LOG_DIR="${ENVERCETIN_LOG_DIR:-$HOME/Library/Logs/envercetin-weekly-article}"
 LOG="$LOG_DIR/guard-$JOB-$(date +%Y-%m-%d-%H%M).log"
 LOCK_ROOT="$HOME/Library/Caches/envercetin-guard"
 LOCK_DIR="$LOCK_ROOT/$JOB.lock"
-RETRY_LABEL="com.enver.envercetin.retry-$JOB"
+# Every arming gets its own label. `launchctl bootout` on the label you are
+# running under kills the process executing that line, so a retry that re-arms
+# under the same name kills itself mid-arm — it leaves the plist on disk, never
+# loaded, and the chain stops dead. That is what happened on 2026-09-17: the
+# 14:00 retry deferred to 19:00, wrote the plist, and died at the bootout. 19:00
+# came and went. A unique label per arming makes the collision impossible rather
+# than handled.
+RETRY_PREFIX="com.enver.envercetin.retry-$JOB"
+RETRY_LABEL="$RETRY_PREFIX"
 
 # What separates "still working" from "hung forever". A legitimate run can take
 # most of a day — the topic question waits up to three rounds of 150 minutes and
@@ -91,8 +99,16 @@ notify() {
 # attempt turns one problem into an alarm clock — a dozen identical messages for
 # a single long wait, all delivered at once when the network returns. Say it on
 # the run that first hit it, and then keep quiet about it.
+# True when this process IS one of the retries armed for this job — by the label
+# launchd is running us under, or by the stamp arm_retry puts in the plist.
+running_as_retry() {
+  [[ "${XPC_SERVICE_NAME:-}" == "$RETRY_PREFIX" \
+     || "${XPC_SERVICE_NAME:-}" == "$RETRY_PREFIX-"* \
+     || "${ENVERCETIN_RETRY_OF:-}" == "$JOB" ]]
+}
+
 notify_unless_retry() {
-  if [[ "${XPC_SERVICE_NAME:-}" == "$RETRY_LABEL" || "${ENVERCETIN_RETRY_OF:-}" == "$JOB" ]]; then
+  if running_as_retry; then
     echo "(reported already on the first attempt, staying quiet) $1"
     return 0
   fi
@@ -252,12 +268,13 @@ arm_retry() {
   # An absolute epoch when the caller knows exactly when to come back — a usage
   # limit prints the minute it lifts — and a fixed delay when it does not.
   if [[ -n "$at" ]]; then
-    when="$(date -r "$at" "+%Y %m %d %H %M")"
+    when="$(date -r "$at" "+%Y %-m %-d %-H %-M")"
   else
-    when="$(date -v "+${RETRY_IN_MIN}M" "+%Y %m %d %H %M")"
+    when="$(date -v "+${RETRY_IN_MIN}M" "+%Y %-m %-d %-H %-M")"
   fi
   set -- $when
-  label="com.enver.envercetin.retry-$JOB"
+  # Unique per arming, so the bootout below can never be aimed at us.
+  label="$RETRY_PREFIX-$(date +%Y%m%d%H%M%S)"
   plist="${ENVERCETIN_AGENTS_DIR:-$HOME/Library/LaunchAgents}/$label.plist"
   mkdir -p "$(dirname "$plist")"
   args=""
@@ -317,20 +334,27 @@ PLIST
 #
 # launchd sets XPC_SERVICE_NAME to the running job's own label, and arm_retry also
 # stamps ENVERCETIN_RETRY_OF into the plist it writes; either identifies us.
-RETRY_PLIST="${ENVERCETIN_AGENTS_DIR:-$HOME/Library/LaunchAgents}/$RETRY_LABEL.plist"
-if [[ -f "$RETRY_PLIST" ]]; then
-  if [[ "${XPC_SERVICE_NAME:-}" == "$RETRY_LABEL" || "${ENVERCETIN_RETRY_OF:-}" == "$JOB" ]]; then
-    # Deleting the plist is enough, and is the only safe half. The job is one-shot
-    # with a StartCalendarInterval already in the past, so it cannot fire again;
-    # with the file gone it is not reloaded at next login either.
-    rm -f "$RETRY_PLIST"
-    echo "this run is the retry for $JOB — dropped its plist, kept the process"
-  else
-    launchctl bootout "gui/$(id -u)/$RETRY_LABEL" 2>/dev/null
-    rm -f "$RETRY_PLIST"
-    echo "cleared a pending retry for $JOB"
-  fi
-fi
+RETRY_AGENTS="${ENVERCETIN_AGENTS_DIR:-$HOME/Library/LaunchAgents}"
+clear_pending_retries() {
+  local plist label
+  shopt -s nullglob
+  for plist in "$RETRY_AGENTS/$RETRY_PREFIX.plist" "$RETRY_AGENTS/$RETRY_PREFIX-"*.plist; do
+    label="$(basename "$plist" .plist)"
+    if [[ "${XPC_SERVICE_NAME:-}" == "$label" ]]; then
+      # Deleting the plist is enough, and is the only safe half. The job is
+      # one-shot with a StartCalendarInterval already in the past, so it cannot
+      # fire again; with the file gone it is not reloaded at next login either.
+      rm -f "$plist"
+      echo "this run is the retry for $JOB — dropped its plist, kept the process"
+    else
+      [[ -n "${ENVERCETIN_TEST_NO_LAUNCHCTL:-}" ]] || launchctl bootout "gui/$(id -u)/$label" 2>/dev/null
+      rm -f "$plist"
+      echo "cleared a pending retry for $JOB ($label)"
+    fi
+  done
+  shopt -u nullglob
+}
+clear_pending_retries
 
 # --- One job at a time per working tree ---------------------------------------
 # Keyed by the physical repo path, so two checkouts of the same project do not
@@ -440,8 +464,7 @@ if [[ $RC -eq 75 ]]; then
   if (( ATTEMPT > LIMIT_MAX )); then
     echo "giving up: $LIMIT_MAX deferrals in a row and the limit is still spent"
     rm -f "$LIMIT_ATTEMPTS_FILE" "$RETRY_AT_FILE" "$RETRY_ARGS_FILE"
-    [[ -n "${ENVERCETIN_TEST_NO_LAUNCHCTL:-}" ]] || launchctl bootout "gui/$(id -u)/$RETRY_LABEL" 2>/dev/null
-    rm -f "$RETRY_PLIST"
+    clear_pending_retries
     notify "🛑 $JOB has now waited $LIMIT_MAX times for the Claude limit to lift and it is still spent, so I stopped re-arming it.
 
 Nothing was published and nothing was lost. Start it again by hand when there is budget:
