@@ -30,10 +30,14 @@ export ENVERCETIN_ASK_FROM_HOUR ENVERCETIN_ASK_UNTIL_HOUR
 REPO="$(cd "$(dirname "${BASH_SOURCE[0]}")/../../.." && pwd)"
 GUARD="$REPO/scripts/weekly-article/guard.sh"
 LOCK_ROOT="$HOME/Library/Caches/envercetin-guard"
-AGENTS="$HOME/Library/LaunchAgents"
 UID_NUM="$(id -u)"
 
 TMP="$(mktemp -d -t envercetin-repolock)"
+TMP_AGENTS="$TMP/agents"
+# Deliberately NOT ~/Library/LaunchAgents: a suite must never arm a job that
+# outlives it. guard.test.sh is the one place that drives real launchd.
+AGENTS="$TMP_AGENTS"
+mkdir -p "$AGENTS"
 FAKE_REPO="$TMP/repo"
 TARGET="$FAKE_REPO/scripts/weekly-article/target.sh"
 RAN="$TMP/target-ran"
@@ -53,6 +57,16 @@ cleanup() {
     launchctl bootout "gui/$UID_NUM/$l" 2>/dev/null
     rm -f "$AGENTS/$l.plist"
   done
+  # Armed labels now carry a timestamp, so a fixed name no longer finds them —
+  # and anything this suite ever leaked into the real LaunchAgents dir has to go
+  # too, whatever it was called.
+  local stray
+  shopt -s nullglob
+  for stray in "$HOME/Library/LaunchAgents"/com.enver.envercetin.retry-repolocktest-*.plist; do
+    launchctl bootout "gui/$UID_NUM/$(basename "$stray" .plist)" 2>/dev/null
+    rm -f "$stray"
+  done
+  shopt -u nullglob
   rm -rf "$TMP" "$LOCK_ROOT"/repolocktest*.lock
   rm -rf "$LOCK_ROOT/repo-${REPO_KEY:-unset}.lock" 2>/dev/null
 }
@@ -107,6 +121,8 @@ run_guard() {
   env ENVERCETIN_TEST_SILENT=1 \
       ENVERCETIN_PROBE_URL="file://$PROBE" \
       ENVERCETIN_RETRY_IN_MIN=30 \
+      ENVERCETIN_AGENTS_DIR="$AGENTS" \
+      ENVERCETIN_TEST_NO_LAUNCHCTL=1 \
       "$@" \
       /bin/bash "$GUARD" "$job" "$TARGET" > "$TMP/guard.log" 2>&1
   GUARD_RC=$?

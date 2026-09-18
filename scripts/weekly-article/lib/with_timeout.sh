@@ -43,6 +43,15 @@ with_timeout() {
   "$@" &
   local pid=$!
 
+  # Read the group NOW, while the child is alive: after it exits there is nothing
+  # left to ask. Compared against our own group before any group-wide signal,
+  # because `set -m` does not always take effect — in a pipeline element, for one
+  # — and then `-$pid` is not the child's group but OURS, and the cleanup below
+  # would kill the caller.
+  local child_pgid own_pgid
+  child_pgid="$(ps -o pgid= -p "$pid" 2>/dev/null | tr -d ' ')"
+  own_pgid="$(ps -o pgid= -p $$ 2>/dev/null | tr -d ' ')"
+
   # >/dev/null matters more than it looks: the watcher inherits the caller's
   # stdout, and a caller like `X="$(with_timeout 60 claude -p ...)"` or a pipe
   # into sed only ends when EVERY writer has closed that pipe. With the watcher
@@ -67,6 +76,26 @@ with_timeout() {
   # account of what happened, not bash's.
   { wait "$pid"; } 2>/dev/null
   local rc=$?
+
+  # Whatever the command left behind in its own process group goes with it.
+  #
+  # This is not tidiness. A caller writes `OUT="$(with_timeout 1800 model_run ...)"`,
+  # and a command substitution ends when the PIPE closes, not when the child
+  # exits — so one grandchild holding the write end blocks the caller forever,
+  # deadline or no deadline. On 2026-09-18 `claude -p` was still running seven and
+  # a half hours into a thirty-minute step, reparented to pid 1, with run.sh
+  # waiting on it: the watcher had seen its direct child go, exited, and reported
+  # nothing wrong. Nobody was told, because nothing had failed.
+  if [[ -n "$child_pgid" && "$child_pgid" != "$own_pgid" ]] \
+     && pgrep -g "$child_pgid" >/dev/null 2>&1; then
+    kill -TERM "-$child_pgid" 2>/dev/null
+    local settle=0
+    while (( settle < grace )) && pgrep -g "$child_pgid" >/dev/null 2>&1; do
+      sleep 1
+      settle=$(( settle + 1 ))
+    done
+    pgrep -g "$child_pgid" >/dev/null 2>&1 && kill -KILL "-$child_pgid" 2>/dev/null
+  fi
 
   # Both forms, unconditionally: `set -m` does not always take effect in a
   # subshell — a pipeline element, for instance — and then the watcher is not a

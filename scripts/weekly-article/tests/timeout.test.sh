@@ -99,6 +99,46 @@ ELAPSED=$(( $(date +%s) - START ))
 (( ELAPSED < 15 )) && ok "a pipeline returns when the command does, not when the budget runs out" \
   || bad "a pipeline returns when the command does, not when the budget runs out" "took ${ELAPSED}s of a 60s budget"
 
+# --- 4b. A survivor must not hold the caller's pipe open ------------------------
+# 2026-09-18: `claude -p` was still running SEVEN AND A HALF HOURS into a step
+# whose ceiling is thirty minutes, reparented to pid 1, while run.sh sat in
+# `PROPOSE_OUT="$(with_timeout ...)"` waiting for it. The deadline had nothing to
+# do with it: a command substitution ends when the PIPE closes, not when the
+# child exits, and any grandchild that outlives the child keeps the write end
+# open. The timeout can fire perfectly and the caller still never returns.
+#
+# So: when the command is done, whatever it left behind in its process group goes
+# with it. This case runs in the background against a wall-clock deadline,
+# because a regression here does not fail — it hangs, and would take the whole
+# suite with it.
+LEAK_OUT="$(mktemp -t envercetin-timeout-leak)"
+(
+  # The inner bash exits at once; the subshell it backgrounded inherits stdout
+  # and lives on. That is the shape of `claude -p` spawning a child and dying.
+  RESULT="$(with_timeout 30 bash -c '( sleep 45 ) & echo done; exit 0')"
+  printf '%s' "$RESULT" > "$LEAK_OUT"
+) & LEAK_PID=$!
+
+LEAK_WAITED=0
+while (( LEAK_WAITED < 15 )) && kill -0 "$LEAK_PID" 2>/dev/null; do
+  sleep 1
+  LEAK_WAITED=$(( LEAK_WAITED + 1 ))
+done
+
+if kill -0 "$LEAK_PID" 2>/dev/null; then
+  kill -KILL "$LEAK_PID" 2>/dev/null
+  bad "a survivor of the command does not hold the caller's pipe open" \
+      "still blocked after ${LEAK_WAITED}s — the orphan is holding stdout, exactly as on 18.09."
+else
+  if [[ "$(cat "$LEAK_OUT" 2>/dev/null)" == "done" ]]; then
+    ok "a survivor of the command does not hold the caller's pipe open"
+  else
+    bad "a survivor of the command does not hold the caller's pipe open" \
+        "returned, but the output was '$(cat "$LEAK_OUT" 2>/dev/null)' rather than 'done'"
+  fi
+fi
+rm -f "$LEAK_OUT"
+
 # --- 5. Timing out must not leave the caller's shell in job-control mode --------
 # with_timeout turns on `set -m` to get a process group. Leaving it on changes how
 # every later background job in run.sh behaves.
