@@ -65,7 +65,10 @@ odd     = [r for r in path_rules if "(~/" not in r]
 
 TREES = ["Projects/**", "Documents/**", "Desktop/**", "Downloads/**",
          "Library/CloudStorage/**", ".ssh/**", ".aws/**", ".gnupg/**", ".config/**"]
-TOOLS = ["Read", "Edit", "Glob", "Grep"]
+# Read only -- plus Edit for writes. NOT Glob or Grep: the CLI rejects those on
+# startup ("only Read(path) rules are" matched by file permission checks) and a
+# Read rule already covers every file-reading tool, Glob and Grep included.
+TOOLS = ["Read", "Edit"]
 missing = [f"{t}(~/{tree})" for t in TOOLS for tree in TREES
            if f"{t}(~/{tree})" not in path_rules]
 
@@ -90,6 +93,17 @@ else
   bad "no rule uses the /single-slash form that denies nothing" "$(field useless)"
 fi
 
+NOOPS="$(python3 -c "
+import json,sys
+rules = json.load(open(sys.argv[1]))['permissions']['deny']
+print(json.dumps([r for r in rules if r.startswith(('Glob(', 'Grep('))]))
+" "$SETTINGS")"
+if [[ "$NOOPS" == "[]" ]]; then
+  ok "no Glob or Grep rules — the CLI rejects them and Read already covers them"
+else
+  bad "no Glob or Grep rules — the CLI rejects them and Read already covers them" "$NOOPS"
+fi
+
 if [[ "$(field odd)" == "[]" ]]; then
   ok "every path rule is written ~/..."
 else
@@ -97,9 +111,9 @@ else
 fi
 
 if [[ "$(field missing)" == "[]" ]]; then
-  ok "Read, Edit, Glob and Grep are denied on every protected tree"
+  ok "Read and Edit are denied on every protected tree"
 else
-  bad "Read, Edit, Glob and Grep are denied on every protected tree" "fehlt: $(field missing)"
+  bad "Read and Edit are denied on every protected tree" "fehlt: $(field missing)"
 fi
 
 # Denying Read while leaving Glob open still hands over the filenames — which is
