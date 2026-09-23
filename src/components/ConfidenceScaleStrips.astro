@@ -1,0 +1,260 @@
+---
+// One idea: the same answers can need a different cut-off, so a threshold
+// belongs to a configuration, not to a model.
+//
+// Two dot plots of the same 59 answers from jeff, an unofficial open-source
+// reimplementation of Jev's API. Only the server temperature differs between
+// the strips and every chosen answer is identical, so the filled and hollow dots
+// are the same messages in both. A fixed cut-off of 0.5 routes none of them in
+// the top strip and 37 in the bottom one, seven of them wrong. Nothing else goes
+// on the figure: no Jev data, no client data, no accuracy table. Each of those
+// would invite a second reading and bury the shift.
+//
+// The data is REAL, hard-coded from the run of 23 Sep 2026 (jeff @ 34b32f9,
+// called through typesafe-sdk 0.7.1): the confidence of the `category` choice in
+// jev-exp/raw/jeff_A_choice_described.jsonl (T = 3.2, jeff's default) and in
+// jev-exp/raw/jeffT1iso_A_choice_described.jsonl (T = 1). `rightQueue` is the
+// strict match of that choice against the gold label in jev-exp/dataset.jsonl.
+// It is hard-coded rather than imported because the article is a snapshot dated
+// in its own footer: a figure that moved when jeff or its defaults changed would
+// contradict the text beside it.
+//
+// Self-checks, also asserted at build time below so an edited row fails the
+// build instead of drifting away from the caption:
+//   T = 3.2: 0 dots >= 0.5; 19 dots >= 0.3, all right.
+//   T = 1:   37 dots >= 0.5, 7 of them hollow; 15 dots >= 0.9, all right.
+//   37 filled per strip, because the argmax is identical in both runs.
+//
+// A tall stack (viewBox 600 x 424) rather than one wide strip, so it renders
+// about 1:1 in the 40em prose column. Dots are plain circles, not rough.ts
+// paths: at r = 4.3 a jittered outline reads as noise, not as a pen.
+//
+// Unlike the site's other figures, this one does not scroll on a phone: its
+// payload is on the right (the 37 routed dots, the 0.9 cut-off), exactly where
+// a scrolled figure is cut off. At 560px and narrower it scales to the column
+// instead, with every label at 15.5 units or more (about 9px in the 350px column
+// of a 390px phone). To make room, the 0.25 and 0.75 tick labels are hidden and
+// each caret moves up into its tick row.
+import { roughLine, roughArrowHead } from '../lib/rough';
+
+// [id, confidence at T = 3.2, confidence at T = 1, rightQueue]
+const rows: ReadonlyArray<readonly [string, number, number, boolean]> = [
+  ['en01', 0.1360, 0.3537, false], ['en02', 0.2372, 0.7449, false], ['en03', 0.2137, 0.4355, true],
+  ['en04', 0.1791, 0.3918, false], ['en05', 0.2220, 0.7795, false], ['en06', 0.2339, 0.7416, true],
+  ['en07', 0.1019, 0.3214, false], ['en08', 0.1045, 0.2698, true],  ['en09', 0.0938, 0.2638, true],
+  ['en10', 0.1560, 0.5620, false], ['en11', 0.1035, 0.2783, false], ['en12', 0.3349, 0.9068, true],
+  ['en13', 0.3933, 0.9616, true],  ['en14', 0.2851, 0.8303, true],  ['en15', 0.4023, 0.9659, true],
+  ['en16', 0.3101, 0.8624, true],  ['en17', 0.2920, 0.8753, false], ['en18', 0.1722, 0.3638, true],
+  ['en19', 0.1769, 0.5133, true],  ['en20', 0.2630, 0.8532, false], ['en21', 0.1469, 0.3468, false],
+  ['en22', 0.3061, 0.6821, true],  ['en23', 0.2662, 0.7861, true],  ['en24', 0.3456, 0.9347, true],
+  ['en25', 0.4272, 0.9735, true],  ['en26', 0.3002, 0.8069, true],  ['en27', 0.3710, 0.9521, true],
+  ['en28', 0.3963, 0.9487, true],  ['en29', 0.2804, 0.8039, true],  ['en30', 0.4964, 0.9800, true],
+  ['en31', 0.3826, 0.9406, true],  ['en32', 0.4254, 0.9764, true],  ['en33', 0.2995, 0.8761, true],
+  ['en34', 0.2277, 0.7621, true],  ['en35', 0.2084, 0.7333, true],  ['en36', 0.1038, 0.3347, false],
+  ['en37', 0.2603, 0.7321, true],  ['en38', 0.1246, 0.3851, true],  ['en39', 0.1382, 0.4640, false],
+  ['en40', 0.3490, 0.8238, true],  ['en41', 0.1304, 0.3970, false], ['en42', 0.1961, 0.4186, true],
+  ['en43', 0.3341, 0.9255, true],  ['en44', 0.0956, 0.2736, false],
+  ['de01', 0.1364, 0.3619, true],  ['de02', 0.1472, 0.4889, false], ['de03', 0.1128, 0.4099, false],
+  ['de04', 0.0903, 0.2476, false], ['de05', 0.4296, 0.9723, true],  ['de06', 0.4182, 0.9706, true],
+  ['de07', 0.1588, 0.5631, false], ['de08', 0.1500, 0.3956, false], ['de09', 0.2940, 0.6242, true],
+  ['de10', 0.2285, 0.5981, true],  ['de11', 0.1921, 0.6856, false], ['de12', 0.3727, 0.9592, true],
+  ['de13', 0.3813, 0.9494, true],  ['de14', 0.0941, 0.2662, false], ['de15', 0.0893, 0.2982, false],
+];
+
+type Row = (typeof rows)[number];
+type Col = 1 | 2;
+
+const PLOT_X = 40;
+const PLOT_W = 520;
+const BINS = 50;
+const BIN_W = PLOT_W / BINS;
+const DOT_R = 4.3;
+// A hollow dot is a 1.4-wide ring. Drawn at r = 4.3 its outer edge would sit at
+// 5.0, so two wrong answers stacked 9.6 apart would fuse into a figure eight and
+// the seven hollow dots the caption counts would stop being countable. Pulling
+// the ring in by half its stroke makes both kinds of dot the same outer size.
+const RING_W = 1.4;
+const RING_R = DOT_R - RING_W / 2;
+const STACK_STEP = 9.6;
+const CUT = 0.5;
+// The layout is sized for this: stacks of 5 (T = 3.2) and 6 (T = 1).
+const MAX_STACK = 6;
+
+const px = (v: number): number => Math.round(v * 10) / 10;
+const xOf = (c: number): number => px(PLOT_X + c * PLOT_W);
+// Integer arithmetic on purpose: 0.3 / 0.02 is 14.999… in floating point, which
+// would drop a dot sitting exactly on a round value into the bin below it.
+const binOf = (c: number): number => Math.min(BINS - 1, Math.floor(Math.round(c * 10000) / 200));
+
+interface Dot { cx: number; cy: number; k: number; right: boolean }
+
+// Within a bin the lowest confidence sits at the bottom of the stack.
+const dotsFor = (col: Col, baseline: number): Dot[] => {
+  const sorted = [...rows].sort((a, b) => a[col] - b[col]);
+  return sorted.map((r, i) => {
+    const bin = binOf(r[col]);
+    const k = sorted.slice(0, i).filter((s) => binOf(s[col]) === bin).length;
+    return { cx: px(PLOT_X + (bin + 0.5) * BIN_W), cy: px(baseline - 5 - k * STACK_STEP), k, right: r[3] };
+  });
+};
+
+const POINT_UP = -Math.PI / 2;
+
+// Everything below the strip label hangs off the baseline, so the two strips
+// share one geometry and differ only in their data and their words. Paths are
+// built here rather than in the template: @astrojs/compiler 2.13 garbles an
+// attribute expression holding both a `/` and an object literal, as in
+// d={roughArrowHead(x, y, -Math.PI / 2, { … })}, and the build fails.
+//
+// Each note ends just left of the cut-off line (x = 292, anchored at its end),
+// above the stacks, so on a phone it stays in view instead of running off the
+// right edge.
+const NOTE_X = 292;
+const strips = [
+  {
+    col: 1 as Col, label: "Temperature 3.2 · jeff's default", labelY: 92, baseline: 176, axisSeed: 11,
+    note: '0.5 routes 0 of 59', noteY: 112,
+    caret: { c: 0.3, seed: 21, lines: ['0.3 keeps it clean', '19 of 19 right'] },
+  },
+  {
+    col: 2 as Col, label: 'Temperature 1 · same answers', labelY: 262, baseline: 352, axisSeed: 12,
+    note: '0.5 routes 37 · 7 wrong', noteY: 288,
+    caret: { c: 0.9, seed: 22, lines: ['0.9 keeps it clean', '15 of 15 right'] },
+  },
+].map((s) => ({
+  ...s,
+  axisPath: roughLine(PLOT_X, s.baseline + 4, PLOT_X + PLOT_W, s.baseline + 4, { seed: s.axisSeed, roughness: 0.5 }),
+  tickY: s.baseline + 20,
+  caretX: xOf(s.caret.c),
+  caretPath: roughArrowHead(xOf(s.caret.c), s.baseline + 28, POINT_UP, { seed: s.caret.seed, size: 8 }),
+  // The caret's two-line note hangs off the caret's foot in em rather than in
+  // units, so the lines keep their spacing when the phone layout enlarges the
+  // text. At 11px this puts them at the foot + 10 and + 24 (y = 222 and 236 in
+  // strip A).
+  caretFootY: s.baseline + 36,
+  dots: dotsFor(s.col, s.baseline),
+}));
+
+// The dashed cut-off spans both strips at x = 300. It stops at each axis and
+// resumes below the top strip's "0.5" tick label rather than running through
+// it: a background halo on the label cannot hide it, because the line shows
+// through the gap above the decimal point.
+const [stripA, stripB] = strips;
+const cutPath = [
+  roughLine(xOf(CUT), 74, xOf(CUT), stripA.baseline + 4, { seed: 5, roughness: 0.5 }),
+  roughLine(xOf(CUT), stripA.tickY + 4, xOf(CUT), stripB.baseline + 4, { seed: 6, roughness: 0.5 }),
+].join(' ');
+
+// The 0.25 and 0.75 labels are the ones the phone layout drops.
+const ticks = [0, 0.25, 0.5, 0.75, 1].map((t) => ({ t, minor: t % 0.5 !== 0 }));
+
+// Build-time guard. The caption and the prose quote these counts; an edited row
+// or bin must fail the build here rather than ship a picture that disagrees.
+const routed = (col: Col, cut: number): Row[] => rows.filter((r) => r[col] >= cut);
+const wrongIn = (rs: Row[]): number => rs.filter((r) => !r[3]).length;
+const checks: ReadonlyArray<readonly [string, boolean]> = [
+  ['59 rows, 37 right', rows.length === 59 && rows.filter((r) => r[3]).length === 37],
+  ['T=3.2 routes 0 at 0.5', routed(1, CUT).length === 0],
+  ['T=3.2 routes 19 at 0.3, all right', routed(1, 0.3).length === 19 && wrongIn(routed(1, 0.3)) === 0],
+  ['T=1 routes 37 at 0.5, 7 wrong', routed(2, CUT).length === 37 && wrongIn(routed(2, CUT)) === 7],
+  ['T=1 routes 15 at 0.9, all right', routed(2, 0.9).length === 15 && wrongIn(routed(2, 0.9)) === 0],
+  ['stacks fit the layout', strips.every((s) => s.dots.every((d) => d.k < MAX_STACK))],
+];
+const failed = checks.filter(([, ok]) => !ok).map(([name]) => name);
+if (failed.length > 0) {
+  throw new Error(`ConfidenceScaleStrips: data no longer matches the caption: ${failed.join('; ')}`);
+}
+
+const alt =
+  'Two stacked dot plots share a confidence axis from 0 to 1. Each shows the same 59 synthetic ' +
+  "card-dispute messages answered by jeff, an unofficial open-source reimplementation of Jev's API, " +
+  "not TypeSafe's model. Filled dots were routed to the right queue (37 of 59 in both strips, because " +
+  "the chosen answers are identical); hollow dots to the wrong one. Top strip, jeff's default server " +
+  'temperature of 3.2: every dot lies between 0.09 and 0.50, so a dashed cut-off line at 0.5 routes ' +
+  'none of the 59; a cut-off of 0.3 would route 19, all right. Bottom strip, temperature 1: the same ' +
+  'answers spread from 0.25 to 0.98; the 0.5 line now routes 37 messages, 7 of them wrong, among them ' +
+  'three fraud reports (two routed as not a dispute, one as a duplicate charge); a cut-off of 0.9 ' +
+  'routes 15, all right. The number that separates right from wrong moves with the server setting, ' +
+  'even though no answer changed.';
+---
+<div class="diagram-scroll">
+  <svg viewBox="0 0 600 424" role="img" aria-labelledby="css-title css-desc" class="diagram">
+    <title id="css-title">Confidence of the same 59 jeff answers at two server temperatures, with a fixed cut-off of 0.5</title>
+    <desc id="css-desc">{alt}</desc>
+
+    <text x="0" y="18" class="d-zone">jeff (not Jev) · confidence of the same 59 answers</text>
+    <g class="legend">
+      <circle cx="5" cy="36" r={DOT_R} class="dot dot-ok" />
+      <text x="14" y="40" class="d-fine d-start">right queue</text>
+      <g class="legend-bad">
+        <circle cx="100" cy="36" r={RING_R} class="dot dot-bad" />
+        <text x="109" y="40" class="d-fine d-start">wrong queue</text>
+      </g>
+    </g>
+
+    {/* The cut-off is drawn before both strips, so dots sit on top of it. */}
+    <path d={cutPath} class="cut" />
+    <text x={xOf(CUT)} y="66" class="d-fine d-accent">fixed cut-off 0.5</text>
+
+    {strips.map((s) => (
+      <g>
+        <text x="0" y={s.labelY} class="d-row">{s.label}</text>
+        <path d={s.axisPath} class="axis" />
+        {ticks.map(({ t, minor }) => (
+          <text x={xOf(t)} y={s.tickY} class={minor ? 'd-fine tick-minor' : 'd-fine'}>{String(t)}</text>
+        ))}
+        {s.dots.map((d) => (
+          <circle cx={d.cx} cy={d.cy} r={d.right ? DOT_R : RING_R} class={d.right ? 'dot dot-ok' : 'dot dot-bad'} />
+        ))}
+        <text x={NOTE_X} y={s.noteY} class="d-val d-accent d-end">{s.note}</text>
+        <g class="caret-mark">
+          <path d={s.caretPath} class="caret" />
+          {/* No whitespace between the tspans: a space would join the first
+              line's chunk and pull it half a space off the caret. */}
+          <text x={s.caretX} y={s.caretFootY} class="d-fine"><tspan x={s.caretX} dy="0.909em">{s.caret.lines[0]}</tspan><tspan x={s.caretX} dy="1.273em">{s.caret.lines[1]}</tspan></text>
+        </g>
+      </g>
+    ))}
+  </svg>
+</div>
+
+<style>
+  /* The site's rule for figures: below ~520px the 11px labels would shrink under
+     9px, so the figure scrolls rather than scales. The phone layout at the end
+     of this block overrides it. */
+  .diagram-scroll { overflow-x: auto; margin: 2rem 0 0.75rem; }
+  .diagram { display: block; width: 100%; min-width: 520px; height: auto; }
+
+  .axis { fill: none; stroke: var(--muted); stroke-width: 1; stroke-linecap: round; }
+  .cut { fill: none; stroke: var(--accent); stroke-width: 1.3; stroke-dasharray: 4 5; }
+  .caret { fill: none; stroke: var(--fg); stroke-width: 1.3; stroke-linecap: round; }
+
+  .dot-ok { fill: var(--muted); stroke: none; }
+  .dot-bad { fill: var(--bg); stroke: var(--fg); stroke-width: 1.4; }
+
+  text { text-anchor: middle; }
+  .d-row { font-family: var(--font-sans); font-size: 12.5px; fill: var(--fg); text-anchor: start; }
+  .d-val { font-family: var(--font-mono); font-size: 11px; fill: var(--muted); text-anchor: start; }
+  .d-fine { font-family: var(--font-sans); font-size: 11px; fill: var(--muted); }
+  .d-start { text-anchor: start; }
+  .d-end { text-anchor: end; }
+  .d-accent { fill: var(--accent); }
+  .d-zone {
+    font-family: var(--font-mono); font-size: 11px; font-weight: 500; fill: var(--muted);
+    letter-spacing: 0.14em; text-transform: uppercase; text-anchor: start;
+  }
+
+  /* Phone layout. The figure's payload is on the right, where a scrolled figure
+     is cut off, so here it scales to the column instead. Font sizes are in
+     viewBox units: 15.5 renders at about 9px in a 350px column. */
+  @media (max-width: 560px) {
+    .diagram { min-width: 0; }
+    .d-fine, .d-val { font-size: 16.5px; }
+    .d-row { font-size: 18px; }
+    .d-zone { font-size: 15.5px; letter-spacing: 0.1em; }
+    .tick-minor { display: none; }
+    .legend-bad { transform: translateX(20px); }
+    /* Up into the tick row that the hidden 0.25 and 0.75 labels leave free. */
+    .caret-mark { transform: translateY(-14px); }
+  }
+</style>

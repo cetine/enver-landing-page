@@ -1,0 +1,140 @@
+---
+title: 'Jev and the Confidence Threshold: What a Bank Actually Owns'
+date: 2026-09-23
+description: Building confidence-gated routing for a bank's card disputes, then running an open reimplementation of Jev's API on my laptop, to find out what a confidence threshold actually belongs to.
+tags: [Jev, Calibration, Banking, DORA]
+type: post
+---
+
+import ConfidenceScaleStrips from '../../../components/ConfidenceScaleStrips.astro';
+
+<aside class="tldr">
+<p class="tldr-label">TL;DR</p>
+<ul>
+<li>A confidence threshold is not a setting you can copy. On jeff, an unofficial open-source reimplementation of Jev's API, the round cut-off that kept the routed answers clean was 0.3 at one server temperature and 0.9 at another.</li>
+<li>What a German bank kept from our card-dispute router was a policy, not a model: thresholds chosen on labels its own people made. About 57% of its written dispute messages are now routed without a person.</li>
+<li>Because that policy exists, trying a new model is a two-day replay, not a project. Jev's public terms (no supervisor audit right, no uptime commitment, a $50 liability cap at this volume) are not ones a bank can sign for this flow as written.</li>
+<li>A model swap is a recalibration, not a redeploy: pin the version, own the labels, set the target per language.</li>
+</ul>
+</aside>
+
+Since TypeSafe launched Jev on 15 September, most banking conversations I have reach one question: should decision flows move to software that can "[act when confidence is high and escalate when it is not](https://typesafe.ai/)"?
+
+That frames it as a model choice. It is not. **In a confidence-gated system, the durable asset is not the model but the threshold: a cut-off chosen on your own labels, valid for one pinned model version.** Swap the model and you recalibrate; you do not redeploy.
+
+Earlier this year my team built that pattern for a German retail bank. This week we replayed 600 of its test messages through Jev, and why that took two days is the argument. *(The engagement is anonymised and composite; its figures, the replay's included, are illustrative. Everything else is sourced or was run on my laptop.)*
+
+## What we built before Jev launched
+
+The bank gets about 9,000 written dispute messages a month, four in five in German. Until June, people routed every one.
+
+We added no model vendor; we extended the DPIA. An open-weight LLM in the bank's own EU cloud tenancy, whose DORA register entry now covers dispute intake, picks one of seven queues, gated on that choice's log-probability. It never decides a refund, and `not_a_dispute` is never automated: a fraud report read as a balance question is the costliest error.
+
+Two senior agents labelled 2,400 messages independently; a team lead settled the 7% they disagreed on. Six thresholds, chosen on half and checked on the rest, target at most 2% in the wrong queue. Live since June, it routes 57% without a person; June–July audits found 1.7% wrong (95% interval 0.9–3.0%). About two and a half people's reading time moved to chargeback and fraud casework, agreed with the works council; nobody was cut.
+
+**What the bank owns is six numbers, one rule, a version string and 2,400 labels its own people made.**
+
+## A confidence number is a setting, not a fact
+
+TypeSafe calls `confidence` "a statistic computed from the probability distribution". I ran jeff, an unofficial open-source reimplementation of Jev's API on a different open model, through TypeSafe's official SDK on 59 synthetic disputes.
+
+<figure>
+<ConfidenceScaleStrips />
+<figcaption>jeff (not Jev) on 59 synthetic card disputes I labelled, 23 September 2026: same weights, same answers, two server temperatures. A fixed 0.5 routes none at one setting and 37, seven wrong, at the other. The cut-offs that kept the routed set clean, 0.3 and 0.9, were picked in-sample.</figcaption>
+</figure>
+
+At jeff's default server temperature of 3.2, confidence tops out at 0.4964; at temperature 1 the same answers reach 0.98. Two of the seven wrong answers above 0.5 are then fraud reports sent to `not_a_dispute`, at 0.74 and 0.78; a lost card went to `duplicate_charge` at 0.56. Another fraud report, at default settings:
+
+```
+jeff @ 34b32f9, default settings, via typesafe-sdk 0.7.1
+state:  "Someone used my card details to buy clothes from an online
+         store abroad. The card has never left my possession."
+choice: not_a_dispute            confidence 0.1791
+        not_a_dispute            0.2964
+        fraud_card_not_present   0.2917
+```
+
+jeff lost clearly to two small local LLMs (33–42 of 59 against 53 and 55); this measures nothing about Jev. Its ranking stayed useful (AUROC 0.878 and 0.821), and a guaranteed error rate needs ranking plus same-distribution labels, not calibration (Geifman & El-Yaniv). Jev exposes no temperature; I infer its scale is set server-side too, so pin versions, as TypeSafe advises.
+
+**A threshold belongs to a model version, the way it is served and your data — never to the documentation.**
+
+## The replay
+
+After Jev opened to everyone on 20 September, the replay ran on an ordinary self-serve account: a public signup, no preferential access, no contact beyond the form. The bank signed nothing.
+
+Only 600 messages crossed, rewritten by hand with invented details; the DPO confirmed they held no personal data ([redaction alone](/writing/gdpr-presidio-llm-privacy) would not have done). We pinned `jev-1.13.0`, not the SDK's default `jev-latest`. Jev's cut-offs were chosen per language by cross-validation on the 600, the bank's on 1,200 other labels, an asymmetry that favours Jev.
+
+| On 600 cleared messages (illustrative) | Jev | Bank's model |
+|---|---|---|
+| Right queue: all (German/English) | 76% (74/82) | 90% (90/91) |
+| Acting alone at a copied 0.85 | 64%, 92% right | — |
+| Acting alone at the bank's 2% bar | 28% (English 47, German 22) | 58% |
+
+Public numbers run higher: Jev scores 79.7% on the Jevals Banking77 board and acts alone on 54% at 95.4% right, a looser bar than the bank's 98%. But TypeSafe says English is "where accuracy is currently best"; this set is three-quarters German. An English-language flow could decide differently.
+
+That 0.85 comes from a voice-banking example in TypeSafe's routing pattern; here it erred at four times the bank's bar, consistent with an audit finding Jev overconfident on Banking77 (ECE 0.0936), though calibrated on CLINC150.
+
+Because the policy existed, the replay took two days and one page: not now; rerun on the next pinned version.
+
+## Where it breaks
+
+**A threshold does not rescue a weaker model; it prices it honestly:** 28% against 58%.
+
+**A pooled target hides a subgroup.** One Jev cut-off for both languages met the bar on average, as marginal guarantees do (Angelopoulos & Bates), while German alone ran over it (139 of 142 right). The bank's table now splits by language too.
+
+**The asset depreciates anyway.** In August two app dropdown options became free text, and audited errors on the bank's own model rose to 3.7%, mostly `goods_not_received` confused with `not_as_described`; calibration is not guaranteed under shift (Ovadia et al.). Re-choosing the cut-offs took 600 fresh labels and sign-off.
+
+**Small, clean numbers.** Jev's 163 of 166 right has a 95% Wilson interval of 94.8–99.4%, on text cleaner than real mail. The replay can reject for now; it cannot certify.
+
+## Why this stays a replay
+
+This bank judges dispute intake to support a critical or important function (DORA Art. 3(22)), which adds Arts 28(8), 29(2) and 30(3).
+
+| The bank needs | TypeSafe's public terms, 23 Sep 2026 |
+|---|---|
+| Audit, supervisor included (Art.&nbsp;30(3)(e)(i)) | Personal-data controls only, yearly at most; none for the supervisor |
+| Exit with a transition period (Arts 28(8), 30(3)(f)) | None: use ends at once on termination |
+| Service levels (Art.&nbsp;30(3)(a)) | No SLA; "AS IS", "AS AVAILABLE" |
+| Locations and data (Arts 29(2), 30(2)(b)–(c)) | No locations in the contract; US hosting and six US subprocessors; perpetual licence to derive "Telemetry", including "classifications" |
+| Liability (not DORA) | Greater of 12 months' fees (about $1.40 here) or $50 |
+
+**None of this says Jev is a bad model; it says a bank cannot sign the public contract for this flow as written.**
+
+## What I would build
+
+1. **Own the labels, and have people make them:** the MCA bars training a model to imitate Jev's output.
+2. **Version the policy,** logging the `model` field and every probability; BaFin names unannounced model changes as a testing challenge.
+3. **Make a version bump a recalibration ticket.**
+
+```yaml
+policy: card-dispute-routing
+model: jev-1.13.0      # pinned; never an alias
+labels: disputes-2400  # people-made, double-labelled, adjudicated
+target: max 2% wrong queue, per language
+never_auto: [not_a_dispute]
+thresholds: per class × per language, chosen on the 'choose' half
+checked_on: held-out half + monthly audit of 300
+recalibrate_on: [new model version, upstream form change]
+sign_off: model risk, as a parameter change
+label_retention: per DPIA; rewritten set kept for replays
+```
+
+## Bottom line
+
+The bank did not buy a model this year; it built a rule for when a model may act alone. Jev trailed, mostly in German, as TypeSafe's docs predict; its next version gets a replay. Use confidence gates — I do.
+
+You rent the model. You own the threshold.
+
+---
+
+## Sources
+
+- TypeSafe documentation: [models](https://docs.typesafe.ai/models), [confidence](https://docs.typesafe.ai/confidence), [confidence routing](https://docs.typesafe.ai/patterns/confidence-routing), [SDK defaults](https://docs.typesafe.ai/sdk/python/api/constants).
+- TypeSafe, [launch post](https://typesafe.ai/blog/introducing-system-one-models-and-jev) (15 September 2026), [signup post](https://x.com/typesafeai/status/2101786156572823624) of 20 September.
+- TypeSafe, [Master Customer Agreement](https://typesafe.ai/legal/mca) (19 September 2026), [DPA](https://typesafe.ai/legal/data-processing), [privacy policy](https://typesafe.ai/legal/privacy-policy), [subprocessors](https://trust.typesafe.ai/subprocessors).
+- Third-party measurements of Jev: the [Jevals Banking77 board](https://jevals.com/choice) (18 September 2026) and the [ASSAY-001 audit](https://github.com/jourdanlabs/assay-001).
+- [logan-markewich/jeff](https://github.com/logan-markewich/jeff) at `34b32f9`: unofficial, MIT.
+- Geifman & El-Yaniv, [arXiv 1705.08500](https://arxiv.org/abs/1705.08500) (2017); Angelopoulos & Bates, [arXiv 2107.07511](https://arxiv.org/abs/2107.07511) (2021); Ovadia et al., [arXiv 1906.02530](https://arxiv.org/abs/1906.02530) (2019).
+- [DORA](https://eur-lex.europa.eu/eli/reg/2022/2554/oj): Arts 3(22), 28–30; [BaFin's non-binding guidance on ICT risks when using AI](https://www.bafin.de/SharedDocs/Downloads/DE/Anlage/dl_Anlage_orientierungshilfe_IKT_Risiken_bei_KI.pdf?__blob=publicationFile&v=1) (18 December 2025).
+
+<p class="text-[13px] text-muted">Verified against the <code>jev-1.13.0</code> documentation, TypeSafe's MCA of 19 September 2026 and <code>typesafe-sdk 0.7.1</code> on 23 September 2026; jeff ran at <code>34b32f9</code> on an Apple M3 Pro the same day and is not a TypeSafe product. The client engagement is anonymised and composite: its details and figures, including the Jev replay, are illustrative and consistent with the public evidence cited, not measurements. Law stated as at that date; it will age. Engineering write-up, not legal advice.</p>
