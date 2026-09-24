@@ -39,6 +39,11 @@ curl -sS --fail-with-body -X POST \
   --data-urlencode "text=$MSG"
 ```
 
+Before anything else, check that both variables are non-empty. Print only their
+lengths, and make one call to `https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/getMe`
+to confirm the token is valid. If either check fails, you cannot report, so stop
+and say so in the last line of your final response.
+
 Never echo, log, commit or write the token anywhere. Use `sendMessage` only.
 Never call `getUpdates` or `setWebhook`: another consumer on Enver's Mac
 polls this bot, and doing so would break it.
@@ -56,7 +61,18 @@ npm ci
 npx playwright install --with-deps chromium
 ```
 
-`npm run verify` needs both.
+`npm run verify` needs both. There is no `gh` CLI in this environment (smoke test
+2026-09-24).
+
+The build refuses to run without `PUBLIC_WEB3FORMS_KEY`, which is the contact
+form's public key. The local verify build is never deployed, because Vercel builds
+the preview itself with the real value. So for verify:
+
+```bash
+export PUBLIC_WEB3FORMS_KEY="${PUBLIC_WEB3FORMS_KEY:-verify-placeholder}"
+```
+
+Never write that key into a tracked file.
 
 ## 3. What is already covered
 
@@ -65,7 +81,8 @@ Derive it from git and GitHub, never from the working tree alone:
 - titles and slugs of every file in `src/content/writing/en/` on `origin/main`
 - every remote branch matching `article/*` or `claude/article-*`
   (`git ls-remote --heads origin`), with the `.mdx` it adds relative to `main`
-- open pull requests (`gh pr list --state open`), if `gh` works
+- open pull requests on `cetine/enver-landing-page`, via the GitHub MCP tools
+  (load them with ToolSearch, e.g. `list_pull_requests`)
 
 An article waiting on an open PR is finished and scheduled. Propose nothing that
 restates any of it, or tells the same story from a slightly different angle.
@@ -143,9 +160,10 @@ git commit -m "feat: article — <slug>"
 git push -u origin claude/article-<date>
 ```
 
-Open a PR against `main` with `gh pr create`. Title: the article title. Body:
-the thesis, the primary query and search evidence, the verify result, and the
-other three candidates. If `gh` is unavailable, use
+Open a PR against `main` with the GitHub MCP tool (load it with ToolSearch:
+`create_pull_request`, owner `cetine`, repo `enver-landing-page`). Title: the
+article title. Body: the thesis, the primary query and search evidence, the
+verify result, and the other three candidates. If that tool is unavailable, use
 `https://github.com/cetine/enver-landing-page/compare/main...<branch>?expand=1`
 as the PR link instead.
 
@@ -153,12 +171,20 @@ Never merge it. Merging is how Enver publishes.
 
 ## 7. Preview link
 
-Vercel's GitHub integration builds a preview for the pushed branch. Find it with
-the Vercel connector: `list_deployments` with
-`projectId: prj_5CJnCZlJp0pHFjkCsA7jw1UwWyc5`,
-`teamId: team_aftDssDFelPSFFZtVtlOfT2i`, `branch: <branch>`. Poll every 60 s
-for up to 15 minutes until its state is `READY`. The article preview is
-`https://<deployment url>/writing/<slug>`.
+Vercel's GitHub integration builds a preview for the pushed branch. The Vercel
+connector in this environment has no `list_deployments` (smoke test 2026-09-24).
+Also, the branch alias `*-git-<branch>-envers-projects-6dad3744.vercel.app`
+exceeds 63 characters, so Vercel shortens it and it cannot be guessed. Find the
+URL through GitHub instead, polling every 60 s for up to 15 minutes:
+
+1. The comment `vercel[bot]` posts on the PR. Its "Preview" link is the
+   deployment URL.
+2. Otherwise, the Vercel commit status on the head SHA. Its `target_url` is the
+   inspector (`https://vercel.com/envers-projects-6dad3744/enver-landing-page/<id>`).
+   Pass `dpl_<id>` to the Vercel connector's `get_deployment`
+   (`teamId: team_aftDssDFelPSFFZtVtlOfT2i`) to get `url` and `readyState`.
+
+Wait for `READY`. The article preview is `https://<deployment url>/writing/<slug>`.
 
 If the state is `ERROR`, or it is not ready after 15 minutes, still send
 step 8. Use the Vercel inspector URL in place of the preview and say which case
