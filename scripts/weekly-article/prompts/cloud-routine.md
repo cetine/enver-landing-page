@@ -39,7 +39,22 @@ curl -sS --fail-with-body -X POST \
   --data-urlencode "text=$MSG"
 ```
 
-Before anything else, check that both variables are non-empty. Print only their
+The environment editor makes it easy to paste both lines into one value. That
+happened on 2026-09-24: the token held `<token> TELEGRAM_CHAT_ID=<id>` and the
+chat ID was empty. Normalise first, so a formatting slip cannot silence the run:
+
+```bash
+if [ -z "${TELEGRAM_CHAT_ID:-}" ] && [[ "$TELEGRAM_BOT_TOKEN" == *TELEGRAM_CHAT_ID=* ]]; then
+  TELEGRAM_CHAT_ID="$(printf '%s' "$TELEGRAM_BOT_TOKEN" | sed -n 's/.*TELEGRAM_CHAT_ID=\([-0-9]*\).*/\1/p')"
+fi
+TELEGRAM_BOT_TOKEN="${TELEGRAM_BOT_TOKEN%%[[:space:]]*}"
+export TELEGRAM_BOT_TOKEN TELEGRAM_CHAT_ID
+```
+
+Each Bash call is a fresh shell, so write this to a scratch file and source it
+before every Telegram call.
+
+Next, check that both variables are non-empty. Print only their
 lengths, and make one call to `https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/getMe`
 to confirm the token is valid. If either check fails, you cannot report, so stop
 and say so in the last line of your final response.
@@ -179,12 +194,18 @@ URL through GitHub instead, polling every 60 s for up to 15 minutes:
 
 1. The comment `vercel[bot]` posts on the PR. Its "Preview" link is the
    deployment URL.
-2. Otherwise, the Vercel commit status on the head SHA. Its `target_url` is the
-   inspector (`https://vercel.com/envers-projects-6dad3744/enver-landing-page/<id>`).
-   Pass `dpl_<id>` to the Vercel connector's `get_deployment`
-   (`teamId: team_aftDssDFelPSFFZtVtlOfT2i`) to get `url` and `readyState`.
+2. Otherwise, the `Vercel` commit status on the PR (GitHub MCP
+   `pull_request_read`, method `get_status`). `state: success` means the build
+   is ready. Its `target_url` ends in the deployment id. Pass `dpl_<id>` to the
+   Vercel connector's `list_deployment_aliases`
+   (`teamId: team_aftDssDFelPSFFZtVtlOfT2i`) to get the preview hostname. This
+   connector has no `get_deployment`.
 
-Wait for `READY`. The article preview is `https://<deployment url>/writing/<slug>`.
+Foreground `sleep` is blocked. To wait, use Monitor or a background command.
+`*.vercel.app` cannot be reached from this sandbox, and previews sit behind
+Vercel login anyway, so never try to fetch the preview yourself.
+
+Wait for the status to be `success`. The article preview is `https://<deployment url>/writing/<slug>`.
 
 If the state is `ERROR`, or it is not ready after 15 minutes, still send
 step 8. Use the Vercel inspector URL in place of the preview and say which case
