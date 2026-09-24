@@ -30,7 +30,13 @@
     "beat allow rules and a broad pattern cannot carve out an exception, so a repo",
     "inside a denied tree fences itself out. That happened on 2026-08-15 and cost a",
     "run. scripts/weekly-article/install.sh now refuses to install from a path these",
-    "rules deny, so the same mistake cannot be made silently again."
+    "rules deny, so the same mistake cannot be made silently again.",
+    "",
+    "NO `Bash(git push:*)` DENY since 2026-09-24. The article pipeline moved to a Claude",
+    "Code cloud routine (scripts/weekly-article/prompts/cloud-routine.md), and cloud",
+    "sessions obey this file, so the rule would stop the routine from pushing its",
+    "claude/article-* branch. Publishing is still gated: only a human merging the PR",
+    "reaches main."
   ],
   "permissions": {
     "deny": [
@@ -43,7 +49,6 @@
       "Bash(launchctl:*)",
       "Bash(defaults write:*)",
       "Bash(rm -rf /*)",
-      "Bash(git push:*)",
       "Bash(vercel deploy:*)",
       "Read(~/Projects/**)",
       "Read(~/Documents/**)",

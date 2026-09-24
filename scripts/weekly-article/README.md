@@ -1,5 +1,13 @@
 # Weekly article automation
 
+> **Since 2026-09-24 this runs in the cloud, not on the Mac.** A Claude Code
+> routine ("envercetin — fortnightly article", Opus 5.5) fires every second
+> Saturday at 10:00 Munich time. It follows `prompts/cloud-routine.md`, pushes a
+> `claude/article-<date>` branch, opens a PR, and sends the Vercel preview link to
+> Telegram. **Merging the PR publishes the article.** The launchd jobs described
+> below are unloaded. The rest of this README documents the retired local
+> pipeline, whose two prompts the routine still uses.
+
 Saturdays at 14:00, Fable proposes topics over Telegram, has subagents write
 the chosen article, and publishes it only after you approve a preview.
 

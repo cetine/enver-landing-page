@@ -118,7 +118,9 @@ fi
 
 # Denying Read while leaving Glob open still hands over the filenames — which is
 # how ~/.ssh gave up five private key names on 2026-09-18.
-if [[ "$(python3 -c "import json,sys; print(json.loads(sys.argv[1])['n_bash'])" "$REPORT")" -ge 11 ]]; then
+# 10, not 11: `Bash(git push:*)` was dropped on 2026-09-24 because the cloud
+# routine that now writes the articles obeys this file and must push its branch.
+if [[ "$(python3 -c "import json,sys; print(json.loads(sys.argv[1])['n_bash'])" "$REPORT")" -ge 10 ]]; then
   ok "the Bash guardrails from the 2026-08-12 incident are still there"
 else
   bad "the Bash guardrails from the 2026-08-12 incident are still there" "$REPORT"
