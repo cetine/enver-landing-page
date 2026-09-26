@@ -1,0 +1,131 @@
+---
+// One idea: at the same 30-minute TTL, the same traffic and the same prompt
+// content, a tool list serialised from a set across 8 worker processes loses
+// almost all of the prompt cache at low traffic and 25 points of it at moderate
+// traffic.
+//
+// The picture exists to make one comparison unmissable: the gap between the two
+// bars in each pair. At 1 and 5 requests per hour the set-ordered prompt caches
+// almost nothing, at 20 (moderate) it trails by 25 points, and only at 60 does
+// raw traffic paper over the problem. The figure deliberately omits cost, latency
+// and per-worker detail, which would invite a second reading and bury the gap.
+//
+// Numbers are from the simulation run of 26 Sep 2026: Poisson arrivals on
+// Mon–Fri 08:00–18:00, a sliding 30-minute TTL (every hit refreshes it), strict
+// round-robin over 8 worker processes, cache breakpoint after tools + system
+// prompt, token counts with tiktoken o200k_base. "Byte-stable" sends the same
+// bytes from every worker; "set" gives each worker its own tool order, so each
+// worker needs its own warm prefix. They are hard-coded rather than imported:
+// the article is a snapshot dated in its own footer, and a figure that moved
+// when the simulation was re-run would contradict the text beside it.
+//
+// Horizontal bars like TokenCostBars, so both figures read the same way in the
+// 40em column and the value labels have room at the bar ends.
+import { roughRect, roughLine } from '../lib/rough';
+
+interface Row { name: string; stable: number; set: number; seed: number }
+
+const rows: Row[] = [
+  { name: '1 per hour', stable: 38.7, set: 0.0, seed: 61 },
+  { name: '5 per hour', stable: 89.8, set: 0.6, seed: 71 },
+  { name: '20 per hour', stable: 98.2, set: 73.1, seed: 81 },
+  { name: '60 per hour', stable: 98.5, set: 97.1, seed: 91 },
+];
+
+const AXIS_MAX = 100;
+const PLOT_X = 132;
+const PLOT_W = 372;
+const BAR_H = 15;
+const PAIR_GAP = 5;
+const GROUP_TOP = 62;
+const GROUP_H = 58;
+
+const scale = (v: number): number => (v / AXIS_MAX) * PLOT_W;
+const fmt = (v: number): string => `${v.toFixed(1)}%`;
+
+const bars = rows.flatMap((r, i) => {
+  const top = GROUP_TOP + i * GROUP_H;
+  return [
+    { value: r.stable, y: top, seed: r.seed, set: false },
+    { value: r.set, y: top + BAR_H + PAIR_GAP, seed: r.seed + 1, set: true },
+  ];
+});
+
+const gridlines = [0, 25, 50, 75, 100];
+const plotBottom = GROUP_TOP + rows.length * GROUP_H - (GROUP_H - 2 * BAR_H - PAIR_GAP) + 6;
+
+const alt =
+  'Grouped horizontal bar chart titled "Cached share of input tokens, 30-minute TTL". Four traffic ' +
+  'levels during business hours each have two bars: a byte-stable prompt, and a prompt whose tool ' +
+  'list is serialised from a set across 8 worker processes. The prompt content is identical. At 1 ' +
+  'request per hour: byte-stable 38.7 percent cached, tool list from a set 0.0 percent. At 5 ' +
+  'requests per hour: byte-stable 89.8 percent, set-ordered 0.6 percent. At 20 requests per hour: ' +
+  'byte-stable 98.2 percent, set-ordered 73.1 percent. At 60 requests per hour: byte-stable 98.5 ' +
+  'percent, set-ordered 97.1 percent. The set-ordered prompt caches almost nothing at 1 and 5 ' +
+  'requests per hour, trails by 25 points at 20, and only catches up at 60.';
+---
+<div class="diagram-scroll">
+  <svg viewBox="0 0 620 324" role="img" aria-labelledby="chr-title chr-desc" class="diagram">
+    <title id="chr-title">Cached share of input tokens for a byte-stable prompt and a set-ordered tool list, at four traffic levels</title>
+    <desc id="chr-desc">{alt}</desc>
+
+    <text x="0" y="16" class="d-zone">Cached share of input tokens · 30-min TTL</text>
+    <g class="legend">
+      <path d={roughRect(0, 28, 14, 11, { seed: 17, roughness: 0.7 })} class="bar bar-stable" />
+      <text x="20" y="38" class="d-fine d-start">Byte-stable prompt</text>
+      <path d={roughRect(140, 28, 14, 11, { seed: 18, roughness: 0.7 })} class="bar bar-set" />
+      <text x="160" y="38" class="d-fine d-start">Tool list from a set, 8 workers</text>
+    </g>
+
+    {gridlines.map((g) => (
+      <g>
+        <path d={roughLine(PLOT_X + scale(g), 50, PLOT_X + scale(g), plotBottom, { seed: 200 + g, roughness: 0.5 })} class="grid" />
+        <text x={PLOT_X + scale(g)} y={plotBottom + 16} class="d-fine">{`${g}%`}</text>
+      </g>
+    ))}
+
+    <text x="0" y={plotBottom + 16} class="d-fine d-start">Requests</text>
+
+    {rows.map((r, i) => (
+      <text x="0" y={GROUP_TOP + i * GROUP_H + BAR_H + 3} class="d-row">{r.name}</text>
+    ))}
+
+    {bars.map((b) => (
+      <g>
+        {/* A 0.0% bar collapses to a hand-drawn tick on the axis; the label
+            beside it carries the value. */}
+        <path
+          d={roughRect(PLOT_X, b.y, scale(b.value), BAR_H, { seed: b.seed, roughness: 0.7 })}
+          class={b.set ? 'bar bar-set' : 'bar bar-stable'}
+        />
+        <text x={PLOT_X + scale(b.value) + 7} y={b.y + BAR_H - 3} class={b.set ? 'd-val d-accent' : 'd-val'}>
+          {fmt(b.value)}
+        </text>
+      </g>
+    ))}
+  </svg>
+</div>
+
+<style>
+  /* Same rule as the other figures on the site: below ~560px the row labels and
+     the percentages would collide, so the figure scrolls rather than scales. */
+  .diagram-scroll { overflow-x: auto; margin: 2rem 0 0.75rem; }
+  .diagram { display: block; width: 100%; min-width: 560px; height: auto; }
+
+  .bar { stroke-width: 1.4; stroke-linecap: round; }
+  .bar-stable { fill: none; stroke: var(--muted); }
+  .bar-set { fill: var(--accent-soft); stroke: var(--accent); }
+
+  .grid { fill: none; stroke: var(--muted); stroke-width: 0.8; opacity: 0.3; stroke-dasharray: 3 5; }
+
+  text { text-anchor: middle; }
+  .d-row { font-family: var(--font-sans); font-size: 12.5px; fill: var(--fg); text-anchor: start; }
+  .d-val { font-family: var(--font-mono); font-size: 11px; fill: var(--muted); text-anchor: start; }
+  .d-fine { font-family: var(--font-sans); font-size: 11px; fill: var(--muted); }
+  .d-start { text-anchor: start; }
+  .d-accent { fill: var(--accent); }
+  .d-zone {
+    font-family: var(--font-mono); font-size: 11px; font-weight: 500; fill: var(--muted);
+    letter-spacing: 0.14em; text-transform: uppercase; text-anchor: start;
+  }
+</style>
