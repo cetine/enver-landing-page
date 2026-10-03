@@ -1,0 +1,121 @@
+---
+// One idea: whether invalid JSON gets through depends on the grammar engine,
+// not on its point release.
+//
+// Counts, not rates, on one shared axis: each outline is every schema-invalid
+// instance one engine version was asked to accept (bar length = count); the
+// filled part is how many it accepted anyway (the JSON Schema validator rejects
+// them, the engine lets them through without an error). The task set is
+// enriched with hand-written cases aimed at known gaps, so the filled share is
+// by construction, not a field rate; no percentage is printed.
+//
+// Numbers are hard-coded from the fact-checked re-run of 3 Oct 2026 (466 tasks,
+// engines tested as libraries with vLLM's call-site options, no generation).
+// xgrammar 0.2.6 is left out: the re-run reports no invalid-accept count for it.
+// llguidance was scored only on schemas it agreed to compile, hence the smaller
+// denominator. Hard-coded rather than imported, like the site's other figures:
+// the article is a dated snapshot.
+import { roughRect } from '../lib/rough';
+
+interface Row { v: string; note?: string; acc: number; of: number; seed: number }
+interface Group { name: string; y: number; rows: Row[] }
+
+const groups: Group[] = [
+  {
+    name: 'xgrammar', y: 76, rows: [
+      { v: '0.2.5.post1', acc: 72, of: 277, seed: 11 },
+      { v: '0.2.7', note: 'vLLM 0.31.0 pin', acc: 71, of: 277, seed: 13 },
+      { v: '0.2.8', acc: 71, of: 277, seed: 15 },
+    ],
+  },
+  {
+    name: 'llguidance', y: 192, rows: [
+      { v: '1.7.6', note: 'stock vLLM', acc: 0, of: 215, seed: 21 },
+      { v: '1.8.0', acc: 0, of: 215, seed: 23 },
+      { v: '1.9.1', acc: 0, of: 215, seed: 25 },
+    ],
+  },
+];
+
+const PLOT_X = 108;
+const PLOT_W = 264;
+const VAL_X = PLOT_X + PLOT_W + 10;
+const BAR_H = 16;
+const STEP = 26;
+
+// One scale for every bar: the largest denominator spans the plot width.
+const MAX = Math.max(...groups.flatMap((g) => g.rows.map((r) => r.of)));
+const len = (n: number) => Math.round((n / MAX) * PLOT_W * 10) / 10;
+
+const bars = groups.flatMap((g) => g.rows.map((r, i) => {
+  const y = g.y + 12 + i * STEP;
+  const w = len(r.acc);
+  return {
+    ...r, y,
+    outline: roughRect(PLOT_X, y, len(r.of), BAR_H, { seed: r.seed, roughness: 0.6 }),
+    fill: w > 0 ? roughRect(PLOT_X, y, w, BAR_H, { seed: r.seed + 1, roughness: 0.6 }) : null,
+    label: `${r.acc} of ${r.of}`,
+  };
+}));
+
+if (bars.map((b) => b.label).join() !== '72 of 277,71 of 277,71 of 277,0 of 215,0 of 215,0 of 215') {
+  throw new Error('GrammarEngineSplit: data no longer matches the caption');
+}
+
+const alt =
+  'Horizontal bar chart of counts on one shared scale. Each outline is the number of schema-invalid ' +
+  'JSON instances one grammar-engine version was asked to accept in a 466-task re-run; the filled ' +
+  'part is how many it accepted without an error, although a JSON Schema validator rejects them. ' +
+  'xgrammar 0.2.5.post1 accepted 72 of 277; xgrammar 0.2.7, the version pinned by vLLM 0.31.0, ' +
+  'accepted 71 of 277; xgrammar 0.2.8 accepted 71 of 277. llguidance 1.7.6, the version stock vLLM ' +
+  'ships, 1.8.0 and 1.9.1 each accepted 0 of 215, scored on the schemas llguidance agreed to compile. ' +
+  'The task set includes hand-written cases aimed at known gaps, so these are counts, not field rates. ' +
+  'Across three xgrammar releases the count moves by one; switching engine moves it to zero.';
+---
+<div class="diagram-scroll">
+  <svg viewBox="0 0 600 306" role="img" aria-labelledby="ges-title ges-desc" class="diagram">
+    <title id="ges-title">Schema-invalid JSON accepted silently, by grammar engine and version</title>
+    <desc id="ges-desc">{alt}</desc>
+
+    <text x="0" y="16" class="d-zone">Invalid JSON let through · 466-task re-run</text>
+    <path d={roughRect(0, 28, 14, 11, { seed: 7, roughness: 0.6 })} class="bar fill" />
+    <text x="20" y="38" class="d-fine">accepted, validator rejects</text>
+    <path d={roughRect(186, 28, 14, 11, { seed: 8, roughness: 0.6 })} class="bar" />
+    <text x="206" y="38" class="d-fine">rejected</text>
+
+    {groups.map((g) => <text x="0" y={g.y} class="d-row">{g.name}</text>)}
+
+    {bars.map((b) => (
+      <g>
+        <text x="0" y={b.y + 12} class="d-mono">{b.v}</text>
+        <path d={b.outline} class="bar" />
+        {b.fill && <path d={b.fill} class="bar fill" />}
+        <text x={VAL_X} y={b.y + 12} class={b.acc ? 'd-val d-accent' : 'd-val'}>{b.label}</text>
+        {b.note && <text x={VAL_X + 70} y={b.y + 12} class="d-fine">{b.note}</text>}
+      </g>
+    ))}
+
+    <text x="0" y="298" class="d-fine">Three releases of one engine: the count moves by 1. A different engine: 71 → 0.</text>
+  </svg>
+</div>
+
+<style>
+  /* The site's rule for figures: below ~520px the 11px labels would shrink
+     under 9px, so the figure scrolls rather than scales. */
+  .diagram-scroll { overflow-x: auto; margin: 2rem 0 0.75rem; }
+  .diagram { display: block; width: 100%; min-width: 520px; height: auto; }
+
+  .bar { fill: none; stroke: var(--muted); stroke-width: 1.3; stroke-linecap: round; }
+  .fill { fill: var(--accent-soft); stroke: var(--accent); }
+
+  text { text-anchor: start; }
+  .d-row { font-family: var(--font-sans); font-size: 12.5px; font-weight: 500; fill: var(--fg); }
+  .d-mono { font-family: var(--font-mono); font-size: 11.5px; fill: var(--fg); }
+  .d-val { font-family: var(--font-mono); font-size: 11px; fill: var(--muted); }
+  .d-fine { font-family: var(--font-sans); font-size: 11px; fill: var(--muted); }
+  .d-accent { fill: var(--accent); }
+  .d-zone {
+    font-family: var(--font-mono); font-size: 11px; font-weight: 500; fill: var(--muted);
+    letter-spacing: 0.14em; text-transform: uppercase;
+  }
+</style>

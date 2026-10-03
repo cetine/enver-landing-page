@@ -1,0 +1,113 @@
+---
+title: 'vLLM JSON Schema Not Supported by xgrammar? Check the Engine'
+date: 2026-10-03
+description: On 2,855 real-world JSON schemas, xgrammar and llguidance disagree on compiling 339, and xgrammar drops some keywords silently. Point-release drift is small.
+tags: [vLLM, Structured Output, JSON Schema, LLM]
+type: post
+---
+
+import GrammarEngineSplit from '../../../components/GrammarEngineSplit.astro';
+
+<aside class="tldr">
+<p class="tldr-label">TL;DR</p>
+<ul>
+<li>A JSON schema is not portable between grammar engines. On the 2,855-schema JSONSchemaBench test split, <strong>xgrammar and llguidance disagree on whether to compile 339 of them</strong>, about 12%.</li>
+<li>They fail in opposite directions. llguidance refuses keywords such as <code>not</code>, <code>if</code>/<code>then</code> and <code>uniqueItems</code> with an error; xgrammar compiles them and ignores the keyword without a warning.</li>
+<li>Several of those silent cases pass vLLM v0.31.0's own xgrammar feature check, so, by the source, the default <code>auto</code> backend would serve them with no error.</li>
+<li>Point-release drift, the risk I set out to measure, is small: zero in llguidance 1.7.6 to 1.9.1 (1.7.6 on a 466-task subset), and 2 schemas in 2,855 in xgrammar 0.2.5 to 0.2.8. Pin the engine, not just the version.</li>
+</ul>
+</aside>
+
+Most teams I talk to that run open-weight models in production have decided that structured output is solved. The open question, as they see it, is version hygiene: will a point release of the grammar engine quietly change what gets through?
+
+I went looking for that drift and mostly did not find it. **The risk that matters sits between engines, not between releases.** The same schema compiles in one engine and is refused by the other, and where the engines disagree, the one vLLM tries first is the one that can fail silently.
+
+## What vLLM does with your schema
+
+As of vLLM v0.31.0 (2 October 2026), `vllm/config/structured_outputs.py` offers five options and defaults to `auto`. The source says: "With ‘auto’, we will make opinionated choices based on request contents and what the backend libraries currently support, so the behavior is subject to change in each release."
+
+The order, per `sampling_params.py`: under `auto`, xgrammar goes first. If vLLM's own feature check rejects the schema, it falls back to outlines if the tokenizer is a non-Tekken Mistral one or the schema also trips vLLM's guidance check (any `patternProperties`, for instance), otherwise to guidance (llguidance): "# Fall back to guidance by default." Name xgrammar explicitly and there is no fallback.
+
+The structured-output manager in `vllm/v1/structured_output/__init__.py` still says: "We only support a single backend. We do NOT support different backends on a per-request basis in V1". It builds the backend from the first structured request and compiles every later request through it. **From the source, a schema that `auto` routes to guidance can be compiled by an xgrammar backend latched by an earlier request.** I read this; I did not run vLLM.
+
+That latch had a sharper edge before v0.30.0. Advisory GHSA-85xf-c7hm-whqw (moderate, CVSS 6.5, published 23 September 2026, affected versions below 0.30.0) describes how it "permanently latches one backend on the first structured-output request", and how an ordinary structured-output request (two, for one of its three sites) could "terminate the shared EngineCore, denying service to all tenants". Since v0.30.0 (PR #51450) the failure is contained to the request. The latch remains.
+
+Pins matter too. vLLM v0.31.0 requires `xgrammar == 0.2.7` and `llguidance >= 1.7.0, < 1.8.0`. SGLang v0.5.21 pins the same xgrammar and allows llguidance from 1.7.6 up to, but not including, 2.0, and resolves an unset grammar backend to xgrammar.
+
+## What I measured
+
+The engines as libraries, not through vLLM: no GPU, no model, no generation. Each schema from the JSONSchemaBench test split (2,855 real-world schemas, MIT-licensed) was compiled with the options vLLM passes, then fed valid and invalid JSON instances [token by token](/writing/german-token-tax). "Accepts" means the matcher allows that token sequence, not that a model would produce it.
+
+The full run covered xgrammar 0.2.5.post1 and 0.2.8 and llguidance 1.8.0 and 1.9.1. A second, independent harness re-ran 466 tasks on seven versions: 400 random benchmark schemas that compiled quickly, plus every hand-written probe and case, with slow and timed-out schemas excluded. It added xgrammar 0.2.6 and 0.2.7 and llguidance 1.7.6, which stock vLLM installs. Three ways of feeding each instance agreed every time, so tokenization explains nothing below.
+
+<figure>
+<GrammarEngineSplit />
+<figcaption>Schema-invalid instances each engine version accepted in the 466-task re-run, drawn as counts on one scale. llguidance is scored only on schemas it agreed to compile, hence 215, not 277. The task set is enriched with hand-written cases aimed at known gaps, so the filled share is not a field rate. Instances are generated, not model output.</figcaption>
+</figure>
+
+## Does a JSON schema that works with llguidance also work with xgrammar?
+
+It almost always compiles, which is the problem. xgrammar 0.2.5.post1 and llguidance 1.8.0 disagree on whether to compile 339 of the 2,855 schemas; 0.2.8 against 1.9.1, 340. **In 329 to 331 of those, xgrammar is the one that compiles.** The commonest llguidance refusal, 142 times, is `oneOf`, which it rejects unless told to coerce it.
+
+Then check what it does with the keywords. Its JSON Schema converter does call a warning function for `not`, `if`/`then`/`else`, `dependentRequired`, `uniqueItems` and `contains`, but that function returns immediately unless verbose mode is on. **By default these keywords are dropped without a word.** llguidance, non-lenient as vLLM calls it, refuses them at compile time: "Unimplemented keys: [...]".
+
+The most ordinary failure is this: put `properties` next to an `anyOf` and xgrammar drops the properties:
+
+```
+# schema
+{"type":"object","properties":{"a":{"type":"string"}},"anyOf":[{"required":["a"]}],"additionalProperties":false}
+
+# xgrammar 0.2.5.post1, 0.2.8
+min_props_plus_sibling_anyOf_required ok {"a":"x"}:valid->acc {"a":5}:INVALID->acc {"a":"x","zz":1}:INVALID->acc {}:INVALID->acc
+# llguidance 1.8.0, 1.9.1
+min_props_plus_sibling_anyOf_required ok {"a":"x"}:valid->acc {"a":5}:INVALID->rej {"a":"x","zz":1}:INVALID->rej {}:INVALID->rej
+```
+
+That matches open xgrammar issue #858 (22 August 2026). On the benchmark, xgrammar accepted 38 of 1,204 schema-invalid instances, all in five schemas, identically in every version; llguidance accepted none of 1,045. In the 466-task re-run, whose hand-written cases aim at these gaps, xgrammar 0.2.7 and 0.2.8 accepted 71 of 277 invalid instances, and llguidance 1.7.6 to 1.9.1 none of 215. The benchmark's own authors saw the same shape on XGrammar 0.1.6 and Guidance 0.2.0rc (late 2024): XGrammar under-constrained at least once in 38 of 45 schema categories, Guidance in 1.
+
+## Why does vLLM say my JSON schema contains features not supported by xgrammar?
+
+Because vLLM keeps its own denylist in `backend_xgrammar.py`, in front of the engine. In v0.31.0 it catches `multipleOf`, `uniqueItems`, `contains`, unsupported string formats, `pattern` or `format` combined with length bounds, and several `propertyNames` and `patternProperties` combinations. Under `auto` that check is what sends a schema to guidance. With xgrammar named explicitly, it is an error.
+
+The check is a list of known gaps, not a proof of enforcement. Running vLLM's own function over every case where xgrammar accepted invalid JSON, **`not`, `if`/`then`, `dependentRequired`, overlapping `oneOf`, regex lookaheads and the sibling `anyOf` all pass it**, as do 4 of the 5 under-constrained benchmark schemas. By the v0.31.0 source, those go to xgrammar on the default path and would be served without error. vLLM issue #56556 (12 September 2026) reports the same for multiple `allOf` branches.
+
+## Drift between versions is small, and still not harmless
+
+llguidance 1.8.0 and 1.9.1 made identical decisions on all 2,855 schemas: no compile changes, no changed instances. 1.7.6, the version stock vLLM installs, matched both on every one of the 466 re-run tasks.
+
+xgrammar changed compile status on 5 schemas in 2,855. Three were timeouts under load that compile alone in both versions; **2 were real, 0.07%.** Every change landed in 0.2.6 (on PyPI 9 September 2026) or 0.2.7 (15 September); 0.2.7 to 0.2.8 changed nothing in my re-run.
+
+Small, but the wrong kind. Both schemas that newly compile carry a lookahead. 0.2.5 refused them with a parse error ("Lookahead is not supported yet."); from 0.2.6 the lookahead is dropped with a single stderr warning, which an API client never sees. A hand-written probe, `^(?!admin$)[a-z]+$`, shows the effect: `"admin"` is accepted. Separately, from 0.2.6 (still in pinned 0.2.7), `patternProperties` with `".*"` rejects valid escaped keys, such as a key containing `é` or a quote, which 0.2.5 accepted; one benchmark schema lost 7 valid instances. In the other direction, 0.2.7 began to "Honor the `additionalProperties` value schema when `propertyNames` is also present", so `{"team":5}` is now correctly refused.
+
+Compile time moved more than behaviour. On `JsonSchemaStore/cloudformation`, with four threads, caching off and single runs: 15.7 s on 0.2.5.post1, 228.28 s on 0.2.7, 224.41 s on 0.2.8, roughly 14x, arriving in 0.2.6 or 0.2.7 (I did not time 0.2.6). Not a general slowdown: `Github_easy/o6261` fell from 0.74 s to 0.03 s. vLLM compiles with eight threads and caches grammars, so the cost is paid on first use.
+
+## Where my evidence stops
+
+I expected version drift; the numbers say it barely exists. It also runs against easy praise for llguidance: it refuses about 12% of real schemas outright, `oneOf` most of all, and its zero under-constraint covers only the roughly 88% it agrees to compile. Its own documentation says it does not enforce unique keys under `additionalProperties` or `patternProperties`, which I did not probe.
+
+Both engines enforce property order, and xgrammar's strict mode rejects undeclared keys even on open objects. Invalid instances were generated and mutated, not sampled from a model, so I report counts, not rates. Labels come from python-jsonschema, whose `\d` matches Unicode digits where ECMA-262 does not. The latch is source reading.
+
+## What I would actually do
+
+1. **Set `backend` explicitly.** `auto` is documented as subject to change in each release. Pick the engine whose failure mode you can live with: loud refusals or silent gaps.
+2. **Pin the engine version yourself if you install outside vLLM's requirements,** and re-run your schemas when either moves. The changes are rare, and some are silent.
+3. **Test your own schemas with must-reject instances** against the engine you actually run. A schema that compiled is no evidence that any given keyword is enforced.
+
+## Bottom line
+
+Within llguidance, structured output is stable across point releases. Within xgrammar, it changes rarely, and the keywords it ignores, it ignores in every release. Move a schema across the engine boundary, or let vLLM move it for you, and roughly one in eight lands differently. On xgrammar's side, the difference does not announce itself.
+
+A grammar that compiles has told you it can parse your schema, not that it read all of it.
+
+---
+
+## Sources
+
+- [vllm-project/vllm at v0.31.0](https://github.com/vllm-project/vllm/tree/v0.31.0): `config/structured_outputs.py`, `sampling_params.py`, `v1/structured_output/__init__.py`, `backend_xgrammar.py`, `backend_guidance.py`, `requirements/common.txt`; and [issue #56556](https://github.com/vllm-project/vllm/issues/56556).
+- [GHSA-85xf-c7hm-whqw](https://github.com/vllm-project/vllm/security/advisories/GHSA-85xf-c7hm-whqw), the single-backend latch and EngineCore denial of service, patched in v0.30.0.
+- [mlc-ai/xgrammar](https://github.com/mlc-ai/xgrammar): 0.2.7 release notes, `cpp/json_schema_converter.cc`, and [issue #858](https://github.com/mlc-ai/xgrammar/issues/858).
+- [guidance-ai/llguidance](https://github.com/guidance-ai/llguidance): `docs/json_schema.md`.
+- [*JSONSchemaBench*](https://arxiv.org/abs/2501.10868) (arXiv v3, 27 February 2025), Tables 4 and 6; dataset [epfl-dlab/JSONSchemaBench](https://huggingface.co/datasets/epfl-dlab/JSONSchemaBench).
+- [sgl-project/sglang](https://github.com/sgl-project/sglang) v0.5.21: `python/pyproject.toml` pins and the default grammar backend.
+
+<p class="text-[13px] text-muted">Measured on 3 October 2026 against <code>xgrammar</code> 0.2.5.post1, 0.2.6, 0.2.7 and 0.2.8 and <code>llguidance</code> 1.7.6, 1.8.0 and 1.9.1 as libraries (0.2.6, 0.2.7 and 1.7.6 on a 466-task subset), with vLLM v0.31.0 and SGLang v0.5.21 read from source, not run; it will age quickly. Schemas from the JSONSchemaBench test split; invalid instances are generated. Engineering write-up, not a benchmark of either project.</p>
