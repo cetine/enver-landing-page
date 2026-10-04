@@ -102,6 +102,10 @@ Judge every candidate against all six:
 Say, for each topic, who forwards it to whom. "An EU enterprise architect sends
 it to their legal counterpart" is a real answer; "AI practitioners" is not.
 
+Virality is for choosing, not for writing: the article will never mention that
+a story spread. For each candidate, also say which client decision it speaks to
+(industry and role, anonymised), because that is how Enver will frame it.
+
 Rank candidates by these six together; the virality and plain-language tests
 decide between otherwise equal topics. Virality never overrides the thesis rule
 or the primary-source rule: a viral claim is a reason to check it, not a fact.
@@ -120,5 +124,6 @@ Output ONLY a JSON array, no prose, no code fence:
    "can_measure": "<one sentence: what could actually be run and measured>",
    "who_forwards_it": "<one sentence: who sends this to whom, and what they say>",
    "virality_evidence": "<one sentence: where this or the claim it corrects has spread, with numbers and URLs, or why it would spread>",
-   "plain_summary": "<the thesis as Enver would say it to a CFO in one sentence, with one number>"}
+   "plain_summary": "<the thesis as Enver would say it to a CFO in one sentence, with one number>",
+   "client_angle": "<the anonymised client decision this informs, e.g. a mid-sized German insurer choosing between X and Y>"}
 ]

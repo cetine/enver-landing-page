@@ -71,6 +71,39 @@ State the thesis in the first three paragraphs, before any explanation.
 - Close on a line that lands. "The compliance argument was never going to be won
   in the regex."
 
+## Framing: Enver's practice, not the news cycle
+
+Topics are often chosen because a story or claim is spreading elsewhere. The
+article never says so. No "this went viral", "everyone is talking about",
+"trending on LinkedIn", no upvote counts, no "as seen on Hacker News". The
+popularity of a story is a reason to pick it, never part of the argument.
+
+Instead, anchor the piece in Enver's background and in the kind of client
+decision it informs: Director AI at Ciklum, working with enterprise clients in
+Germany and the EU (banking, insurance, manufacturing, retail, the public
+sector). Open on the decision a company actually faces, not on the headline.
+
+- **Never name a client, a client's employee, or a project**, and never give
+  details that would identify one (exact headcount, city plus industry, a
+  distinctive product). "A mid-sized German insurer" is fine; "a Munich insurer
+  with 4,000 staff" is not.
+- **Never invent an experience.** The writing pipeline has no access to Enver's
+  client work, so it must not claim that something happened in a real
+  engagement ("a client of mine lost €200k", "last month a bank asked me").
+  Use one of these honest framings instead:
+  - a clearly hypothetical scenario: "Take a mid-sized insurer deciding
+    whether…", with numbers from public sources or from the article's own
+    calculation;
+  - the decision in general terms: "The question I am asked most about this
+    is not X but Y" only if it follows from the article's own evidence, not as
+    an anecdote;
+  - Enver's role as a reason the question matters: "When I scope an AI
+    rollout, this is the line item that…".
+- **Leave one slot for a real example.** Where a short, anonymised example from
+  Enver's own work would make the piece stronger, put an MDX comment there:
+  `{/* ENVER: anonymised client example here — e.g. <what kind> */}`. It
+  renders nothing. Enver fills it in or deletes it before merging.
+
 ## Mechanics
 
 - English only. There is no German version of writing posts.

@@ -77,6 +77,13 @@ Anything you cannot verify does not go in the article.
 
 ## Write
 
+Framing comes from the house style's section "Framing: Enver's practice, not
+the news cycle". In short: never mention that a topic went viral or is
+trending; anchor the piece in Enver's role and in an anonymised client
+decision; never name or identify a client; never invent an experience; leave
+one `{/* ENVER: ... */}` slot where a real anonymised example would help. Every
+writer and reviewer brief must carry this rule.
+
 - `src/content/writing/en/<slug>.mdx`, following the house style exactly:
   TL;DR aside, 6–9 sections, one figure, 1,200–1,600 words of prose, 6–9 sources.
 - Build the figure as a new Astro component using `src/lib/rough.ts`. One idea
