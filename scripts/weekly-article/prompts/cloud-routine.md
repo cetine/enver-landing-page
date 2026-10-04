@@ -232,6 +232,7 @@ One Telegram message, plain text, in this shape:
 
 🔎 Search target: "<primary query>"
 📈 Why it can travel: <virality_evidence, one line>
+✍️ Your example: <what the ENVER slot asks for, one line, or "none">
 Preview: <preview url>
 PR: <pr url>
 
