@@ -12,6 +12,7 @@ const pages: { path: string; hreflang: number }[] = [
   { path: '/writing/ai-act-article-50-marking', hreflang: 2 },
   { path: '/writing/german-token-tax', hreflang: 2 },
   { path: '/writing/jev-confidence-thresholds', hreflang: 2 },
+  { path: '/writing/prompt-caching-not-working', hreflang: 2 },
 ];
 
 for (const { path, hreflang } of pages) {

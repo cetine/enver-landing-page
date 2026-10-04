@@ -1,0 +1,134 @@
+---
+title: 'Prompt Caching Not Working? Check Your Serialiser First'
+date: 2026-09-26
+description: 'Same traffic, same 30-minute TTL: in a simulation, a tool list built from a Python set across eight workers cut cached input from 89.8% to 0.6% at 5 req/h.'
+tags: [Prompt Caching, LLM, Cost, MCP]
+type: post
+---
+
+import CacheHitRateBars from '../../../components/CacheHitRateBars.astro';
+
+<aside class="tldr">
+<p class="tldr-label">TL;DR</p>
+<ul>
+<li>When prompt caching does not work, rule out the serialiser before the TTL. A frequent cause is a prefix that is not byte-identical across requests or worker processes, produced by the application's own serialiser.</li>
+<li>Every byte-variant of the prefix is its own cache entry. <strong>In a simulation, a tool list built from a Python set across eight separately started workers cut the cached share of input from 89.8% to 0.6%</strong> at 5 requests an hour and a 30-minute TTL.</li>
+<li>With an explicit breakpoint, every miss pays the write premium, so a cache that never hits costs more than no cache. On GPT-6 Sol that works out at €12.55 per 1,000 requests at list prices, against €10.12 for not caching at all.</li>
+<li>The TTL is the lever only at low traffic. At 1 request an hour a byte-perfect prompt gets 7.3%, 38.7% and 60.8% at 5 minutes, 30 minutes and 1 hour.</li>
+</ul>
+</aside>
+
+The ticket reads the same way every time: we turned on prompt caching, the bill did not move, so let's try a longer TTL.
+
+That is often the wrong fix. **Prompt caching matches bytes, and a frequent reason a prefix stops matching, the one to rule out first, is the application's own serialiser**: a tool list ordered differently per worker, a timestamp atop the system prompt, MCP tools merged in whatever order the servers answered.
+
+The damage is larger than "one extra miss". Each variant of the prefix is a separate cache entry, so a nondeterministic serialiser divides your traffic by the number of variants, and a TTL that covered your traffic stops covering it. I built a support agent, broke its serialiser five ways, measured where the bytes diverge and simulated what that does under a TTL.
+
+## Why is my prompt cache not hitting?
+
+OpenAI: "Cache reuse requires the entire rendered prefix to match." Anthropic: "Cache hits require 100% identical prompt segments", and "Cache prefixes are created in the following order: `tools`, `system`, then `messages`." Tools come first, so a changed tool invalidates everything after it.
+
+Anthropic's cache diagnostics have a `tools_changed` reason for tools "added, removed, or reordered between turns, or tool `input_schema` JSON was serialized non-deterministically." Diagnostics `null` with low reads is the TTL case. A `*_changed` reason with low reads is labelled, plainly, "Your bug".
+
+OpenAI's GPT-5.6 family added explicit caching controls on 9 July 2026; for GPT-5.6 and later the TTL's "only supported value, 30m, is also the default", "though OpenAI may retain it longer". Its diagnostics went generally available in the Responses API for GPT-5.6 and later on 8 September 2026, Anthropic's on 23 September, Claude API only.
+
+## The set that reorders itself
+
+Python salts `str` and `bytes` hashes per process. They "remain constant within an individual Python process" but "are not predictable between repeated invocations of Python", and "Changing hash values affects the iteration order of sets."
+
+So a tool registry built from a set of plugin names is stable inside one process and different in the next. Three fresh processes:
+
+```
+['search_tickets', 'create_ticket', 'get_order', 'create_refund', 'get_ticket', 'get_customer']
+['get_order', 'create_refund', 'get_customer', 'create_ticket', 'search_tickets', 'get_ticket']
+['search_tickets', 'get_customer', 'get_ticket', 'get_order', 'create_ticket', 'create_refund']
+```
+
+With `PYTHONHASHSEED=0` twice, identical. The seed is fixed at interpreter start, so plain fork-based workers inherit their parent's order (I did not test fork). The variation is across independently started interpreters: replicas, containers, spawn-based workers, restarts, rolling deploys. Go has the same trap one level down: map iteration order "is not guaranteed to be the same from one iteration to the next".
+
+Claude Code issue [#49038](https://github.com/anthropics/claude-code/issues/49038) reported the Agent tool's description enumerating sub-agents "in non-deterministic order"; because `Agent` was `tools[0]`, "any reshuffle invalidates the prompt-cache prefix hash for everything after it". The reporter measured cache creation drop "56,296 → 32 tokens" with their local fix; the issue, opened 16 April 2026, was closed as not planned.
+
+## The rig
+
+A support agent for an EU B2B distributor: a 1,871-word policy (2,265 tokens), 21 tool JSON schemas (3,311 tokens), rendered as one JSON body of 5,772 `o200k_base` tokens. 60 users, 200 requests over five business days, round-robin over 8 separately started worker interpreters without `PYTHONHASHSEED`.
+
+First differing byte between request 0 on worker 0 and request 1 on worker 1:
+
+```
+baseline          first diff at byte 24566 of 24778   tokens before = 5713
+a_set_registry    first diff at byte    25 of 24778   tokens before =    9
+b_timestamp_sec   first diff at byte 12874 of 24816   tokens before = 3339
+```
+
+The set-ordered registry diverges nine tokens in. Between two requests on the same worker it diverges at byte 24570, like the baseline.
+
+In a real engine, llama.cpp with Qwen2.5-0.5B on CPU, the set-ordered variant reused 5,775 tokens on the same worker (710.1 ms) and 8 on another (28,353.2 ms). That says nothing about vendor latency; it shows the mechanics are real.
+
+## What a finite TTL does to it
+
+With a shared cache and no expiry, on the 200-request, five-day rig (about 4 requests an hour), the set-ordered bug costs little: 94.8% of input cached against 98.2% for the baseline. Eight prefixes, each written once. The damage appears when entries expire.
+
+<figure>
+<CacheHitRateBars />
+<figcaption>Cached share of input tokens at a 30-minute TTL, byte-stable baseline against the set-ordered tool registry. Simulated Poisson arrivals, Mon–Fri 08–18, strict round-robin over 8 workers, one breakpoint after tools and system, <code>o200k_base</code> counts of the JSON body. The ordering logic transfers to vendors; the exact percentages do not.</figcaption>
+</figure>
+
+The mechanism is arithmetic: each worker's prefix sees one eighth of the traffic, so gaps between hits on it are about eight times longer. At 5 requests an hour, the baseline gets 89.8% and the set-ordered registry 0.6%. At 20 an hour, 98.2% against 73.1%. A 1-hour TTL lifts set-ordered at 5 requests an hour only to 11.0%, but at 20 an hour to 94.2%: at moderate traffic the longer TTL partly hides the bug and leaves the serialiser broken.
+
+At 20 requests an hour, with one breakpoint after the system prompt, a timestamp to the second atop it gets 0.0%; implicit prefix caching still reuses the tools ahead of it (3,394 of 5,870 tokens in llama.cpp). Tenant data first gets 12.3%, MCP tools merged per request in completion order 77.1%.
+
+## Where the bug is cheap
+
+**At steady high traffic, ordering bugs are cheap.** At 60 requests an hour the set-ordered registry reaches 97.1% against 98.5%.
+
+**At low traffic, the TTL dominates even for a byte-perfect prompt.** At 1 request an hour the baseline gets 7.3% at 5 minutes, 38.7% at 30 minutes and 60.8% at an hour. At 20 requests an hour both give 98.2%, at 60 both 98.5%.
+
+**A date-only stamp is nearly harmless.** Five distinct prefixes over five days: 96.2% against 98.2% with no TTL on the 200-request rig.
+
+**The per-request MCP bug fails in one process too.** The set-order bug is the "works on my machine" one: a single-process test suite would not see it unless it compares output across processes with different seeds.
+
+Not tested: real API calls (no keys); OpenAI's machine-local routing and overflow, which the shared-cache model flatters; OpenAI retaining entries past 30 minutes, so the strict simulated expiry is a lower bound; multi-turn histories. Bigger tool lists than these 3.3k tokens make ordering bugs costlier.
+
+## A cache that never hits costs more than none
+
+Every miss at an explicit breakpoint pays the write rate: 1.25× at OpenAI for GPT-5.6 and later and for Anthropic's 5-minute TTL, 2× for Anthropic's 1-hour write. Per million tokens on 26 September 2026: GPT-6 Sol $2.00 input, $2.50 write, $0.20 cached; Opus 5.5 $4 input, $5 (5m write), $8 (1h write), $0.20 hit. Euros per 1,000 requests, input only, ECB 1.1403 (25 September 2026):
+
+```
+                                   no cache   baseline   set-ordered   timestamp
+GPT-6 Sol, 30m TTL, 5 req/h          €10.12      €2.16       €12.55      €12.62
+GPT-6 Sol, 30m TTL, 20 req/h         €10.12      €1.19        €4.11      €12.62
+Opus 5.5, 1h TTL, 5 req/h            €20.25      €2.23       €35.91      €40.23
+Opus 5.5, 5m TTL, 5 req/h            €20.25     €17.09       €25.24      €25.24
+```
+
+On GPT-6 Sol the set-ordered prompt costs 24% more than not caching. On Opus 5.5 with the 1-hour TTL, 77% more. **At 5 requests an hour, paying for the longer TTL without fixing the serialiser makes the bill larger, not smaller.** With implicit caching and no write surcharge, you lose the discount but pay nothing extra. As with [tokenisers](/writing/german-token-tax), compare euros per request, not the rate card.
+
+## What I would build
+
+1. **Diff two fully rendered request bodies byte for byte.** The first differing byte is the answer.
+2. **Sort tool lists by name and serialise schemas with sorted keys**: `json.dumps(..., sort_keys=True, separators=(",", ":"))`. Never iterate a set. Merge MCP servers in a fixed order; the 2026-07-28 MCP specification only says servers "SHOULD return tools in a deterministic order".
+3. **Static first, then tenant, then time.** Move timestamps and per-user data after the last breakpoint. Date, not second.
+4. **Render the prompt in two subprocesses with different `PYTHONHASHSEED` values in CI** and assert byte equality.
+5. **Read the diagnostics before touching the TTL,** then choose the TTL from your traffic.
+
+## Bottom line
+
+Prompt caching is a contract that your serialiser emits the same bytes in every process. Break it and the cache splits your traffic into pieces that expire alone, each paying a write premium.
+
+The TTL matters at a handful of requests an hour. Everywhere else, the cache was never short of time. It was short of identical bytes.
+
+---
+
+## Sources
+
+- [OpenAI prompt caching guide](https://developers.openai.com/api/docs/guides/prompt-caching), [diagnostics](https://developers.openai.com/api/docs/guides/prompt-caching/diagnostics) and [changelog](https://developers.openai.com/api/docs/changelog) — TTL, matching, routing, dates.
+- [OpenAI API pricing](https://developers.openai.com/api/docs/pricing) and [GPT-6 Sol](https://developers.openai.com/api/docs/models/gpt-6-sol) — rates.
+- Anthropic [prompt caching](https://platform.claude.com/docs/en/build-with-claude/prompt-caching) and [cache diagnostics](https://platform.claude.com/docs/en/build-with-claude/cache-diagnostics) — prefix order, `tools_changed`.
+- [Anthropic pricing](https://platform.claude.com/docs/en/about-claude/pricing) and [release notes](https://platform.claude.com/docs/en/release-notes/overview) — rates, diagnostics out of beta.
+- [MCP specification 2026-07-28, tools](https://modelcontextprotocol.io/specification/2026-07-28/server/tools)
+- Python [data model](https://docs.python.org/3/reference/datamodel.html) and [command line](https://docs.python.org/3/using/cmdline.html)
+- [Claude Code issue #49038](https://github.com/anthropics/claude-code/issues/49038)
+- [Go specification](https://go.dev/ref/spec)
+- [ECB euro reference rates](https://www.ecb.europa.eu/stats/eurofxref/eurofxref-daily.xml)
+
+<p class="text-[13px] text-muted">Measured on 26 September 2026 with Python 3.11.15, <code>tiktoken 0.14.0</code> (<code>o200k_base</code>), <code>llama-cpp-python 0.3.35</code> (llama.cpp <code>4df29be</code>) and Qwen2.5-0.5B-Instruct q4_k_m on four CPU cores; TTL and euro figures are simulations, not API calls. Prices (26 September) and the ECB rate (25 September) will age. Not procurement advice.</p>
