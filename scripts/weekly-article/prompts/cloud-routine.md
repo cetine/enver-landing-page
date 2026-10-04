@@ -105,23 +105,32 @@ restates any of it, or tells the same story from a slightly different angle.
 ## 4. Choose the topic — you decide
 
 Read `scripts/weekly-article/prompts/propose-topics.md` and do everything it asks
-up to the JSON output: the research fan-out, the thesis rule, and all four
-**Reach** criteria. Then apply a fifth criterion, which is Enver's goal for the
-site: **people should find these articles through Google and AI search.**
+up to the JSON output: the research fan-out (including the virality sweep), the
+focus rule (business first, technical only when easy to understand), the thesis
+rule, and all six **Reach** criteria. Then apply one more criterion, which is
+Enver's goal for the site: **people should find these articles through Google
+and AI search, and click them.**
 
-5. **Somebody is searching for this.** Name the primary query a practitioner
+7. **Somebody is searching for this, and would click.** Name the primary query a practitioner
    actually types, in their words, not the article's. Run that query with
    WebSearch. Prefer topics where the query clearly has demand (it returns
    vendor docs, forum threads, "People also ask", Stack Overflow or Reddit
    questions) and where what ranks today is thin, outdated, or wrong on the
    exact point the article corrects. Reject topics whose only audience is people
-   who already follow the news item. Search demand never overrides the thesis
+   who already follow the news item. Write queries the way a business reader
+   types them ("does Copilot actually save time", "AI agent cost per employee"),
+   not only the way an engineer does. Clicks come from a title that answers the
+   searcher's own question with a number they did not expect; check that the
+   planned title would stand out among the ten results you saw. Search demand never overrides the thesis
    rule or the primary-source rule. Rank what cannot be found below what can,
    but never publish a claim you could not verify.
 
-Build 4 candidates in the JSON shape from `propose-topics.md`, plus
-`"primary_query"` and `"search_evidence"` (one sentence: what you saw ranking
-and why this piece beats it). Pick the strongest one and continue. Keep the
+Build 4 candidates in the JSON shape from `propose-topics.md` (which includes
+`"virality_evidence"` and `"plain_summary"`), plus `"primary_query"` and
+`"search_evidence"` (one sentence: what you saw ranking and why this piece beats
+it). At least three of the four must be business topics or easy-to-understand
+technical topics in the sense of the focus rule. Pick the strongest one and
+continue. Keep the
 other three for the Telegram message.
 
 ## 5. Write
@@ -222,6 +231,7 @@ One Telegram message, plain text, in this shape:
 <thesis, one sentence>
 
 🔎 Search target: "<primary query>"
+📈 Why it can travel: <virality_evidence, one line>
 Preview: <preview url>
 PR: <pr url>
 
