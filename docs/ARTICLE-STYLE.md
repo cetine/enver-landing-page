@@ -58,6 +58,11 @@ State the thesis in the first three paragraphs, before any explanation.
 - First person, present tense, short declaratives. "The reflex is right. The
   reasoning behind it usually is not."
 - Concrete over abstract: a named entity, a real score, an exact article number.
+- Write for a smart non-specialist. A business reader without an engineering
+  background must be able to follow every section. Explain each technical term
+  in plain words the first time it appears, or leave it out. Prefer money,
+  time and headcount over internal metrics; when a technical number matters,
+  say what it means in euros, hours or risk.
 - No vendor language, no superlatives, no call to action. The strongest
   permitted endorsement is the shape of "Use it — I do."
 - British-leaning spelling ("anonymisation", "minimisation"), matching the
