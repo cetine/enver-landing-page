@@ -1,0 +1,109 @@
+---
+title: 'Microsoft 365 Copilot Cost Per User Is Not the Seat Price'
+date: 2026-10-10
+description: On Microsoft's own estimate of 300–700 credits per medium Cowork task, 4.3 to 10 such tasks a month cost as much as the whole $30 Enterprise seat.
+tags: [Microsoft Copilot, AI Cost, Pricing, Agents]
+type: post
+---
+
+import CopilotCostStack from '../../../components/CopilotCostStack.astro';
+
+<aside class="tldr">
+<p class="tldr-label">TL;DR</p>
+<ul>
+<li>The Copilot seat (€26 a month for Enterprise in Germany, $30 in the US) is a <strong>floor, not the cost per employee</strong>. Agentic work such as Cowork is billed on top, in credits at $0.01 each.</li>
+<li>On Microsoft's own planning estimate of 300–700 credits per medium Cowork task, <strong>4.3 to 10 such tasks a month cost as much as the whole $30 Enterprise seat</strong>.</li>
+<li>Nothing is billed until enabled: Enterprise usage stays off until an admin creates a spending policy, and the 1 December default for new Business licences bought through partners excludes Germany for now.</li>
+<li>The inconvenient part: even at two to four times the seat price, the break-even is a few minutes a day. The risk is credit spend nobody measures against output.</li>
+</ul>
+</aside>
+
+Ask what Microsoft 365 Copilot costs per user and you get a list price: €26 a month for the Enterprise seat in Germany, $30 in the US. The budget line follows: headcount times seat price.
+
+**That number is now a floor.** Since 16 June 2026, Cowork, the Copilot agent that runs multi-step jobs across a user's mail, calendar and files, has been billed by usage on top of the seat. On Microsoft's own planning estimate, a medium Cowork task uses 300 to 700 credits at a cent each, so 4.3 to 10 such tasks a month cost as much as the whole $30 Enterprise seat.
+
+For anyone who adopts the agentic features, usage, not the seat, sets the budget line. The price list compares the wrong thing, much like [comparing models on price per million tokens](/writing/german-token-tax).
+
+## How much does Microsoft 365 Copilot cost per user?
+
+List prices as of 10 October 2026, excluding VAT:
+
+- **Enterprise:** €26.00 per user per month on annual billing in Germany, $30.00 in the US.
+- **Business:** €18.20 in Germany, $21.00 in the US, for up to 300 users. A promotion brings this to €15.60 or $18.00 for annual commitments bought between 1 July and 31 December 2026, for the first year only.
+
+The seat also needs a qualifying Microsoft 365 licence underneath it. It covers Chat, Copilot in Word, Excel, PowerPoint, Outlook and Teams, and included models with limits that, Microsoft says, "the vast majority of people never reach". For everyday drafting and summarising, the seat price is a fair answer.
+
+## What a Copilot Credit is, and what it buys
+
+A **Copilot Credit** is Microsoft's metering unit for work the seat does not cover, at $0.01 pay-as-you-go. A task's credits depend on model use, context retrieval, tool calls and runtime. Microsoft publishes no euro price, so I convert at the ECB reference rate of 1.1206 dollars per euro (9 October 2026).
+
+Cowork has been billed on that meter since 16 June. The new Copilot announced on 25 September extended it: Microsoft says Code, Autopilot and frontier models "all run on UBB", its abbreviation for usage-based billing. Code is still in Microsoft's early-access Frontier programme, Autopilot is only entering private preview, and the frontier models have no published credit rate yet.
+
+Microsoft's October 2026 Credits Guide gives three Cowork bands, labelled "rough planning estimates":
+
+- **Light, 100–300 credits** ($1–3): "Create a weekly status update for my team…"
+- **Medium, 300–700 credits** ($3–7): pull emails, calendar items and recent files into a briefing document, an Excel sales overview and "a client-ready presentation".
+- **Heavy, more than 700 credits.** No upper bound is given.
+
+**At $30 a seat, 4.3 to 10 of those tasks a month cost as much as the seat**; on the $21 Business seat, 3 to 7. The estimates are soft. Microsoft's June launch post said the per-task estimates there assumed Anthropic's Opus 4.8; Microsoft now says Cowork uses Opus 5 and GPT-5.6 Sol, so current costs per task may differ.
+
+## The cost per employee, by profile
+
+I built four illustrative profiles; the task counts are my assumptions: chat only; light (8 light tasks a month); medium (8 light plus 8 medium); heavy (10 light, 15 medium, 5 heavy, with heavy tasks assumed to top out at 1,400 credits).
+
+<figure>
+<CopilotCostStack />
+<figcaption>The German Enterprise seat (€26) plus Cowork credits for four illustrative profiles. Task counts and the 1,400-credit heavy ceiling are my assumptions; credits per task are Microsoft's "rough planning estimates". List prices excluding VAT, before discounts; credits converted from dollars at the ECB rate of 9 October 2026.</figcaption>
+</figure>
+
+The medium profile costs $62–110 a month, about €55–97: **2.1 to 3.7 times the $30 seat**. The heavy profile costs €106–209, four to eight times the €26 seat.
+
+Take a 1,000-person company on Enterprise (Business stops at 300 users). Seats cost $360,000 a year, €312,000. With an illustrative mix of 60% chat-only, 25% light, 10% medium and 5% heavy users, credits add $116,400 to $291,000 a year: **32% to 81% on top of the seat budget**.
+
+## Who pays this today, and who from December
+
+**For Enterprise customers, nothing is billed until an admin acts.** Usage-based services "stay off until an admin creates a spending policy in the Microsoft 365 admin center, and nothing is billed before that." A **spending policy** is the admin rule that says which users may use which billed services, up to how many credits a month.
+
+For Copilot Business the default changes on 1 December 2026, but only for new licences bought through **CSP**, the Cloud Solution Provider programme, meaning through a Microsoft partner or reseller rather than directly. Those licences get usage billing switched on with a default limit of 4,000 credits per user per month, up to $40 on top of the seat: a ceiling, not a forecast. And it "will initially not be available" in Germany or ten other markets. For German readers it is what is coming, not what applies today.
+
+Two details matter. "Auto-apply new services" is on by default, so services Microsoft adds to the meter later fall under existing policies. And "a policy with a limit of one credit still grants access": a spending policy is an access switch first, a budget second.
+
+## The inconvenient part: on paper, it still pays for itself
+
+At the average labour cost in German industry and services reported by Destatis, the federal statistics office, €45.00 per hour worked in 2025 (projected from the 2020 survey), **the €26 Enterprise seat pays for itself if it saves 35 minutes a month**. The medium profile needs 73 to 130 minutes. Even the seat plus a full 4,000-credit month (hypothetical for Enterprise), €61.70, needs about 82 minutes, roughly four a working day.
+
+The most rigorous public evidence I found clears that bar. HMRC, the UK tax authority, allocated 3,000 licences at random and, after cutting self-reported savings by about 20%, reports "around 60 minutes per week": about 240 minutes a month, assuming 20 working days. The Department for Work and Pensions, using a comparison group rather than a randomised trial, headlines 19 minutes a day; without its statistical controls the figure is 10, still about 200 minutes a month. Only the heavy profile at its upper end, 279 minutes, needs more than HMRC's figure.
+
+But these studies measured 2024-era chat Copilot, not agentic work, and the minutes are self-reported. The Department for Business and Trade "did not find evidence that time savings have led to improved productivity". **And no study I could find measures time saved per credit.** The problem is not that credits are expensive. It is that credit spend arrives with no measure of what it produced.
+
+## What the budget should actually control
+
+GitHub Copilot's $19 Business seat includes 1,900 credits at $0.01, with additional usage "enabled by default". Claude Enterprise's seat "covers access only, and all usage is billed separately at API rates". Seat plus meter is a common pattern for agentic work, though not universal: Google Workspace bundles Gemini into the seat with usage caps. Wherever the meter exists, the budget has to control usage, not seats.
+
+What I would set up:
+
+1. **Budget per employee group, not per seat.** Chat-only users at seat price; agentic groups with their own spending policy and a credit limit sized to the role.
+2. **Switch off "Auto-apply new services"**, so new metered services are a decision, not a default.
+3. **Measure output per credit.** Track credits per finished briefing or report, monthly, not at renewal.
+4. **Prepay only with data.** Pre-purchase discounts run from 5% to 20%, but purchases are final and unused credits expire.
+
+## Bottom line
+
+For anyone using Cowork, the honest cost per user is the seat plus a usage line that can be several times larger, and it scales with adoption, not headcount. The break-even is small, so the meter is no reason to avoid Cowork. It is a reason to stop budgeting Copilot like a licence.
+
+The seat was never going to be the expensive part.
+
+---
+
+## Sources
+
+- Microsoft 365 Copilot pricing: [Enterprise DE](https://www.microsoft.com/de-de/microsoft-365-copilot/enterprise), [Enterprise US](https://www.microsoft.com/en-us/microsoft-365-copilot/enterprise), [Business DE](https://www.microsoft.com/de-de/microsoft-365-copilot/pricing), [Business US](https://www.microsoft.com/en-us/microsoft-365-copilot/pricing).
+- Microsoft, [*Copilot Credits Guide*](https://cdn-dynmedia-1.microsoft.com/is/content/microsoftcorp/microsoft/bade/documents/products-and-services/en-us/ai/Copilot-Credits-Guide.pdf), October 2026, pp. 4, 5, 7.
+- Microsoft, [*Copilot Cowork is now generally available*](https://www.microsoft.com/en-us/microsoft-365/blog/2026/06/16/copilot-cowork-is-now-generally-available/), 16 June 2026.
+- Microsoft, [*Introducing the new Copilot*](https://blogs.microsoft.com/blog/2026/09/25/introducing-the-new-copilot-with-home-code-and-autopilot/) and [*Evolution of the Copilot pricing model*](https://techcommunity.microsoft.com/blog/microsoft-copilot-blog/evolution-of-the-copilot-pricing-model/4559416), 25 September 2026.
+- Microsoft Learn: [usage-based billing](https://learn.microsoft.com/en-us/microsoft-365/copilot/usage-based-billing-overview-copilot-credits), [managing credits](https://learn.microsoft.com/en-us/microsoft-365/copilot/usage-based-billing-manage-copilot-credits), [Cowork governance](https://learn.microsoft.com/en-us/microsoft-365/copilot/cowork/cowork-admin-governance), [pre-purchase plan](https://learn.microsoft.com/en-us/azure/cost-management-billing/reservations/copilot-credit-p3); Partner Center, [October 2026 announcements](https://learn.microsoft.com/en-us/partner-center/announcements/2026-october).
+- [Destatis, Pressemitteilung Nr. 148](https://www.destatis.de/DE/Presse/Pressemitteilungen/2026/04/PD26_148_624.html), 29 April 2026; [ECB reference rate](https://data-api.ecb.europa.eu/service/data/EXR/D.USD.EUR.SP00.A?startPeriod=2026-10-01&endPeriod=2026-10-10&format=csvdata).
+- UK evaluations: [HMRC](https://www.gov.uk/government/publications/evaluation-report-phase-3-trial-of-microsoft-copilot/evaluating-the-impact-of-microsoft-copilot-in-hmrc), [DWP](https://www.gov.uk/government/publications/an-evaluation-of-dwps-microsoft-copilot-365-trial/an-evaluation-of-dwps-microsoft-365-copilot-trial), [DBT](https://www.gov.uk/government/publications/microsoft-365-copilot-pilot-dbt-evaluation-report).
+- [GitHub Copilot plans](https://docs.github.com/en/copilot/get-started/plans) and [billing](https://docs.github.com/en/copilot/concepts/billing-and-usage/organizations-and-enterprises/billing); [Claude Enterprise plan](https://support.claude.com/en/articles/9797531-what-is-the-enterprise-plan); [Google Workspace pricing](https://workspace.google.com/pricing).
+
+<p class="text-[13px] text-muted">Prices, defaults and documentation verified as of 10 October 2026; they will age. List prices excluding VAT, before discounts. Profiles, task counts, user mixes and the heavy-task ceiling are illustrative assumptions. Not procurement advice.</p>
