@@ -14,6 +14,7 @@ const pages: { path: string; hreflang: number }[] = [
   { path: '/writing/jev-confidence-thresholds', hreflang: 2 },
   { path: '/writing/vllm-json-schema-xgrammar-llguidance', hreflang: 2 },
   { path: '/writing/prompt-caching-not-working', hreflang: 2 },
+  { path: '/writing/copilot-cost-per-user', hreflang: 2 },
 ];
 
 for (const { path, hreflang } of pages) {

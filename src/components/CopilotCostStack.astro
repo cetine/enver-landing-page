@@ -1,0 +1,162 @@
+---
+// One idea: credits, not the seat, set the monthly cost per employee.
+//
+// Every bar starts with the same €26 Enterprise seat (Germany list, excl. VAT).
+// What follows is Cowork credits for four illustrative usage profiles, drawn as
+// a range: the solid part is the low end of Microsoft's per-task planning
+// estimates, the dashed part runs to the high end. A dashed vertical marks
+// €52, where credits alone cost as much as the seat. One shared € scale, so
+// the bars compare directly.
+//
+// Numbers are hard-coded from the fact-checked cost model, section 1, "Ent EUR"
+// column (cost_model_fc_output.txt, run 10 Oct 2026):
+//   a chat-only 26.00 · b light 33.14–47.42 · c medium 54.56–97.39 ·
+//   d heavy 106.31–208.94
+// Inputs behind them: seat €26.00 (microsoft.com/de-de, "Preise zzgl. MwSt.");
+// $0.01 per Copilot Credit and Cowork tasks of 100–300 / 300–700 / >700
+// credits (Copilot Credits Guide, Oct 2026, p.4 and p.7, "rough planning
+// estimates"); heavy upper bound 1,400 credits and the task counts per profile
+// are assumptions; credits are USD, converted at the ECB reference rate 1.1206
+// USD per EUR (9 Oct 2026) because Microsoft publishes no euro credit price.
+// Hard-coded rather than imported, like the site's other figures: the article
+// is a dated snapshot. The guard below recomputes the euro values from the
+// dollar inputs and throws if either drifts.
+import { roughRect, roughLine } from '../lib/rough';
+
+interface Row {
+  id: string; name: string; tasks: string;
+  usdLo: number; usdHi: number; // Cowork credits per month, USD
+  lo: number; hi: number;       // seat + credits, EUR (cost model, Ent EUR)
+  seed: number;
+}
+
+const SEAT = 26;
+const USD_PER_EUR = 1.1206;
+const PARITY = SEAT * 2; // credits cost as much as the seat
+
+const rows: Row[] = [
+  { id: 'a', name: 'Chat only', tasks: 'no Cowork', usdLo: 0, usdHi: 0, lo: 26.0, hi: 26.0, seed: 11 },
+  { id: 'b', name: 'Light agentic', tasks: '8 L', usdLo: 8, usdHi: 24, lo: 33.14, hi: 47.42, seed: 21 },
+  { id: 'c', name: 'Medium agentic', tasks: '8 L · 8 M', usdLo: 32, usdHi: 80, lo: 54.56, hi: 97.39, seed: 31 },
+  { id: 'd', name: 'Heavy agentic', tasks: '10 L · 15 M · 5 H', usdLo: 90, usdHi: 205, lo: 106.31, hi: 208.94, seed: 41 },
+];
+
+const eur = (v: number): string => v.toFixed(2);
+const label = (r: Row): string => (r.lo === r.hi ? `€${eur(r.lo)}` : `€${eur(r.lo)}–${eur(r.hi)}`);
+
+// Guard: the hard-coded euro values must still follow from the inputs, must
+// still be the cost model's numbers, and must still support the footer line.
+const recompute = (usd: number): string => eur(SEAT + usd / USD_PER_EUR);
+const drift = rows.some((r) => recompute(r.usdLo) !== eur(r.lo) || recompute(r.usdHi) !== eur(r.hi));
+const labels = rows.map(label).join();
+if (
+  drift ||
+  labels !== '€26.00,€33.14–47.42,€54.56–97.39,€106.31–208.94' ||
+  !(rows[1].hi < PARITY && rows[2].lo > PARITY)
+) {
+  throw new Error('CopilotCostStack: data no longer matches cost_model_fc_output.txt section 1');
+}
+
+const AXIS_MAX = 220;
+const PLOT_X = 132;
+const PLOT_W = 330;
+const BAR_H = 18;
+const ROW_TOP = 78;
+const STEP = 46;
+const x = (v: number): number => PLOT_X + Math.round((v / AXIS_MAX) * PLOT_W * 10) / 10;
+
+const bars = rows.map((r, i) => {
+  const y = ROW_TOP + i * STEP;
+  return {
+    ...r, y,
+    seat: roughRect(x(0), y, x(SEAT) - x(0), BAR_H, { seed: r.seed, roughness: 0.6 }),
+    low: r.lo > SEAT ? roughRect(x(SEAT), y, x(r.lo) - x(SEAT), BAR_H, { seed: r.seed + 1, roughness: 0.6 }) : null,
+    range: r.hi > r.lo ? roughRect(x(r.lo), y, x(r.hi) - x(r.lo), BAR_H, { seed: r.seed + 2, roughness: 0.6 }) : null,
+    text: label(r),
+  };
+});
+
+const plotTop = ROW_TOP - 14;
+const plotBottom = ROW_TOP + (rows.length - 1) * STEP + BAR_H + 10;
+const ticks = [0, 50, 100, 150, 200];
+
+const alt =
+  'Horizontal bar chart on one shared euro scale: monthly cost per employee for Microsoft 365 Copilot ' +
+  'Enterprise at the German list price, excluding VAT, for four illustrative usage profiles. Every bar ' +
+  'starts with the 26 euro seat; Cowork credits are added on top as a range from the low to the high end ' +
+  'of Microsoft\'s per-task planning estimates. Profile a, chat only with no Cowork tasks: 26.00 euros, ' +
+  'the seat alone. Profile b, light agentic, 8 light tasks a month: 33.14 to 47.42 euros. Profile c, ' +
+  'medium agentic, 8 light and 8 medium tasks: 54.56 to 97.39 euros. Profile d, heavy agentic, 10 light, ' +
+  '15 medium and 5 heavy tasks: 106.31 to 208.94 euros. A dashed line at 52 euros marks where credits ' +
+  'cost as much as the seat: profile b stays below it, profiles c and d pass it even at the low end, and ' +
+  'profile d at the high end costs about eight times the seat. Credits are priced in US dollars and ' +
+  'converted at the ECB rate of 1.1206.';
+---
+<div class="diagram-scroll">
+  <svg viewBox="0 0 600 316" role="img" aria-labelledby="ccs-title ccs-desc" class="diagram">
+    <title id="ccs-title">Monthly cost per employee on Copilot Enterprise: the €26 seat plus Cowork credits, four usage profiles</title>
+    <desc id="ccs-desc">{alt}</desc>
+
+    <text x="0" y="16" class="d-zone">Cost per employee per month · € excl. VAT</text>
+    <path d={roughRect(0, 28, 14, 11, { seed: 7, roughness: 0.6 })} class="bar seat" />
+    <text x="20" y="38" class="d-fine">Enterprise seat €26</text>
+    <path d={roughRect(140, 28, 14, 11, { seed: 8, roughness: 0.6 })} class="bar credit" />
+    <text x="160" y="38" class="d-fine">Cowork credits, low estimate</text>
+    <path d={roughRect(332, 28, 14, 11, { seed: 9, roughness: 0.6 })} class="bar range" />
+    <text x="352" y="38" class="d-fine">up to high estimate</text>
+
+    {ticks.map((t) => (
+      <g>
+        <path d={roughLine(x(t), plotTop, x(t), plotBottom, { seed: 60 + t / 10, roughness: 0.5 })} class="grid" />
+        <text x={x(t)} y={plotBottom + 16} class="d-fine d-mid">€{t}</text>
+      </g>
+    ))}
+
+    <path d={roughLine(x(PARITY), plotTop - 4, x(PARITY), plotBottom, { seed: 77, roughness: 0.5 })} class="parity" />
+    <text x={x(PARITY) + 5} y={plotTop - 8} class="d-fine d-accent">credits = seat (€52)</text>
+
+    {bars.map((b) => (
+      <g>
+        <text x="0" y={b.y + 8} class="d-row">{b.id} · {b.name}</text>
+        <text x="0" y={b.y + 23} class="d-mono">{b.tasks}</text>
+        <path d={b.seat} class="bar seat" />
+        {b.low && <path d={b.low} class="bar credit" />}
+        {b.range && <path d={b.range} class="bar range" />}
+        <text x={x(b.hi) + 8} y={b.y + 13} class={b.lo > PARITY ? 'd-val d-accent' : 'd-val'}>{b.text}</text>
+      </g>
+    ))}
+
+    <text x="0" y="290" class="d-fine">Cowork tasks per month: L light (100–300 credits), M medium (300–700), H heavy (&gt;700).</text>
+    <text x="0" y="308" class="d-fine">From profile c on, credits cost more than the seat even at the low estimate.</text>
+  </svg>
+</div>
+
+<style>
+  /* Same rule as the site's other figures: below ~520px the 11px labels would
+     shrink under 9px, so the figure scrolls rather than scales. */
+  .diagram-scroll { overflow-x: auto; margin: 2rem 0 0.75rem; }
+  .diagram { display: block; width: 100%; min-width: 520px; height: auto; }
+
+  .bar { stroke-width: 1.3; stroke-linecap: round; }
+  .seat { fill: var(--line); stroke: var(--muted); }
+  .credit { fill: var(--accent-soft); stroke: var(--accent); }
+  .range { fill: none; stroke: var(--accent); stroke-dasharray: 4 4; opacity: 0.8; }
+
+  .grid { fill: none; stroke: var(--muted); stroke-width: 0.8; opacity: 0.3; stroke-dasharray: 3 5; }
+  .parity { fill: none; stroke: var(--accent); stroke-width: 1.2; stroke-dasharray: 6 4; stroke-linecap: round; }
+
+  text { text-anchor: start; }
+  .d-row { font-family: var(--font-sans); font-size: 12.5px; font-weight: 500; fill: var(--fg); }
+  .d-mono { font-family: var(--font-mono); font-size: 11px; fill: var(--muted); }
+  .d-val { font-family: var(--font-mono); font-size: 11px; fill: var(--muted); }
+  /* Labels for a and b sit across the parity line; a background halo keeps
+     them legible without moving them away from their bars. */
+  .d-val { paint-order: stroke; stroke: var(--bg); stroke-width: 7px; stroke-linejoin: round; }
+  .d-fine { font-family: var(--font-sans); font-size: 11px; fill: var(--muted); }
+  .d-mid { text-anchor: middle; }
+  .d-accent { fill: var(--accent); }
+  .d-zone {
+    font-family: var(--font-mono); font-size: 11px; font-weight: 500; fill: var(--muted);
+    letter-spacing: 0.14em; text-transform: uppercase;
+  }
+</style>
