@@ -1,0 +1,155 @@
+---
+// One idea: the "AI is the No. 1 reason for US layoffs" headline is a
+// year-to-date sum built in spring. Of the 120,136 AI-cited job cuts announced
+// January to September 2026, 112,713 (93.8%) were announced by the end of July;
+// August and September added 7,423 (6.2%) between them.
+//
+// The picture is one bar per month of job cuts citing AI announced by US-based
+// employers, each
+// labelled with its value, plus two brackets that split the year at end-July.
+// Total announced cuts, ranks and the JOLTS comparison are left to the prose:
+// the totals would need a scale where the AI bars of August and September are a
+// few pixels high, which would make the figure about totals instead.
+// Bars for March to July use the accent because Challenger names AI the leading
+// reason in each of those months (stated in the March to July reports).
+//
+// Numbers come from Challenger, Gray & Christmas monthly reports (Table 4 and the
+// page-3 text), January to September 2026, as checked in the verified brief of
+// 2026-10-18. They add up to every YTD figure Challenger prints, ending at
+// 120,136. They are hard-coded: the article is a dated snapshot, and a figure
+// that moved when Challenger reissued a PDF would contradict the text beside it.
+//
+// Vertical bars here, unlike the horizontal TokenCostBars: the rows are months,
+// so time reads left to right. At 620 viewBox units the figure renders about
+// 1:1 in the 40em column and no label falls under 11px.
+import { roughRect, roughLine } from '../lib/rough';
+
+interface Month { name: string; value: number; top: boolean; seed: number }
+
+const months: Month[] = [
+  { name: 'Jan', value: 7_624, top: false, seed: 101 },
+  { name: 'Feb', value: 4_680, top: false, seed: 111 },
+  { name: 'Mar', value: 15_341, top: true, seed: 121 },
+  { name: 'Apr', value: 21_490, top: true, seed: 131 },
+  { name: 'May', value: 38_579, top: true, seed: 141 },
+  { name: 'Jun', value: 14_029, top: true, seed: 151 },
+  { name: 'Jul', value: 10_970, top: true, seed: 161 },
+  { name: 'Aug', value: 3_462, top: false, seed: 171 },
+  { name: 'Sep', value: 3_961, top: false, seed: 181 },
+];
+
+// Axis to a round 40k rather than May's 38,579, so the gridlines read cleanly.
+const AXIS_MAX = 40_000;
+const PLOT_X = 58;
+const SLOT = 62;
+const BAR_W = 36;
+const PLOT_TOP = 108;
+const PLOT_BOTTOM = 338;
+const PLOT_H = PLOT_BOTTOM - PLOT_TOP;
+
+const h = (v: number): number => (v / AXIS_MAX) * PLOT_H;
+const fmt = (v: number): string => v.toLocaleString('en-US');
+const cx = (i: number): number => PLOT_X + i * SLOT + SLOT / 2;
+
+const bars = months.map((m, i) => ({
+  ...m,
+  x: cx(i) - BAR_W / 2,
+  y: PLOT_BOTTOM - h(m.value),
+  bh: h(m.value),
+}));
+
+const gridlines = [10_000, 20_000, 30_000, 40_000];
+const plotRight = PLOT_X + months.length * SLOT;
+
+// Brackets: January to July (index 0–6) and August to September (7–8).
+const BRACKET_Y = 78;
+const spring = { x1: cx(0) - BAR_W / 2, x2: cx(6) + BAR_W / 2 };
+const autumn = { x1: cx(7) - BAR_W / 2, x2: cx(8) + BAR_W / 2 };
+const bracket = (x1: number, x2: number, y: number, seed: number): string =>
+  roughLine(x1, y + 7, x1, y, { seed, roughness: 0.5 }) +
+  roughLine(x1, y, x2, y, { seed: seed + 1, roughness: 0.5 }) +
+  roughLine(x2, y, x2, y + 7, { seed: seed + 2, roughness: 0.5 });
+
+// Underline marking the months in which AI was the leading reason (Mar–Jul).
+const LEAD_Y = 368;
+const lead = { x1: cx(2) - BAR_W / 2, x2: cx(6) + BAR_W / 2 };
+
+const alt =
+  'Bar chart of job cuts citing AI announced by US-based employers each month in 2026, from Challenger, Gray & ' +
+  'Christmas. January 7,624. February 4,680. March 15,341. April 21,490. May 38,579, the peak. ' +
+  'June 14,029. July 10,970. August 3,462. September 3,961. AI was the ' +
+  'leading reason for job cuts in each month from March to July. A bracket over January to July ' +
+  'reads: 112,713 cuts, 93.8% of the year-to-date total of 120,136. A bracket over August and ' +
+  'September reads: 7,423 cuts, 6.2%. The year-to-date lead was built in spring; the two latest ' +
+  'months are small.';
+---
+<div class="diagram-scroll">
+  <svg viewBox="0 0 620 420" role="img" aria-labelledby="ailm-title ailm-desc" class="diagram">
+    <title id="ailm-title">Job cuts citing AI announced by US-based employers, by month, January to September 2026</title>
+    <desc id="ailm-desc">{alt}</desc>
+
+    <text x="0" y="16" class="d-zone">AI-cited job cuts announced by US-based employers · 2026</text>
+    <text x="0" y="36" class="d-fine d-start">Year to date through September: 120,136</text>
+
+    {gridlines.map((g) => (
+      <g>
+        <path d={roughLine(PLOT_X, PLOT_BOTTOM - h(g), plotRight, PLOT_BOTTOM - h(g), { seed: g / 1000, roughness: 0.5 })} class="grid" />
+        <text x={PLOT_X - 8} y={PLOT_BOTTOM - h(g) + 4} class="d-fine d-end">{`${g / 1000}k`}</text>
+      </g>
+    ))}
+    <path d={roughLine(PLOT_X, PLOT_BOTTOM, plotRight, PLOT_BOTTOM, { seed: 7, roughness: 0.6 })} class="axis" />
+
+    <path d={bracket(spring.x1, spring.x2, BRACKET_Y, 201)} class="bracket bracket-accent" />
+    <text x={(spring.x1 + spring.x2) / 2} y={BRACKET_Y - 22} class="d-title d-accent">93.8% announced by end-July</text>
+    <text x={(spring.x1 + spring.x2) / 2} y={BRACKET_Y - 7} class="d-fine">Jan–Jul: 112,713 of 120,136</text>
+
+    <path d={bracket(autumn.x1, autumn.x2, BRACKET_Y, 211)} class="bracket" />
+    <text x={(autumn.x1 + autumn.x2) / 2} y={BRACKET_Y - 22} class="d-title d-muted">6.2%</text>
+    <text x={(autumn.x1 + autumn.x2) / 2} y={BRACKET_Y - 7} class="d-fine">Aug–Sep: 7,423</text>
+
+    {bars.map((b) => (
+      <g>
+        <path
+          d={roughRect(b.x, b.y, BAR_W, b.bh, { seed: b.seed, roughness: 0.7 })}
+          class={b.top ? 'bar bar-top' : 'bar'}
+        />
+        <text x={b.x + BAR_W / 2} y={b.y - 7} class={b.top ? 'd-val d-accent' : 'd-val'}>{fmt(b.value)}</text>
+        <text x={b.x + BAR_W / 2} y={PLOT_BOTTOM + 18} class="d-row">{b.name}</text>
+      </g>
+    ))}
+
+    <path d={roughLine(lead.x1, LEAD_Y, lead.x2, LEAD_Y, { seed: 221, roughness: 0.5 })} class="bracket bracket-accent" />
+    <text x={(lead.x1 + lead.x2) / 2} y={LEAD_Y + 16} class="d-fine d-accent">AI the No. 1 reason each month</text>
+
+    <text x="0" y="412" class="d-fine d-start">Source: Challenger, Gray &amp; Christmas monthly reports, Jan–Sep 2026. Announced plans, not layoffs.</text>
+  </svg>
+</div>
+
+<style>
+  /* Same rule as the other figures on the site: below ~560px the value labels
+     would collide, so the figure scrolls rather than scales. */
+  .diagram-scroll { overflow-x: auto; margin: 2rem 0 0.75rem; }
+  .diagram { display: block; width: 100%; min-width: 560px; height: auto; }
+
+  .bar { fill: none; stroke: var(--muted); stroke-width: 1.4; stroke-linecap: round; }
+  .bar-top { fill: var(--accent-soft); stroke: var(--accent); }
+
+  .grid { fill: none; stroke: var(--muted); stroke-width: 0.8; opacity: 0.3; stroke-dasharray: 3 5; }
+  .axis { fill: none; stroke: var(--fg); stroke-width: 1.2; stroke-linecap: round; opacity: 0.7; }
+  .bracket { fill: none; stroke: var(--muted); stroke-width: 1.3; stroke-linecap: round; }
+  .bracket-accent { stroke: var(--accent); }
+
+  text { text-anchor: middle; }
+  .d-title { font-family: var(--font-sans); font-size: 14px; font-weight: 500; fill: var(--fg); }
+  .d-row { font-family: var(--font-sans); font-size: 12.5px; fill: var(--fg); }
+  .d-val { font-family: var(--font-mono); font-size: 11px; fill: var(--muted); }
+  .d-fine { font-family: var(--font-sans); font-size: 11px; fill: var(--muted); }
+  .d-start { text-anchor: start; }
+  .d-end { text-anchor: end; }
+  .d-accent { fill: var(--accent); }
+  .d-muted { fill: var(--muted); }
+  .d-zone {
+    font-family: var(--font-mono); font-size: 11px; font-weight: 500; fill: var(--muted);
+    letter-spacing: 0.14em; text-transform: uppercase; text-anchor: start;
+  }
+</style>
