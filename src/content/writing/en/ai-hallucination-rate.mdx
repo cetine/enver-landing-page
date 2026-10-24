@@ -1,0 +1,109 @@
+---
+title: 'Which AI Model Hallucinates Least? It Declines 4 in 10'
+date: 2026-10-24
+description: Gemini 4 Argon's 15% hallucination rate counts every decline in its favour. Per 100 questions it gets 49.9 right, 7.6 wrong and declines 38.8.
+tags: [LLM, Hallucination, Benchmarks, Model Selection]
+type: post
+---
+
+import HallucinationOutcomeBars from '../../../components/HallucinationOutcomeBars.astro';
+
+<aside class="tldr">
+<p class="tldr-label">TL;DR</p>
+<ul>
+<li>Gemini 4 Argon's 15% hallucination rate (AA-Omniscience, Artificial Analysis) is not the share of answers it gets wrong. It is wrong answers divided by everything it did not get right, and a question it declines counts in that total. <strong>Every decline lowers it.</strong></li>
+<li>Per 100 questions, Argon gets 49.9 right, 7.6 wrong and 3.7 partly right, and declines 38.8. About half right, about four in ten declined.</li>
+<li>The decline rate is not the whole story. Argon also makes the fewest outright mistakes of the 27 models with a full breakdown, and is wrong on 12.3% of the questions it attempts, against 22–26% for the four most accurate rivals (GPT-6 Astra, GPT-6.1 Sol, Claude Opus 5.5, Claude Fable 5.1).</li>
+<li>Against those rivals, Argon is the cheaper choice only if a wrong answer costs you more than about two hand-offs to a person.</li>
+</ul>
+</aside>
+
+Since Google announced Gemini 4 Argon on 30 September, one number has followed it: a 15% hallucination rate, where a hallucination is simply a wrong answer. AI Weekly's headline read "Gemini 4 Argon Ties GPT-6 Astra at 53 With 15% Hallucination Rate". It did not mention declines.
+
+The number is correct, and easy to misread: one blog credits Argon with "accurate results 85% of the time". Its accuracy is 49.9%. **The hallucination rate does not measure how often the model is wrong. It measures how often it is wrong among the questions it did not get right, and a question the model declines counts as not right.** On these benchmark numbers, whether it is the cheaper model for a support desk turns on a ratio only you can supply: what a wrong answer costs compared with a hand-off to a person.
+
+Argon's API price doubles on 1 December 2026, and for anyone setting a 2027 budget, the decision falls before that date. So I took Artificial Analysis's published figures and worked out what each model does with 100 questions.
+
+## Which AI model hallucinates the least?
+
+Of the 27 models for which the AA-Omniscience page publishes a full breakdown (accuracy, attempt rate and hallucination rate), Argon has the lowest rate. It calls Argon's 15% "the lowest of any model scoring 45+ on the Intelligence Index", Artificial Analysis's combined score across ten evaluations, against 51% for GPT-6 Astra and 54% for GPT-6.1 Sol.
+
+Some of the other 555 models on the page score lower, such as MiniCPM5-1B at 1%. Lowest among the leading models, then, not lowest overall.
+
+## What the 15% divides by
+
+Artificial Analysis defines the rate as "the proportion of incorrect answers out of all non-correct responses, i.e. incorrect / (incorrect + partial answers + not attempted)". The denominator includes every question the model declined.
+
+That makes the metric easy to move. Take Astra, at 51.3%. Suppose it declined ten questions per 100 that it currently answers correctly. Same mistakes, less use, and its rate falls to about 41%. According to the benchmark's paper, every model is told before each question to answer only if it is confident, and that abstaining is better than being wrong.
+
+## What Argon does with 100 questions
+
+The page also publishes each model's accuracy and attempt rate. Together they split results into four outcomes.
+
+<figure>
+<HallucinationOutcomeBars />
+<figcaption>Outcomes per 100 AA-Omniscience questions, derived from Artificial Analysis's published accuracy, hallucination rate and attempt rate, as served on 24 October 2026. Each model at the reasoning setting Artificial Analysis lists it at (Argon: high; the others: max). The benchmark is closed-book recall of obscure facts, answered from memory with no documents to look things up in, and a prompt that tells the model to abstain when unsure. It is not the setting most support tools run in.</figcaption>
+</figure>
+
+Argon: 49.9 correct, 7.6 wrong, 3.7 partial, 38.8 declined (on the 6,000-question set, exactly 2,994, 453, 225 and 2,328). Astra: 62.6, 19.2, 1.6 and 16.6. Claude Fable 5.1 declines only 6.6.
+
+Argon ranks first of 27 on hallucination rate, ninth on correct answers.
+
+## The inconvenient part: it also makes the fewest mistakes
+
+I expected to show that Argon earns its number mostly by declining. The data disagrees.
+
+**Argon makes the fewest wrong answers of all 27 models: 7.6 per 100, against 19 to 24 for the four most accurate rivals.** Of the questions it attempts, it gets 12.3% wrong; Opus, Astra, Sol and Fable get 22.2%, 23.0%, 24.4% and 25.5% wrong. Every other model in the breakdown is wrong on at least 22%.
+
+What the headline metric does is exaggerate the gap. Against Astra, the hallucination rate differs by 3.4 times. Wrong answers per 100 questions differ by 2.5 times, and wrong answers per attempted question by 1.9 times.
+
+On the Omniscience Index, which adds a point per correct answer, subtracts one per wrong answer and scores declines and partial answers at zero, Argon is fourth of 27 at 42.35, behind Opus, Fable and Astra. The low rate also lifts its Intelligence Index score: one minus the hallucination rate carries 5% of that weighted average, which gives Argon about 1.8 points more than Astra and explains much of the "tie at 53".
+
+## What a wrong answer costs against a hand-off
+
+In a support rollout, a declined or partial answer goes to a person. A wrong answer goes to the customer. Per 100 questions, Argon sends 42.6 to people and gets 7.6 wrong. Astra sends 18.2 and gets 19.2 wrong. **Choosing Argon over Astra swaps 11.7 wrong answers for 24.4 extra hand-offs.**
+
+Leaving token prices aside, that turns on one ratio: the cost of a wrong answer divided by the cost of a hand-off. Above the break-even, Argon is cheaper. Counting partial answers as hand-offs:
+
+- Against Opus 5.5 the break-even is 2.33, against Astra 2.09, Fable 2.07 and Sol 1.94.
+- Against Sonnet 5.5, Gemini 3.8 Flash and Kimi K3.1 Pro it is between 1.08 and 1.29; against Grok 4.7 and Haiku 5.5, below 1.
+- Against ten models in the list, Argon is cheaper at any ratio: fewer mistakes and fewer hand-offs.
+
+Hypothetically, if a hand-off costs €4 of agent time and a wrong answer €20 in rework and goodwill, the ratio is 5, above every break-even, and Argon wins. If a wrong answer is a mildly unhelpful reply the customer simply asks again, the ratio may be near 1, and Opus or Astra is cheaper. As Kalai and colleagues put it, if the threshold is not stated, "no single model will be best in general (other than one that is always correct)".
+
+It is the same decision as a [confidence threshold](/writing/jev-confidence-thresholds), made one level up, and it belongs to you, not the vendor.
+
+## Where the benchmark stops matching support work
+
+The task is different. AA-Omniscience asks closed-book questions about obscure facts, answered from memory. **A support assistant usually answers from retrieved documents, and on a test of that, Argon does worse than Astra.** Vectara's leaderboard checks whether a summary sticks to its source. On it, Argon's rate is 12.1% against Astra's 8.7%, and Argon is joint 83rd of 111 (tied with two other models).
+
+The measurement also predates release. Artificial Analysis tested Argon when it was "not publicly available" on 30 September. **I found nothing showing a re-test after it became globally available through the API on 13 October.**
+
+Finally, the break-even leaves out token cost. Google lists Argon at $2 per million input tokens and $10 per million output tokens (tokens are the chunks of text a model is billed by) "through November 30, 2026", and twice that from 1 December. Per-token prices compare the wrong thing when one model uses more tokens for the same work, as I found [with German text](/writing/german-token-tax). Artificial Analysis puts Argon's cost per Intelligence Index task at $1.99 now, 61% of Astra's $3.26, and $3.98 at the full price. **Argon writes about 62,000 output tokens per task against Astra's 27,000.**
+
+## What I would decide before choosing
+
+1. **Put a number on the ratio.** Price a hand-off in agent minutes, and a wrong answer in your worst realistic case.
+2. **Plan for the declines.** Four in ten questions handed to people is a staffing figure. The Batch's praise for Argon came with a condition: "assuming applications using it have a plan for questions the model won't answer".
+3. **Test on your own documents,** with the assistant reading from your own help articles, counting all four outcomes.
+
+## Bottom line
+
+Argon is careful, and makes fewer mistakes than its rivals. It is not as useful as the 15% suggests. It gets half the questions right, four in ten questions go back to a person, and against the most accurate rivals the trade pays only if a mistake costs you more than about two hand-offs.
+
+Before you choose the model, put a number on the mistake.
+
+---
+
+## Sources
+
+- Artificial Analysis, [AA-Omniscience evaluation](https://artificialanalysis.ai/evaluations/omniscience): definitions and per-model results.
+- Artificial Analysis, [Intelligence Index methodology](https://artificialanalysis.ai/methodology/intelligence-benchmarking#aa-omniscience): grading, grader model, index weights.
+- Artificial Analysis, [AA-Omniscience paper](https://arxiv.org/abs/2511.13029), arXiv 2511.13029: formula and abstention prompt.
+- Artificial Analysis, [Gemini 4 Argon article](https://artificialanalysis.ai/articles/gemini-4-argon-google-top-three-labs): the 15% and "45+" claims, cost per task.
+- Google, [Gemini API pricing](https://ai.google.dev/gemini-api/docs/pricing) and [Gemini 4 Argon availability post](https://blog.google/innovation-and-ai/models-and-research/gemini-models/introducing-gemini-4-argon/).
+- Kalai et al., [*Why Language Models Hallucinate*](https://arxiv.org/abs/2509.04664), arXiv 2509.04664 (2025), section 4.2.
+- Vectara, [hallucination leaderboard](https://github.com/vectara/hallucination-leaderboard), updated 22 October 2026.
+- Coverage: [AI Weekly](https://aiweekly.co/alerts/gemini-4-argon-ties-gpt-6-astra-at-53-with-15-hallucination-rate), [stack-archive](https://stack-archive.com/blog/google-gemini-4-argon-output-tokens-hallucination-2026/) and [The Batch](https://www.deeplearning.ai/the-batch/argon-a-low-hallucination-model-build-for-knowledge-work).
+
+<p class="text-[13px] text-muted">Verified against Artificial Analysis AA-Omniscience data as served on 24 October 2026, 08:44 UTC (Intelligence Index v4.3.2, 27 of 582 models with breakdowns), Google's pricing page and the Vectara leaderboard of 22 October 2026; it will age. Per-100 outcomes and break-even ratios are my arithmetic; euro costs are hypothetical.</p>

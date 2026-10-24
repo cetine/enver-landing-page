@@ -1,0 +1,253 @@
+---
+// One idea: per 100 questions, what each model actually does. Each bar is
+// split into correct, wrong, partial and declined answers. The "hallucination
+// rate" printed at the right is wrong ÷ (wrong + partial + declined), so every
+// decline lowers it.
+//
+// The picture exists to make one thing visible: Gemini 4 Argon's lowest
+// hallucination rate comes with the widest "declined" segment (38.8 of 100,
+// more than twice any rival shown), and it gets about half the questions
+// right, fewer than every rival shown. It also has the narrowest "wrong"
+// segment, which the figure shows rather than hides: the data does not
+// support "low only because it declines", so the bars carry both facts.
+// Cost, the Intelligence Index and the other 22 models are left out on
+// purpose; they would invite a second reading.
+//
+// Numbers are from Artificial Analysis AA-Omniscience, as served on 24 Oct 2026,
+// 08:44:10 UTC (the JSON embedded in
+// https://artificialanalysis.ai/evaluations/omniscience). Per-100 values are
+// derived as wrong = halluc × (1 − accuracy), partial = attempt − accuracy −
+// wrong, declined = 1 − attempt. They are hard-coded rather than imported: the
+// article is a snapshot dated in its own footer, and a figure that moved when
+// the leaderboard changed would contradict the text beside it.
+//
+// PRECISION: segments are drawn and labelled at the exact per-100 values to
+// one decimal place, so no segment is adjusted and the labels match the
+// article (Argon 49.9 / 7.6 / 3.7 / 38.8). Only the hallucination rate at the
+// right is rounded to a whole percent. `assertSums` fails the build if a bar
+// does not sum to 100 (to within floating-point error).
+//
+// Horizontal stacked bars, like TokenCostBars and CacheHitRateBars, so the
+// figures on the site read the same way. Model names sit above their bars
+// rather than in a left column so the bars can use 500 of the 620 viewBox units
+// (5 units per question) and the figure renders about 1:1 in the 40em column.
+import { roughRect, roughLine } from '../lib/rough';
+import type { Locale } from '../i18n/routes';
+
+interface Props { locale?: Locale }
+const { locale = 'en' } = Astro.props;
+
+type Kind = 'correct' | 'wrong' | 'partial' | 'declined';
+interface Row {
+  name: string;
+  correct: number;
+  wrong: number;
+  partial: number;
+  declined: number;
+  /** AA-Omniscience hallucination rate, whole percent. */
+  halluc: number;
+  exact: string;
+  seed: number;
+  focus?: boolean;
+}
+
+// Ordered by hallucination rate, lowest first, so the declined segment visibly
+// shrinks as the rate rises.
+const rows: Row[] = [
+  { name: 'Gemini 4 Argon (high)', correct: 49.9, wrong: 7.6, partial: 3.7, declined: 38.8, halluc: 15,
+    exact: '49.9 / 7.6 / 3.7 / 38.8; 15.1%', seed: 301, focus: true },
+  { name: 'GPT-6 Astra (max)', correct: 62.6, wrong: 19.2, partial: 1.6, declined: 16.6, halluc: 51,
+    exact: '62.6 / 19.2 / 1.6 / 16.6; 51.3%', seed: 311 },
+  { name: 'GPT-6.1 Sol (max)', correct: 62.1, wrong: 20.6, partial: 1.7, declined: 15.6, halluc: 54,
+    exact: '62.1 / 20.6 / 1.7 / 15.6; 54.3%', seed: 321 },
+  { name: 'Claude Opus 5.5 (max)', correct: 66.2, wrong: 19.8, partial: 3.0, declined: 11.0, halluc: 59,
+    exact: '66.2 / 19.8 / 3.0 / 11.0; 58.6%', seed: 331 },
+  { name: 'Claude Fable 5.1 (max)', correct: 67.2, wrong: 23.8, partial: 2.4, declined: 6.6, halluc: 73,
+    exact: '67.2 / 23.8 / 2.4 / 6.6; 72.6%', seed: 341 },
+];
+
+function assertSums(list: Row[]): void {
+  for (const r of list) {
+    const sum = r.correct + r.wrong + r.partial + r.declined;
+    if (Math.abs(sum - 100) > 1e-9) throw new Error(`HallucinationOutcomeBars: ${r.name} sums to ${sum}, not 100`);
+  }
+}
+assertSums(rows);
+
+const KINDS: Kind[] = ['correct', 'wrong', 'partial', 'declined'];
+const label: Record<Kind, string> = {
+  correct: 'Correct',
+  wrong: 'Wrong',
+  partial: 'Partial',
+  declined: 'Declined',
+};
+
+const PLOT_X = 0;
+const UNIT = 5; // viewBox units per question
+const PLOT_W = 100 * UNIT;
+const RATE_X = 616;
+const ROW_TOP = 70;
+const ROW_H = 50;
+const NAME_DY = 12;
+const BAR_DY = 18;
+const BAR_H = 22;
+const INSIDE_MIN = 24; // narrower segments get their number above the bar
+
+interface Seg { kind: Kind; value: number; x: number; w: number; y: number; seed: number; id: string }
+
+const segRows = rows.map((r, i) => {
+  const y = ROW_TOP + i * ROW_H + BAR_DY;
+  let cursor = PLOT_X;
+  const segs: Seg[] = KINDS.map((kind, k) => {
+    const w = r[kind] * UNIT;
+    const s: Seg = { kind, value: r[kind], x: cursor, w, y, seed: r.seed + k, id: `hob-clip-${locale}-${i}-${k}` };
+    cursor += w;
+    return s;
+  });
+  return { row: r, top: ROW_TOP + i * ROW_H, y, segs };
+});
+
+// Hand-drawn hatching for the "wrong" segments: 45° strokes every 5 units,
+// clipped to the segment, so wrong answers differ from the others by texture
+// and not by colour alone.
+function hatch(s: Seg): string[] {
+  const lines: string[] = [];
+  for (let k = s.x - BAR_H; k < s.x + s.w; k += 5) {
+    lines.push(roughLine(k, s.y + BAR_H + 2, k + BAR_H + 4, s.y - 2, { seed: s.seed * 7 + k, roughness: 0.35 }));
+  }
+  return lines;
+}
+
+const plotBottom = ROW_TOP + rows.length * ROW_H + 2;
+const ticks = [0, 25, 50, 75, 100];
+
+const titleId = `hob-title-${locale}`;
+const descId = `hob-desc-${locale}`;
+
+const alt =
+  'Stacked horizontal bar chart titled "What each model does with 100 questions", from Artificial ' +
+  'Analysis AA-Omniscience. Each bar splits 100 questions into correct, wrong, partial and declined ' +
+  'answers, with the AA-Omniscience hallucination rate printed at the right. Gemini 4 Argon (high): ' +
+  '49.9 correct, 7.6 wrong, 3.7 partial, 38.8 declined; hallucination rate 15 percent. GPT-6 Astra ' +
+  '(max): 62.6 correct, 19.2 wrong, 1.6 partial, 16.6 declined; 51 percent. GPT-6.1 Sol (max): 62.1 ' +
+  'correct, 20.6 wrong, 1.7 partial, 15.6 declined; 54 percent. Claude Opus 5.5 (max): 66.2 correct, ' +
+  '19.8 wrong, 3.0 partial, 11.0 declined; 59 percent. Claude Fable 5.1 (max): 67.2 correct, 23.8 ' +
+  'wrong, 2.4 partial, 6.6 declined; 73 percent. The hallucination rate is wrong answers divided by ' +
+  'all answers that were not correct, so every decline lowers it. Argon has the lowest rate and the ' +
+  'fewest wrong answers, but it declines 38.8 of 100 questions, more than twice as many as any rival ' +
+  'shown, and gets 49.9 right, against 62.1 to 67.2 for the others.';
+---
+<div class="diagram-scroll">
+  <svg viewBox="0 0 620 388" role="img" aria-labelledby={`${titleId} ${descId}`} class="diagram">
+    <title id={titleId}>What five models do with 100 AA-Omniscience questions: correct, wrong, partial and declined answers, with each model's hallucination rate</title>
+    <desc id={descId}>{alt}</desc>
+
+    <defs>
+      {segRows.flatMap(({ segs }) => segs.filter((s) => s.kind === 'wrong').map((s) => (
+        <clipPath id={s.id}><rect x={s.x} y={s.y} width={s.w} height={BAR_H} /></clipPath>
+      )))}
+      <clipPath id={`hob-clip-${locale}-legend`}><rect x="78" y="28" width="14" height="11" /></clipPath>
+    </defs>
+
+    <text x="0" y="16" class="d-zone">What each model does with 100 questions</text>
+    <g class="legend">
+      <path d={roughRect(0, 28, 14, 11, { seed: 21, roughness: 0.7 })} class="seg seg-correct" />
+      <text x="20" y="38" class="d-fine d-start">{label.correct}</text>
+
+      <g clip-path={`url(#hob-clip-${locale}-legend)`}>
+        {[70, 75, 80, 85, 90].map((k, j) => (
+          <path d={roughLine(k, 41, k + 15, 26, { seed: 40 + j, roughness: 0.35 })} class="hatch" />
+        ))}
+      </g>
+      <path d={roughRect(78, 28, 14, 11, { seed: 22, roughness: 0.7 })} class="seg seg-wrong" />
+      <text x="98" y="38" class="d-fine d-start">{label.wrong}</text>
+
+      <path d={roughRect(150, 28, 14, 11, { seed: 23, roughness: 0.7 })} class="seg seg-partial" />
+      <text x="170" y="38" class="d-fine d-start">{label.partial}</text>
+
+      <path d={roughRect(224, 28, 14, 11, { seed: 24, roughness: 0.7 })} class="seg seg-declined" />
+      <text x="244" y="38" class="d-fine d-start">{label.declined}</text>
+    </g>
+
+    <text x={RATE_X} y="56" class="d-fine d-end">Hallucination</text>
+    <text x={RATE_X} y="68" class="d-fine d-end">rate</text>
+
+    {ticks.map((t) => (
+      <g>
+        <path d={roughLine(PLOT_X + t * UNIT, ROW_TOP + 4, PLOT_X + t * UNIT, plotBottom, { seed: 500 + t, roughness: 0.5 })} class="grid" />
+        <text x={PLOT_X + t * UNIT} y={plotBottom + 14} class={t === 0 ? 'd-fine d-start' : t === 100 ? 'd-fine d-end' : 'd-fine'}>{t}</text>
+      </g>
+    ))}
+    <text x={PLOT_X + PLOT_W / 2} y={plotBottom + 28} class="d-fine">questions out of 100</text>
+
+    {segRows.map(({ row, top, y, segs }) => (
+      <g>
+        <text x={PLOT_X} y={top + NAME_DY} class={row.focus ? 'd-row d-strong' : 'd-row'}>{row.name}</text>
+
+        {segs.map((s) => (
+          <g>
+            {s.kind === 'wrong' && (
+              <g clip-path={`url(#${s.id})`}>
+                {hatch(s).map((d) => <path d={d} class="hatch" />)}
+              </g>
+            )}
+            <path
+              d={roughRect(s.x, s.y, s.w, BAR_H, { seed: s.seed, roughness: 0.7 })}
+              class={`seg seg-${s.kind}`}
+            />
+            {s.w >= INSIDE_MIN ? (
+              <text x={s.x + s.w / 2} y={s.y + BAR_H / 2 + 4} class={`d-val d-halo${s.kind === 'correct' && row.focus ? ' d-accent' : ''}`}>
+                {s.value.toFixed(1)}
+              </text>
+            ) : (
+              <text x={s.x + s.w / 2} y={s.y - 3} class="d-tiny">{s.value.toFixed(1)}</text>
+            )}
+          </g>
+        ))}
+
+        <text x={RATE_X} y={y + BAR_H / 2 + 5} class={row.focus ? 'd-rate d-accent' : 'd-rate'}>{`${row.halluc}%`}</text>
+      </g>
+    ))}
+
+    <text x="0" y={plotBottom + 50} class="d-fine d-start">Hallucination rate = wrong ÷ (wrong + partial + declined). Every decline lowers it.</text>
+    <text x="0" y={plotBottom + 64} class="d-fine d-start">Artificial Analysis AA-Omniscience, 24 Oct 2026. Rates rounded to whole percent.</text>
+  </svg>
+</div>
+
+<style>
+  /* Same rule as the other figures on the site: below ~560px the segment
+     numbers and the rate column would collide, so the figure scrolls rather
+     than scales. */
+  .diagram-scroll { overflow-x: auto; margin: 2rem 0 0.75rem; }
+  .diagram { display: block; width: 100%; min-width: 560px; height: auto; }
+
+  /* Segments differ by fill texture and outline, not hue alone: solid tint for
+     correct, hatching for wrong, a flat grey wash for partial, an empty dashed
+     box for declined. */
+  .seg { stroke-width: 1.4; stroke-linecap: round; }
+  .seg-correct { fill: var(--accent-soft); stroke: var(--accent); }
+  .seg-wrong { fill: none; stroke: var(--fg); }
+  .seg-partial { fill: var(--muted); fill-opacity: 0.35; stroke: var(--muted); }
+  .seg-declined { fill: none; stroke: var(--muted); stroke-dasharray: 4 3; }
+  .hatch { fill: none; stroke: var(--fg); stroke-width: 0.9; opacity: 0.55; }
+
+  .grid { fill: none; stroke: var(--muted); stroke-width: 0.8; opacity: 0.3; stroke-dasharray: 3 5; }
+
+  text { text-anchor: middle; }
+  .d-row { font-family: var(--font-sans); font-size: 12.5px; fill: var(--fg); text-anchor: start; }
+  .d-strong { font-weight: 600; }
+  .d-val { font-family: var(--font-mono); font-size: 11px; fill: var(--fg); }
+  /* A halo in the page background keeps numbers legible over the hatching in
+     both themes. */
+  .d-halo { paint-order: stroke; stroke: var(--bg); stroke-width: 3px; stroke-linejoin: round; }
+  .d-tiny { font-family: var(--font-mono); font-size: 9.5px; fill: var(--muted); }
+  .d-rate { font-family: var(--font-mono); font-size: 14px; font-weight: 500; fill: var(--fg); text-anchor: end; }
+  .d-fine { font-family: var(--font-sans); font-size: 11px; fill: var(--muted); }
+  .d-start { text-anchor: start; }
+  .d-end { text-anchor: end; }
+  .d-accent { fill: var(--accent); }
+  .d-zone {
+    font-family: var(--font-mono); font-size: 11px; font-weight: 500; fill: var(--muted);
+    letter-spacing: 0.14em; text-transform: uppercase; text-anchor: start;
+  }
+</style>
