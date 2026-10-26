@@ -229,3 +229,18 @@ html {
 }
 .prose-col th:last-child, .prose-col td:last-child { padding-right: 0; }
 .prose-col pre code { background: none; padding: 0; }
+
+/* Award callout on posts that grew out of a recognised piece of work. Same
+   label treatment as the TL;DR, but boxed so it reads as context, not argument. */
+.prose-col .award {
+  margin: 0 0 1.75rem; padding: 0.9rem 1.1rem;
+  border: 1px solid var(--accent); border-radius: 6px; background: var(--accent-soft);
+}
+.prose-col .award-label {
+  font-family: var(--font-mono); font-size: 11px; font-weight: 500;
+  letter-spacing: 0.15em; text-transform: uppercase; color: var(--accent);
+  margin: 0 0 0.5rem; text-align: left;
+}
+.prose-col .award p { font-size: 15px; line-height: 1.6; margin: 0 0 0.6rem; }
+.prose-col .award p:last-child { margin-bottom: 0; }
+.prose-col .award a { font-weight: 500; }
