@@ -1,0 +1,104 @@
+---
+title: 'Digital Sovereignty Is Exit Time, Not Server Location'
+date: 2026-10-26
+description: An EU region does not stop the US CLOUD Act, and the Data Act already caps a cloud switch at 30 days. Why sovereignty is better measured in exit time.
+tags: [Digital Sovereignty, Cloud, Data Act, Procurement]
+type: post
+---
+
+import ExitTimeMatrix from '../../../components/ExitTimeMatrix.astro';
+
+<aside class="tldr">
+<p class="tldr-label">TL;DR</p>
+<ul>
+<li>An EU region does not decide who can demand your data. US law reaches what a US provider controls, wherever it is stored. Microsoft France said under oath it cannot guarantee otherwise.</li>
+<li>A better measure of digital sovereignty is <strong>exit time</strong>: how long it takes to leave a provider without your organisation stopping work.</li>
+<li>EU law already thinks this way. The Data Act caps a cloud switch at 30 days and bans switching fees from 12 January 2027. The Commission's cloud proposal wants tested switchover plans for providers' <em>own</em> suppliers.</li>
+<li>It never asks how fast a public body could leave the provider. Nobody measures that number, yet it decides how a negotiation goes.</li>
+</ul>
+</aside>
+
+Every conversation about digital sovereignty I have in Germany ends up on a map. Where are the servers? Frankfurt? Then we are fine, and "sovereign" goes into the board deck.
+
+**The map answers the wrong question.** Where your data sits does not tell you who can order the provider to hand it over, and it says nothing about whether you could leave. I think sovereignty should be measured in a unit people can count: the time it takes to walk away.
+
+I first made this argument in German, in an essay for the Junge DGAP's Ariadne Prize, and defended it on a panel in Berlin last week. The essay took first place; the panel made it better. This is the English version, objections included.
+
+## Why server location is the wrong question
+
+On 10 June 2025, Anton Carniaux, director of public and legal affairs at Microsoft France, testified under oath before a French Senate committee of inquiry. Asked whether he could guarantee that French citizens' data entrusted to Microsoft through UGAP, the state purchasing agency, would never reach US authorities without explicit French consent, he answered: *"Non, je ne peux pas le garantir"*. No, I cannot guarantee it. It had never happened so far, he added.
+
+That was not a slip. Since the CLOUD Act of 2018, a provider under US jurisdiction must preserve or disclose data in its "possession, custody, or control" **"regardless of whether"** it is stored inside or outside the United States (18 U.S.C. § 2713). The test is control, not geography. Location still matters for privacy law, as I wrote about [sending redacted prompts to a model](/writing/gdpr-presidio-llm-privacy). It is the wrong unit for the question "what if the relationship breaks?"
+
+And it can break. After US sanctions on the International Criminal Court, the Associated Press reported on 15 May 2025 that the court's chief prosecutor had lost access to his Microsoft email and moved to Proton Mail, a Swiss provider. Microsoft disputes this: on 28 May 2025 it said it had at no point ceased or suspended its services to the ICC, and that it had been in contact with the court since February about disconnecting a sanctioned official. The facts are contested. The lesson is not.
+
+## What is digital sovereignty, actually?
+
+Here is the definition I propose: **sovereignty is the proven, contractually secured and practised ability to leave a provider, a platform or a jurisdiction within a defined time, without becoming unable to act.** Its unit is exit time.
+
+Three things follow. **Dependency is allowed.** Hardly anyone in Europe will run without US software this decade. The problem is dependency with no way out. **The measure works in every direction**, towards Washington, Beijing and Paris alike. A European provider you cannot leave is better than a non-European one, but you still cannot leave. **It changes the negotiation.** An organisation that can switch in twelve months is treated differently from one that could not switch in twelve years.
+
+## Location and exit are two different axes
+
+<figure>
+<ExitTimeMatrix />
+<figcaption>Most "sovereign cloud" purchases move right, not up. The picture leaves out a third question that matters for the most sensitive workloads: who controls the provider. The EU's highest proposed assurance level tests that. None of its levels tests the vertical axis.</figcaption>
+</figure>
+
+Moving a workload into an EU region shifts it from bottom left to bottom right. The data now sits in the Union; the contract is exactly as hard to leave as before. That bottom-right box is where a lot of public money lands: a sovereign label with no way out. The move that buys freedom is vertical: open formats, a written exit plan, a switch rehearsed at least once. None of it depends on where the servers are.
+
+## Does the EU Data Act already solve cloud lock-in?
+
+Partly. The Data Act (Regulation (EU) 2023/2854) has applied since 12 September 2025, and its Chapter VI turns exit time into law. According to the Bundesnetzagentur, Germany's authority for the Act, a provider gets at most two months after the customer's notice to prepare, and the switch must then be done within **at most 30 calendar days**, stretching to seven months only where that is technically unfeasible. From **12 January 2027**, switching charges are banned.
+
+So the law already accepts the principle. But it guarantees that the provider lets your data go, not that you have somewhere to take it, people who can run the alternative, or a plan that has ever been tested.
+
+## What the Commission's new cloud law measures
+
+On 3 June 2026 the Commission published its proposal for a Cloud and AI Development Act (COM(2026) 502). It is still being negotiated; details will change.
+
+Its core is **four Union assurance levels**. Level 1 is a self-assessment: provider, infrastructure and customer data in the EU. Levels 2 to 4 need third-party audits and tighten step by step, up to level 4: no control by a non-EU country or company, staff who are EU citizens. Public bodies would buy at level 1 by default and at levels 2 to 4 for activities that protect public order, from energy to justice and defence (Art. 30).
+
+The audit annex holds the surprise. For levels 2 to 4, the provider must identify alternatives to its own critical software suppliers, and **"Tests must be implemented and a switchover plan enabling migration"** to them (Annex III, criterion I). The Commission already treats a tested exit as a sovereignty test. It just aims it at the provider's suppliers, not at the customer.
+
+It comes close once more: where a risk assessment puts a public body on the wrong level, the migration "shall not exceed 12 months" (Art. 29(6)). That is an exit time, but only after the fact. **None of the criteria in Annex II asks how fast a public body could leave the provider it buys from.** That is the gap I would close.
+
+## Where the argument gets uncomfortable
+
+The sharpest objection on the panel was about money. Switching fees vanish in 2027, but the lost weeks, the retraining and the risk that something breaks in production are paid by nobody. For a business with 80 people, a parallel system is not a rounding error. And strict exit duties could drown exactly the small providers that might build alternatives.
+
+That is right, and it shapes the answer: grade exit time by how critical a service is. For most services, a clause with open formats and a defined exit window costs almost nothing. Only the most critical deserve a tested reserve.
+
+The second objection came from someone in uniform: in a real crisis, rules get ignored and people switch because they have no choice. Maybe. But a crisis switch happens on the other side's terms. **Nobody negotiates a contract in an emergency.**
+
+And some dependencies have no short exit at all. Europe will not replace the most advanced chips or a satellite network in weeks. There, the honest strategy is being indispensable to the other side, which is a different argument.
+
+## What I would put in every contract
+
+Three questions belong in every public tender for cloud, software and AI. Anyone asks them before signing a phone contract.
+
+1. **In which open format do we get our data back?** Named in the contract, not "on request".
+2. **What is the exit time for this service?** Set per criticality level, with a penalty if missed.
+3. **When did we last try?** Once a year for critical services: one real switch, measured in days.
+
+Because the state is the largest buyer in the market, whoever wants to sell to it would learn to answer them.
+
+## Bottom line
+
+An EU region is a decision about geography. Sovereignty is a decision about time. The Data Act already says how fast a provider must let you go, and the Commission already wants providers to rehearse their own exits. The missing piece is asking the same of ourselves.
+
+The cloud and AI contracts being signed now run well into the 2030s. Whether we can still choose then is decided today, in the small print.
+
+---
+
+## Sources
+
+- [Sénat, commission d'enquête sur la commande publique, hearing of Microsoft France](https://www.senat.fr/compte-rendu-commissions/20250609/ce_commande_publique.html), 10 June 2025.
+- [18 U.S.C. § 2713](https://www.law.cornell.edu/uscode/text/18/2713), added by the CLOUD Act, Pub. L. 115-141, 23 March 2018.
+- Associated Press, Molly Quell, [Trump's sanctions on ICC's chief prosecutor have halted tribunal's work](https://www.pbs.org/newshour/world/trumps-sanctions-on-iccs-chief-prosecutor-have-halted-tribunals-work-officials-and-lawyers-say), 15 May 2025.
+- [Microsoft statement on the ICC](https://news.microsoft.com/da-dk/2025/05/28/kommentar-fra-microsoft-vedr-icc/), 28 May 2025.
+- [Data Act, Regulation (EU) 2023/2854](https://eur-lex.europa.eu/eli/reg/2023/2854/oj), Chapter VI (Arts. 23 to 31) and recital 88.
+- [Bundesnetzagentur, Data Act factsheet on switching](https://www.bundesnetzagentur.de/EN/Areas/Digitalisation/DataAct/DL/Factsheet4.html?nn=1108436).
+- [European Commission, proposal for a Cloud and AI Development Act](https://digital-strategy.ec.europa.eu/en/library/proposal-cloud-and-ai-development-act-cada), COM(2026) 502 and annexes.
+
+<p class="text-[13px] text-muted">Verified against the sources above on 26 October 2026. The Cloud and AI Development Act is a proposal and will change in negotiation. Policy write-up, not legal advice.</p>
