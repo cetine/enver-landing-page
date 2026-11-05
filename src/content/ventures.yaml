@@ -20,3 +20,14 @@
     name: Nebenkosten-Ninja
     tagline: 'Freemium-Check für Nebenkostenabrechnungen: eine client-seitige Regel-Engine findet die häufigsten Abrechnungsfehler.'
     story: Mieter zahlen jedes Jahr durch fehlerhafte Nebenkostenabrechnungen drauf. Nebenkosten-Ninja prüft eine Abrechnung vollständig im Browser gegen ein kuratiertes Regelwerk, ganz ohne Upload und ohne Konto, und erklärt jeden Befund verständlich.
+- id: flokora
+  url: https://flokora.cloud/en/
+  status: preview
+  en:
+    name: Flokora
+    tagline: 'Meeting companion for the Mac: transcribes calls on the device, shows a short answer in the notch when a customer asks, and turns rough notes into clean ones.'
+    story: Built so you can answer customers without leaving the call. No bot joins. Flokora listens to the microphone and call audio on the Mac, transcribes with NVIDIA Parakeet in German and English, and writes answers and notes with the AI you choose, local models included. Every evening it links customers, people and topics across calls, each idea backed by the quotes it rests on. Early access for macOS.
+  de:
+    name: Flokora
+    tagline: 'Meeting-Begleiter für den Mac: transkribiert Calls direkt auf dem Gerät, zeigt eine kurze Antwort in der Notch, wenn der Kunde fragt, und macht aus Stichworten saubere Notizen.'
+    story: Gebaut, um Kunden antworten zu können, ohne den Call zu verlassen. Kein Bot tritt bei. Flokora hört Mikrofon und Call-Audio auf dem Mac, transkribiert mit NVIDIA Parakeet auf Deutsch und Englisch und schreibt Antworten und Notizen mit einer frei wählbaren KI, auch einem lokalen Modell. Jeden Abend verknüpft es Kunden, Personen und Themen über alle Calls hinweg, jede Idee belegt mit den Zitaten, auf denen sie beruht. Early Access für macOS.

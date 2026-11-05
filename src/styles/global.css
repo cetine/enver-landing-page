@@ -9,6 +9,10 @@
   --line: rgba(22, 24, 29, 0.14);
   --accent: #0e7c5b;
   --accent-soft: rgba(14, 124, 91, 0.1);
+  /* Venture "PREVIEW" badge: yellow, text darkened to keep 4.8:1 on the soft fill. */
+  --preview: #8a6100;
+  --preview-dot: #eab308;
+  --preview-soft: rgba(234, 179, 8, 0.16);
   /* Industry plates (PlateSvg.astro) — one inline SVG, colours carried by these
      variables so a single file renders in both themes. */
   --plate-bg: var(--bg);
@@ -26,6 +30,9 @@
   --line: rgba(236, 236, 236, 0.16);
   --accent: #2fbd8f;
   --accent-soft: rgba(47, 189, 143, 0.12);
+  --preview: #facc15;
+  --preview-dot: #facc15;
+  --preview-soft: rgba(250, 204, 21, 0.14);
   /* Brighter plate strokes in dark — the old raster plates read too dim. */
   --plate-bg: var(--bg);
   --plate-stroke: #c2c8d2;
@@ -43,6 +50,9 @@
   --color-line: var(--line);
   --color-accent: var(--accent);
   --color-accent-soft: var(--accent-soft);
+  --color-preview: var(--preview);
+  --color-preview-dot: var(--preview-dot);
+  --color-preview-soft: var(--preview-soft);
   --font-sans: 'IBM Plex Sans', ui-sans-serif, system-ui, sans-serif;
   --font-serif: 'IBM Plex Serif', ui-serif, Georgia, serif;
   --font-mono: 'IBM Plex Mono', ui-monospace, 'SF Mono', monospace;
