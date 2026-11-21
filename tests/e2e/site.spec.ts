@@ -15,6 +15,8 @@ const pages: { path: string; hreflang: number }[] = [
   { path: '/writing/vllm-json-schema-xgrammar-llguidance', hreflang: 2 },
   { path: '/writing/prompt-caching-not-working', hreflang: 2 },
   { path: '/writing/ai-hallucination-rate', hreflang: 2 },
+  { path: '/writing/digital-sovereignty-exit-time', hreflang: 2 },
+  { path: '/writing/how-much-time-does-ai-save', hreflang: 2 },
 ];
 
 for (const { path, hreflang } of pages) {
@@ -96,3 +98,18 @@ test('contact form validates before send', async ({ page }) => {
   await page.click('button[type="submit"]');
   await expect(page.locator('#form-status')).toContainText(/name|Name/);
 });
+
+for (const path of ['/ventures', '/de/ventures']) {
+  test(`venture status badges on ${path}`, async ({ page }) => {
+    await page.goto(path);
+    // Flokora is early access: a yellow PREVIEW badge, never LIVE.
+    const flokora = page.locator('article', { has: page.locator('h3', { hasText: 'Flokora' }) });
+    await expect(flokora.locator('[data-status="preview"]')).toHaveText('PREVIEW');
+    await expect(flokora.locator('[data-status="live"]')).toHaveCount(0);
+    await expect(flokora.locator('a[href="https://flokora.cloud/en/"]')).toHaveText(/flokora\.cloud/);
+    const bg = await flokora.locator('[data-status="preview"]').evaluate((el) => getComputedStyle(el).backgroundColor);
+    expect(bg).not.toBe('rgba(0, 0, 0, 0)');
+    // The two shipped products keep their LIVE badge.
+    await expect(page.locator('[data-status="live"]')).toHaveCount(2);
+  });
+}

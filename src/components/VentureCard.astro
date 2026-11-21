@@ -1,20 +1,25 @@
 ---
 import type { Locale } from '../i18n/routes';
-type Venture = { id: string; url: string; status: string; en: { name: string; tagline: string; story: string }; de: { name: string; tagline: string; story: string } };
+type Venture = { id: string; url: string; status: 'live' | 'preview'; en: { name: string; tagline: string; story: string }; de: { name: string; tagline: string; story: string } };
 interface Props { venture: Venture; locale: Locale; withStory?: boolean }
 const { venture, locale, withStory = false } = Astro.props;
 const v = venture[locale];
+const badges = {
+  live: { label: 'LIVE', pill: 'bg-accent-soft text-accent', dot: 'bg-accent' },
+  preview: { label: 'PREVIEW', pill: 'bg-preview-soft text-preview', dot: 'bg-preview-dot' },
+} as const;
+const badge = badges[venture.status];
 ---
 <article class="rounded-lg border border-line p-5">
   <div class="flex items-center gap-2.5">
     <h3 class="text-lg font-medium">{v.name}</h3>
-    {venture.status === 'live' && (
-      <span class="inline-flex items-center gap-1.5 rounded-full bg-accent-soft px-2 py-0.5 font-mono text-[10px] tracking-wide text-accent">
-        <span class="h-1.5 w-1.5 rounded-full bg-accent"></span>LIVE
+    {badge && (
+      <span data-status={venture.status} class={`inline-flex items-center gap-1.5 rounded-full px-2 py-0.5 font-mono text-[10px] tracking-wide ${badge.pill}`}>
+        <span class={`h-1.5 w-1.5 rounded-full ${badge.dot}`}></span>{badge.label}
       </span>
     )}
   </div>
   <p class="mt-2 text-[14px] leading-relaxed text-muted">{v.tagline}</p>
   {withStory && <p class="mt-3 text-[14px] leading-relaxed">{v.story}</p>}
-  <a href={venture.url} rel="noopener" class="mt-3 inline-block text-[13px] underline underline-offset-4 decoration-accent hover:text-accent">{venture.url.replace('https://', '')} ↗</a>
+  <a href={venture.url} rel="noopener" class="mt-3 inline-block text-[13px] underline underline-offset-4 decoration-accent hover:text-accent">{new URL(venture.url).host} ↗</a>
 </article>

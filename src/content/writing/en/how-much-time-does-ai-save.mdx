@@ -1,0 +1,130 @@
+---
+title: 'How Much Time Does AI Save at Work? About 50 Minutes a Week'
+date: 2026-11-07
+description: A representative US survey puts AI time saved at 2.08% of all work hours, about 50 minutes per worker per week, not the hour a day vendor surveys report.
+tags: [Generative AI, Productivity, Business Case, FRED]
+type: post
+---
+
+import TimeSavedFunnel from '../../../components/TimeSavedFunnel.astro';
+
+<aside class="tldr">
+<p class="tldr-label">TL;DR</p>
+<ul>
+<li>Across all employed US adults, AI saves <strong>2.08% of work hours</strong> by their own account: about <strong>50 minutes in a 40-hour week</strong> (St. Louis Fed, Q3 2026).</li>
+<li>"An hour a day" and "three hours a week" are self-reports from AI users, subsets of them, or an unstated base. An hour of an eight-hour day is six times the workforce-wide rate.</li>
+<li>Use of AI at work fell in Q3 2026 by the largest amount in the series, and no source explains why.</li>
+<li>On German full-time hours, the US rate gives 33 hours a year per employee, or 95 per actual user. Even that is not measured time.</li>
+</ul>
+</aside>
+
+A business case for a Copilot or ChatGPT Enterprise rollout often rests on one line: *hours saved per employee*, usually a vendor survey's hour a day.
+
+Representative data disagrees. **Across the whole US workforce, people report that generative AI saves them 2.08% of their working hours: about 50 minutes in a 40-hour week.** That is per worker, not per user.
+
+The trend is going the wrong way too. In the August 2026 survey wave, which FRED files as Q3 2026, the share of US workers using AI at work fell by more than in any earlier quarter of the series. A 2027 rollout should start from those facts.
+
+## How much time does AI save at work?
+
+The number comes from the Real-Time Population Survey (RPS) by Bick, Blandin and Deming, published on FRED by the St. Louis Fed. It surveys US adults aged 18 to 64 online and is "designed and weighted to be nationally representative". Workers who used AI for their job last week say how many extra hours they would have needed without it, in brackets from under one hour to over four.
+
+The time-saved series turns those answers into the **share of total work hours saved by all employed adults**, with non-users counted as zero. That is the right base for a company-wide licence, which is paid for everyone.
+
+My calculation:
+
+| Quarter | Share of work hours saved | Minutes per 40-hour week |
+|---|---|---|
+| Q3 2026 | 2.08% | 50.0 |
+| Q2 2026 | 2.17% | 52.1 |
+| Q4 2024 | 1.41% | 33.9 |
+
+The 40-hour week is my convention; the series is a share of actual hours. **This is a representative survey of self-reported savings, not a stopwatch.**
+
+## What the headline surveys actually count
+
+- **OpenAI** surveyed 9,000 workers across almost 100 enterprises. ChatGPT Enterprise users "attribute 40–60 minutes of time saved per active day". The report's own summary drops "active", so the per-day reading is OpenAI's own; the top of its range is an hour.
+- **Workday** surveyed nearly 6,000 workers in September 2026 and reports a mean of "~3 hours/week" that "employees say" AI saves them, without stating the base.
+- **Hubstaff** surveyed 1,068 full-time US computer workers in October 2026, unweighted (not adjusted to match the workforce). "Among AI users who reported their time savings", 76% save at least an hour a week and 32% four or more.
+- As a government cross-check, the **US Census Bureau** asked last-week users a similar question in its March 2026 survey wave: 56% said two hours or less, 30% three or more, 10% none, and 4% that AI added time.
+
+OpenAI, Hubstaff and the Census count users or a subset of them; Workday does not say. None of those three includes colleagues who never open the tool. Your licence invoice does.
+
+## From the headline to the whole workforce
+
+<figure>
+<TimeSavedFunnel />
+<figcaption>Every bar is self-reported, and each counts different people: OpenAI users per active day (the five-day week is my conversion), Workday's unstated base, RPS users (my approximation), and the whole workforce with non-users at zero. The axis shows how far a number moves with its base; it does not rank the surveys.</figcaption>
+</figure>
+
+For a rough per-user figure, divide the workforce rate by the share who used AI for work last week, 34.8% in Q3 2026, and you get **5.98% of a user's hours, about 2.4 hours in a 40-hour week**. That approximation is mine and assumes users and non-users work the same hours.
+
+The RPS also estimates (as a midpoint) that 5.31% of work hours are done with AI help, about 128 minutes a week. Time saved is 0.39 of that. **An hour with AI open is not an hour saved.**
+
+Read per user, the gap to an hour a day narrows from a factor of six to about two. Vendor per-user figures go wrong when multiplied by headcount.
+
+## Is AI use at work falling?
+
+In Q3 2026 four RPS series recorded their largest quarterly fall:
+
+- workers using AI for work: down 4.65 percentage points to 40.5% (previous largest fall: 2.26);
+- workers using it last week: down 4.39 points to 34.8%;
+- share of work hours done with AI help: down 0.96 points;
+- share of work hours saved: down 0.088 points, from 2.17% to 2.08%.
+
+Daily use fell 2.22 points, less than in Q4 2024 (3.01). The series are short: nine quarters for adoption, eight for time saved.
+
+The implied per-user saving rose from 5.54% to 5.98%, only because users fell faster than total savings.
+
+No source I checked explains the fall. In 2025 the authors reweighted 2024 results (changed how much each answer counts) after reordering survey questions, so the fall may partly be an artefact of changing the survey.
+
+## What it means for a German full-timer
+
+I applied the US rates to the IAB working-time accounts for 2025 (as of August 2026): 1,594.5 actual hours a year for a full-timer, and a contractual week of 38.19 hours.
+
+- Per full-time employee: **33.2 hours a year**, or 47.8 minutes a week.
+- Per actual user, on my approximation: **95.4 hours a year**.
+- Per 1,000 full-timers: about 33,200 hours, roughly 21 full-time equivalents on my arithmetic.
+
+One hour on each of the IAB's 203.5 working days (an all-employee figure, net of leave and sickness) is 12.8% of annual hours. Even one hour of an eight-hour day, 12.5%, is **6.0 times the all-worker rate and 2.1 times the per-user rate**.
+
+Multiply by your loaded hourly cost for the business-case line. Illustrative only: there is no representative German series.
+
+## Where my own argument is weak
+
+The RPS is self-reported too: a better sample, not an observation. My per-user figure for Q4 2024, 5.36%, sits near the authors' published 5.4%, but that check is only indicative: theirs averages each user's own ratio and predates the 2024 reweighting.
+
+It may **understate** gains where AI fits the work. In Denmark, in surveys from late 2023 and 2024, Humlum and Vestergaard set the 2.8% of work hours users report saving against gains "often exceeding 15%" found by randomised trials in the same occupations.
+
+And reported savings may never reach the payroll. The same study found "no significant impact on earnings or recorded hours", ruling out effects above 1%. The St. Louis Fed notes workers may take saved time "as on-the-job leisure". Hubstaff finds only 26% of AI users take on more work. ActivTrak, which tracked the digital activity of 9,140 knowledge workers from April to September 2026 rather than asking, finds AI users' workday spans run 8.4 to 9.1 hours against 7.6 for non-users. That is a correlation, not a cause, but it is not what saved time looks like.
+
+## What I would put in the business case
+
+1. **Use the all-worker rate for a company-wide licence.** Use the per-user rate only for weekly users, and count them first.
+2. **Ask every vendor figure for its base.** Users, active days, people who reported a saving? Weighted? A figure without its base does not belong in the case.
+3. **Budget for capacity, not hours.** Workday reports a third of AI users losing at least half their saved time to rework; 46% of Hubstaff's AI users say expectations of them have risen. Decide in advance where saved hours go.
+4. **Re-read the series every quarter.** One quarter is not a trend.
+
+Counting the wrong unit is the mistake behind [the German token tax](/writing/german-token-tax), too.
+
+## Bottom line
+
+AI saves time at work: about 50 minutes a week across the workforce, by workers' own account, and roughly 2.4 hours per actual user. The hour a day is a per-user self-report multiplied by a headcount it was never asked of.
+
+Approve on the number you could defend in an audit, then check whether the hours show up.
+
+The saving that counts is the one that reaches the payroll, not the survey.
+
+---
+
+## Sources
+
+- FRED, St. Louis Fed: time-saved series [`RPSGENAITSALL`](https://fred.stlouisfed.org/series/RPSGENAITSALL) and related RPS series; ALFRED vintages of 15 and 16 October 2026.
+- Bick, Blandin and Deming, [Generative AI Adoption Tracker](https://www.genaiadoptiontracker.com/) (Walmart-funded).
+- St. Louis Fed, [*The Impact of Generative AI on Work Productivity*](https://www.stlouisfed.org/on-the-economy/2025/feb/impact-generative-ai-work-productivity) (February 2025, with revision note) and the [November 2025 update](https://www.stlouisfed.org/on-the-economy/2025/nov/state-generative-ai-adoption-2025).
+- IAB, [Arbeitszeitrechnung components](https://doku.iab.de/arbeitsmarktdaten/AZ_Komponenten.xlsx), as of August 2026.
+- OpenAI, [*The state of enterprise AI: 2025 Report*](https://cdn.openai.com/pdf/7ef17d82-96bf-4dd1-9df2-228f7f377a29/the-state-of-enterprise-ai_2025-report.pdf) (undated).
+- October 2026 workforce studies, grouped: [Workday AI@Work](https://www.workday.com/en-us/perspectives/ai/ai-at-work-october.html), 22 October 2026; [Hubstaff, State of the Workweek 2026](https://www.prnewswire.com/news-releases/ai-is-saving-employees-time-but-employers-arent-getting-the-capacity-they-expect-new-hubstaff-research-finds-302920946.html), 27 October 2026; [ActivTrak Productivity Lab](https://www.activtrak.com/news/productivity-lab-ai-users-longer-workdays/), 29 October 2026.
+- US Census Bureau, [HTOPS story on AI use at work](https://www.census.gov/library/stories/2026/08/ai-use-at-work.html), 11 August 2026, revised 24 September 2026.
+- Humlum and Vestergaard, [*Large Language Models, Small Labor Market Effects*](https://bfi.uchicago.edu/wp-content/uploads/2025/04/BFI_WP_2025-56-3.pdf), BFI Working Paper 2025-56.
+
+<p class="text-[13px] text-muted">Verified on 7 November 2026 against FRED (updated 20 October 2026) and the IAB working-time accounts (August 2026). Later vintages may revise earlier quarters. German figures apply US rates to German hours; per-user figures are my approximation.</p>

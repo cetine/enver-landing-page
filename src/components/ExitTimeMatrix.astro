@@ -1,0 +1,124 @@
+---
+// One idea: where the data sits and how fast you can leave are two different
+// axes, and most "sovereign cloud" purchases move along the wrong one.
+//
+// The horizontal arrow is what an EU region buys: the data moves inside the
+// Union, the contract stays exactly as hard to leave. The vertical arrow is the
+// move the article argues for. Everything else (who controls the provider, what
+// it costs, which law applies) is deliberately left out; the caption carries the
+// qualification the picture cannot.
+//
+// No numbers are plotted. The quadrants are categories, not measurements, and a
+// figure with invented coordinates would claim a precision the argument does
+// not have.
+import { roughRect, roughLine, roughArrowHead } from '../lib/rough';
+
+const X0 = 96;
+const Y0 = 52;
+const W = 500;
+const H = 320;
+const HALF_W = W / 2;
+const HALF_H = H / 2;
+
+interface Quad {
+  x: number; y: number; seed: number; accent?: boolean;
+  title: string; sub: string;
+}
+
+const quads: Quad[] = [
+  { x: X0, y: Y0, seed: 31, title: 'Dependent, but free', sub: 'outside the EU, practised exit' },
+  { x: X0 + HALF_W, y: Y0, seed: 32, title: 'Sovereign', sub: 'inside the EU, practised exit' },
+  { x: X0, y: Y0 + HALF_H, seed: 33, title: 'Locked in', sub: 'outside the EU, no way out' },
+  { x: X0 + HALF_W, y: Y0 + HALF_H, seed: 34, accent: true, title: 'Sovereign label', sub: 'inside the EU, no way out' },
+];
+
+// Arrow geometry: the horizontal move along the bottom row, the vertical move
+// up the right column.
+const hY = Y0 + HALF_H + 112;
+const hFrom = X0 + 60;
+const hTo = X0 + HALF_W + 100;
+const vX = X0 + W - 36;
+const vFrom = Y0 + HALF_H + 74;
+const vTo = Y0 + 96;
+const UP = -Math.PI / 2;
+const hLabelX = hFrom + 8;
+const vLabelY = Y0 + HALF_H - 46;
+const vLabelX = vX - 12;
+
+const alt =
+  'A two-by-two matrix. The horizontal axis runs from data held outside the EU on the left to data ' +
+  'held inside the EU on the right. The vertical axis runs from leaving takes years at the bottom ' +
+  'to leaving takes weeks at the top. Top left: dependent, but free. Top right: sovereign. Bottom ' +
+  'left: locked in. Bottom right, highlighted: sovereign label, inside the EU with no way out. A ' +
+  'horizontal arrow along the bottom row, labelled what an EU region buys, moves from locked in to ' +
+  'sovereign label without changing exit time. A vertical arrow up the right column, labelled the ' +
+  'move that counts, goes from sovereign label to sovereign.';
+---
+<div class="diagram-scroll">
+  <svg viewBox="0 0 620 430" role="img" aria-labelledby="etm-title etm-desc" class="diagram">
+    <title id="etm-title">Data location and exit time are two different axes</title>
+    <desc id="etm-desc">{alt}</desc>
+
+    <text x="0" y="16" class="d-zone">Two questions, two axes</text>
+
+    {quads.map((q) => (
+      <g>
+        <path
+          d={roughRect(q.x, q.y, HALF_W, HALF_H, { seed: q.seed, roughness: 0.8 })}
+          class={q.accent ? 'cell cell-accent' : 'cell'}
+        />
+        <text x={q.x + HALF_W / 2} y={q.y + 38} class={q.accent ? 'd-title d-accent' : 'd-title'}>{q.title}</text>
+        <text x={q.x + HALF_W / 2} y={q.y + 58} class="d-sub">{q.sub}</text>
+      </g>
+    ))}
+
+    <g class="arrow arrow-muted">
+      <path d={roughLine(hFrom, hY, hTo, hY, { seed: 41, roughness: 0.6 })} />
+      <path d={roughArrowHead(hTo, hY, 0, { seed: 42, roughness: 0.6 })} />
+    </g>
+    <text x={hLabelX} y={hY - 10} class="d-fine d-start">what an EU region buys</text>
+
+    <g class="arrow arrow-accent">
+      <path d={roughLine(vX, vFrom, vX, vTo, { seed: 43, roughness: 0.6 })} />
+      <path d={roughArrowHead(vX, vTo, UP, { seed: 44, roughness: 0.6 })} />
+    </g>
+    <text x={vLabelX} y={vLabelY} class="d-fine d-accent d-end">the move</text>
+    <text x={vLabelX} y={vLabelY + 15} class="d-fine d-accent d-end">that counts</text>
+
+    <text x={X0 + W / 2} y={Y0 + H + 30} class="d-sub">where the data sits</text>
+    <text x={X0} y={Y0 + H + 30} class="d-fine d-start">outside the EU</text>
+    <text x={X0 + W} y={Y0 + H + 30} class="d-fine d-end">inside the EU</text>
+
+    <text x={X0 - 14} y={Y0 + 14} class="d-fine d-end">weeks</text>
+    <text x={X0 - 14} y={Y0 + H} class="d-fine d-end">years</text>
+    <text x="0" y={Y0 + HALF_H + 4} class="d-sub d-start">how fast</text>
+    <text x="0" y={Y0 + HALF_H + 20} class="d-sub d-start">you can</text>
+    <text x="0" y={Y0 + HALF_H + 36} class="d-sub d-start">leave</text>
+  </svg>
+</div>
+
+<style>
+  /* Below ~560px the quadrant labels would collide, so the figure scrolls
+     inside its own box rather than scaling down, as the other figures do. */
+  .diagram-scroll { overflow-x: auto; margin: 2rem 0 0.75rem; }
+  .diagram { display: block; width: 100%; min-width: 560px; height: auto; }
+
+  .cell { fill: none; stroke: var(--fg); stroke-width: 1.4; stroke-linecap: round; }
+  .cell-accent { fill: var(--accent-soft); stroke: var(--accent); }
+
+  .arrow path { fill: none; stroke-width: 1.5; stroke-linecap: round; }
+  .arrow-muted path { stroke: var(--muted); }
+  .arrow-accent path { stroke: var(--accent); }
+
+  text { text-anchor: middle; }
+  .d-title { font-family: var(--font-sans); font-size: 15px; font-weight: 500; fill: var(--fg); }
+  .d-sub { font-family: var(--font-sans); font-size: 12px; fill: var(--muted); }
+  .d-fine { font-family: var(--font-sans); font-size: 11px; fill: var(--muted); }
+  .d-start { text-anchor: start; }
+  .d-end { text-anchor: end; }
+  .d-accent { fill: var(--accent); }
+  .d-zone {
+    font-family: var(--font-mono); font-size: 11px; font-weight: 500; fill: var(--muted);
+    letter-spacing: 0.14em; text-transform: uppercase; text-anchor: start;
+  }
+</style>

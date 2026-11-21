@@ -1,0 +1,165 @@
+---
+// One idea: the "time saved by AI" number shrinks as the measurement gets
+// harder. The same unit — minutes per 40-hour week — is put on one axis, from a
+// vendor's self-reported headline per enterprise user down to the share of all
+// US work hours saved, as estimated by the nationally representative
+// Real-Time Population Survey (St. Louis Fed / FRED series RPSGENAITSALL).
+//
+// Every bar is still self-report. The difference between the rows is who is
+// asked and what the denominator is, not "survey vs. measurement" — the RPS is a
+// representative survey of self-reported, bracketed savings, not a time study.
+// The figure deliberately omits adoption rates, the Q3 drop and Germany, which
+// the prose carries; adding them would invite a second reading.
+//
+// Numbers, hard-coded with provenance (fact-checked 7 Nov 2026) rather than
+// imported: the article is a snapshot dated in its own footer, and a figure that
+// moved with the next FRED revision would contradict the text beside it.
+// - OpenAI, "The state of enterprise AI | 2025 Report": "40–60 minutes of time
+//   saved per active day" (survey of 9,000 workers, ~100 enterprises). Converted
+//   to a week as ×5 active days = 200–300 min. The ×5 is my assumption, so the
+//   bar is drawn as a range and labelled as my conversion.
+// - Workday AI@Work, October edition (22 Oct 2026, ~6,000 workers): "~3
+//   hours/week" = ~180 min. Workday does not state whether the base is all
+//   employees or AI users only, so the label says so.
+// - RPS, Q3 2026, implied per last-week user: 2.0845 / 34.844 = 5.98% of hours
+//   × 2,400 min = ~144 min. My approximation (assumes users and non-users work
+//   equal hours).
+// - RPS, Q3 2026, all employed adults 18–64 (non-users count as zero):
+//   2.0844853820% × 2,400 min = 50.0 min.
+//
+// Horizontal bars like TokenCostBars, but with the source and method stacked
+// above each bar: the method line is the point, and it is too long for a left
+// label column in a 40em prose column.
+import { roughRect, roughLine } from '../lib/rough';
+
+interface Row {
+  source: string;
+  method: string;
+  /** Minutes per 40-hour week; `hi` set ⇒ drawn as a range lo–hi. */
+  lo: number;
+  hi?: number;
+  label: string;
+  accent?: boolean;
+  seed: number;
+}
+
+const rows: Row[] = [
+  {
+    source: 'OpenAI, enterprise AI report 2025',
+    method: 'vendor survey, 9,000 workers · self-report · 40–60 min per active day × 5 (my conversion)',
+    lo: 200, hi: 300, label: '200–300', seed: 13,
+  },
+  {
+    source: 'Workday AI@Work, Oct 2026',
+    method: 'vendor survey, ~6,000 workers · self-report · ~3 h/week, base not stated',
+    lo: 180, label: '~180', seed: 27,
+  },
+  {
+    source: 'St. Louis Fed RPS, Q3 2026 · per AI user',
+    method: 'representative US survey · self-report · my approximation, 5.98% of hours',
+    lo: 144, label: '~144', seed: 41,
+  },
+  {
+    source: 'St. Louis Fed RPS, Q3 2026 · all workers',
+    method: 'representative US survey · self-report · 2.08% of all hours, non-users = 0',
+    lo: 50, label: '50', accent: true, seed: 55,
+  },
+];
+
+// Axis runs to 300 min (5 h) so the widest vendor range ends exactly on a
+// gridline and the hour ticks stay round.
+const AXIS_MAX = 300;
+const PLOT_X = 4;
+const PLOT_W = 500;
+const BAR_H = 16;
+const ROW_TOP = 50;
+const ROW_H = 70;
+const BAR_OFFSET = 34;
+
+const scale = (v: number): number => (v / AXIS_MAX) * PLOT_W;
+const gridlines = [60, 120, 180, 240, 300];
+const axisY = ROW_TOP + rows.length * ROW_H - 4;
+
+const alt =
+  'Horizontal bar chart titled "Minutes saved per 40-hour week". Four bars on one axis from 0 to 300 ' +
+  'minutes, ordered from the vendor headline down to the representative survey. OpenAI\'s 2025 ' +
+  'enterprise AI report, a vendor survey of 9,000 workers: 40 to 60 minutes per active day, which is 200 ' +
+  'to 300 minutes per week if a user has five active days (my conversion). Workday AI@Work, October ' +
+  '2026, a vendor survey of about 6,000 workers: about 3 hours, or 180 minutes, per week; Workday does ' +
+  'not say whether this is per employee or per AI user. St. Louis Fed Real-Time Population Survey, Q3 ' +
+  '2026, implied per AI user (my approximation): 5.98% of hours, about 144 minutes per week. The same ' +
+  'survey across all employed US adults aged 18 to 64, with non-users counted as zero: 2.08% of all ' +
+  'work hours, 50 minutes per week. All four numbers are self-reported; they differ in who is asked ' +
+  'and what the time is divided by.';
+---
+<div class="diagram-scroll">
+  <svg viewBox="0 0 620 350" role="img" aria-labelledby="tsf-title tsf-desc" class="diagram">
+    <title id="tsf-title">AI time saved per 40-hour week, from vendor headline to representative survey</title>
+    <desc id="tsf-desc">{alt}</desc>
+
+    <text x="0" y="16" class="d-zone">Minutes saved per 40-hour week</text>
+    <text x="0" y="33" class="d-fine d-start">All four bars are self-reported · only the RPS rows are representative (US, 18–64)</text>
+
+    {rows.map((r, i) => {
+      const top = ROW_TOP + i * ROW_H;
+      const barY = top + BAR_OFFSET;
+      const end = r.hi ?? r.lo;
+      return (
+        <g>
+          {gridlines.map((g) => (
+            <path
+              d={roughLine(PLOT_X + scale(g), barY - 4, PLOT_X + scale(g), barY + BAR_H + 4, { seed: g + i, roughness: 0.5 })}
+              class="grid"
+            />
+          ))}
+          <text x="0" y={top + 12} class={r.accent ? 'd-row d-accent' : 'd-row'}>{r.source}</text>
+          <text x="0" y={top + 27} class="d-fine d-start">{r.method}</text>
+          <path
+            d={roughRect(PLOT_X, barY, scale(r.lo), BAR_H, { seed: r.seed, roughness: 0.7 })}
+            class={r.accent ? 'bar bar-accent' : 'bar'}
+          />
+          {r.hi !== undefined && (
+            <path
+              d={roughRect(PLOT_X + scale(r.lo), barY, scale(r.hi - r.lo), BAR_H, { seed: r.seed + 1, roughness: 0.7 })}
+              class="bar bar-range"
+            />
+          )}
+          <text x={PLOT_X + scale(end) + 8} y={barY + BAR_H - 3} class={r.accent ? 'd-val d-accent' : 'd-val'}>
+            {r.label} min
+          </text>
+        </g>
+      );
+    })}
+
+    <path d={roughLine(PLOT_X, axisY, PLOT_X + PLOT_W, axisY, { seed: 97, roughness: 0.5 })} class="axis" />
+    {gridlines.map((g) => (
+      <text x={PLOT_X + scale(g)} y={axisY + 16} class="d-fine">{g / 60} h</text>
+    ))}
+    <text x={PLOT_X} y={axisY + 16} class="d-fine d-start">0</text>
+  </svg>
+</div>
+
+<style>
+  /* Same rule as the other bar figures: below ~560px the method lines and the
+     value labels would collide, so the figure scrolls rather than scales. */
+  .diagram-scroll { overflow-x: auto; margin: 2rem 0 0.75rem; }
+  .diagram { display: block; width: 100%; min-width: 560px; height: auto; }
+
+  .bar { fill: none; stroke: var(--muted); stroke-width: 1.4; stroke-linecap: round; }
+  .bar-range { stroke-dasharray: 4 4; }
+  .bar-accent { fill: var(--accent-soft); stroke: var(--accent); }
+
+  .grid { fill: none; stroke: var(--muted); stroke-width: 0.8; opacity: 0.3; stroke-dasharray: 3 5; }
+  .axis { fill: none; stroke: var(--muted); stroke-width: 1; opacity: 0.6; stroke-linecap: round; }
+
+  text { text-anchor: middle; }
+  .d-row { font-family: var(--font-sans); font-size: 12.5px; font-weight: 500; fill: var(--fg); text-anchor: start; }
+  .d-val { font-family: var(--font-mono); font-size: 11px; fill: var(--muted); text-anchor: start; }
+  .d-fine { font-family: var(--font-sans); font-size: 11px; fill: var(--muted); }
+  .d-start { text-anchor: start; }
+  .d-accent { fill: var(--accent); }
+  .d-zone {
+    font-family: var(--font-mono); font-size: 11px; font-weight: 500; fill: var(--muted);
+    letter-spacing: 0.14em; text-transform: uppercase; text-anchor: start;
+  }
+</style>

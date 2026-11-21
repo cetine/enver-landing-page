@@ -9,6 +9,10 @@
   --line: rgba(22, 24, 29, 0.14);
   --accent: #0e7c5b;
   --accent-soft: rgba(14, 124, 91, 0.1);
+  /* Venture "PREVIEW" badge: yellow, text darkened to keep 4.8:1 on the soft fill. */
+  --preview: #8a6100;
+  --preview-dot: #eab308;
+  --preview-soft: rgba(234, 179, 8, 0.16);
   /* Industry plates (PlateSvg.astro) — one inline SVG, colours carried by these
      variables so a single file renders in both themes. */
   --plate-bg: var(--bg);
@@ -26,6 +30,9 @@
   --line: rgba(236, 236, 236, 0.16);
   --accent: #2fbd8f;
   --accent-soft: rgba(47, 189, 143, 0.12);
+  --preview: #facc15;
+  --preview-dot: #facc15;
+  --preview-soft: rgba(250, 204, 21, 0.14);
   /* Brighter plate strokes in dark — the old raster plates read too dim. */
   --plate-bg: var(--bg);
   --plate-stroke: #c2c8d2;
@@ -43,6 +50,9 @@
   --color-line: var(--line);
   --color-accent: var(--accent);
   --color-accent-soft: var(--accent-soft);
+  --color-preview: var(--preview);
+  --color-preview-dot: var(--preview-dot);
+  --color-preview-soft: var(--preview-soft);
   --font-sans: 'IBM Plex Sans', ui-sans-serif, system-ui, sans-serif;
   --font-serif: 'IBM Plex Serif', ui-serif, Georgia, serif;
   --font-mono: 'IBM Plex Mono', ui-monospace, 'SF Mono', monospace;
@@ -229,3 +239,18 @@ html {
 }
 .prose-col th:last-child, .prose-col td:last-child { padding-right: 0; }
 .prose-col pre code { background: none; padding: 0; }
+
+/* Award callout on posts that grew out of a recognised piece of work. Same
+   label treatment as the TL;DR, but boxed so it reads as context, not argument. */
+.prose-col .award {
+  margin: 0 0 1.75rem; padding: 0.9rem 1.1rem;
+  border: 1px solid var(--accent); border-radius: 6px; background: var(--accent-soft);
+}
+.prose-col .award-label {
+  font-family: var(--font-mono); font-size: 11px; font-weight: 500;
+  letter-spacing: 0.15em; text-transform: uppercase; color: var(--accent);
+  margin: 0 0 0.5rem; text-align: left;
+}
+.prose-col .award p { font-size: 15px; line-height: 1.6; margin: 0 0 0.6rem; }
+.prose-col .award p:last-child { margin-bottom: 0; }
+.prose-col .award a { font-weight: 500; }
