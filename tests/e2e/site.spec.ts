@@ -16,6 +16,7 @@ const pages: { path: string; hreflang: number }[] = [
   { path: '/writing/prompt-caching-not-working', hreflang: 2 },
   { path: '/writing/digital-sovereignty-exit-time', hreflang: 2 },
   { path: '/writing/how-much-time-does-ai-save', hreflang: 2 },
+  { path: '/writing/ai-coding-tools-productivity', hreflang: 2 },
 ];
 
 for (const { path, hreflang } of pages) {

@@ -1,0 +1,188 @@
+---
+// One idea: after firms add AI coding agents, code volume rises a lot but
+// finished work rises little. The gap opens downstream of writing code, where
+// review is the measured bottleneck.
+//
+// All bars are the paper's estimated effects of AI AGENTS, 12 months after firm
+// adoption, as a % of the pre-adoption baseline. They are firm averages, and
+// they are increments on top of AI assistants the firms already had, so the
+// figure is NOT "agents versus no AI" and NOT a per-seat effect. Assistants are
+// deliberately left out: adding a second series would invite a second reading.
+//
+// Source: Fiona Chen & James Stratton, "Artificial Intelligence in the Firm:
+// Bottlenecks in Software Production", Harvard job market paper, current
+// version 19 November 2026, https://fion.ac/jellyfish.pdf. Fact-checked
+// 21 Nov 2026. Hard-coded rather than imported: the article is a snapshot, and
+// a later paper revision must not silently change the figure beside the text.
+// - Lines of code +44.0%, commits +36.0%, PRs opened +35.7%: Intro p.4 and
+//   Sec 4.3 pp.30-31; Fig 3 captions. LOC is marginally insignificant
+//   (β12 2,113.65, s.e. 1,401.59), so it is drawn dashed.
+// - PRs merged +26.0% (β12 1.08 on a 4.16 baseline): Sec 4.3 p.31.
+// - Jira issues resolved +13.7%, epics +18.0%: Sec 4.5 pp.33-34; Fig 4. Both
+//   marginally insignificant (the paper rules out more than 30.7% / 41.5%), so
+//   both are drawn dashed. The p.4 "borderline significant" wording is not used.
+//   An issue counts as resolved when its code is deployed to production.
+// - Time from PR submission to merge +1.99 days, +56.1% on a 3.56-day
+//   baseline: Sec 5.2 pp.37-38; Fig 7 Panel A. Different unit (time, not
+//   output), so it is a text note under the axis, not a bar.
+// The authors attribute 62.4% of the volume-to-output gap to the review /
+// production bottleneck and 37.6% to a residual (Sec 6.2), so the gap label
+// says "review and other downstream steps", not "review" alone.
+// - Pass-through ratio ~0.4 = 13.7 / 35.7 = 0.38 (issues resolved over PRs
+//   opened). This is OUR arithmetic on the 12-month point estimates, not the
+//   paper's model pass-through (0.233, which is from modelled coding
+//   productivity, a different quantity). The numerator is marginally
+//   insignificant, so the figure labels it "my calculation, wide uncertainty".
+import { roughRect, roughLine } from '../lib/rough';
+
+interface Row {
+  label: string;
+  value: number;
+  /** Marginally insignificant in the paper ⇒ dashed outline. */
+  ns?: boolean;
+  accent?: boolean;
+  seed: number;
+}
+
+const volume: Row[] = [
+  { label: 'Lines of code', value: 44.0, ns: true, seed: 101 },
+  { label: 'Commits', value: 36.0, seed: 113 },
+  { label: 'Pull requests opened', value: 35.7, seed: 127 },
+  { label: 'Pull requests merged', value: 26.0, seed: 139 },
+];
+const finished: Row[] = [
+  { label: 'Jira issues resolved', value: 13.7, ns: true, accent: true, seed: 151 },
+  { label: 'Jira epics resolved', value: 18.0, ns: true, accent: true, seed: 163 },
+];
+
+// Axis to a round 50% so the longest bar (44.0%) does not read as a maximum.
+const AXIS_MAX = 50;
+const PLOT_X = 168;
+const PLOT_W = 390;
+const BAR_H = 16;
+const ROW_H = 30;
+const G1_HEAD = 76;
+const G1_TOP = 86;
+const G2_HEAD = G1_TOP + volume.length * ROW_H + 26;
+const G2_TOP = G2_HEAD + 10;
+const axisY = G2_TOP + finished.length * ROW_H + 4;
+
+const scale = (v: number): number => (v / AXIS_MAX) * PLOT_W;
+const gridlines = [10, 20, 30, 40, 50];
+
+const placed = [
+  ...volume.map((r, i) => ({ ...r, y: G1_TOP + i * ROW_H })),
+  ...finished.map((r, i) => ({ ...r, y: G2_TOP + i * ROW_H })),
+];
+const prRow = placed[2];
+const issuesRow = placed[4];
+// The gap guide runs from the end of the PRs-opened bar down to the issues row.
+const gapX = PLOT_X + scale(prRow.value);
+// Skip a row's gridline where it would run through that row's value label.
+const labelZone = (g: number, v: number): boolean => scale(g) > scale(v) + 2 && scale(g) < scale(v) + 56;
+const gapMidY = issuesRow.y + BAR_H * 0.5;
+const fmt = (v: number): string => `+${v.toFixed(1)}%`;
+// Derived pass-through, rounded to one digit to avoid false precision.
+const passThrough = issuesRow.value / prRow.value; // 0.38
+const passThroughTenths = Math.round(passThrough * 10); // 4
+
+const alt =
+  'Horizontal bar chart of the estimated effect of adding AI coding agents, 12 months after firm ' +
+  'adoption, as a percentage change from the pre-adoption baseline. Firm averages, measured on top of ' +
+  'AI assistants the firms already used; 655 firms. Code volume: lines of code plus 44.0% (marginally ' +
+  'insignificant, drawn dashed); commits plus 36.0%; pull requests opened plus 35.7%; pull requests ' +
+  'merged plus 26.0%. Finished work: Jira issues resolved, meaning code deployed to production, plus ' +
+  '13.7%; Jira epics resolved plus 18.0%. Both finished-work estimates are marginally insignificant, ' +
+  'so zero cannot be ruled out; the paper rules out increases above 30.7% for issues and 41.5% for ' +
+  'epics. A guide line marks the gap between pull requests opened (35.7%) and issues resolved ' +
+  '(13.7%), which opens in review and other downstream steps. Pass-through, the author\'s own ' +
+  'calculation on point estimates rather than a figure from the paper: roughly 0.4, meaning that of ' +
+  'every 10 points of extra pull requests, about 4 show up as extra resolved issues; the uncertainty ' +
+  'is wide because a zero gain in issues cannot be ruled out. Note under the axis: time from pull ' +
+  'request submission to merge rises by 1.99 days, or 56.1%, from a 3.56-day baseline. Source: Chen ' +
+  'and Stratton, Harvard, version of 19 November 2026.';
+---
+<div class="diagram-scroll">
+  <svg viewBox="0 0 620 452" role="img" aria-labelledby="cts-title cts-desc" class="diagram">
+    <title id="cts-title">AI coding agents: code volume rises far more than finished work</title>
+    <desc id="cts-desc">{alt}</desc>
+
+    <text x="0" y="16" class="d-zone">Effect of adding AI agents, after 12 months</text>
+    <text x="0" y="33" class="d-fine d-start">% change vs. pre-adoption · firm averages, on top of existing AI assistants · 655 firms</text>
+    <path d={roughRect(1, 43, 22, 9, { seed: 7, roughness: 0.5 })} class="bar bar-ns" />
+    <text x="30" y="51" class="d-fine d-start">dashed = marginally insignificant in the paper: zero cannot be ruled out</text>
+
+    <text x="0" y={G1_HEAD} class="d-zone">Code volume</text>
+    <text x="0" y={G2_HEAD} class="d-zone d-accent">Finished work · deployed to production</text>
+
+    {placed.map((r) => (
+      <g>
+        {gridlines.filter((g) => !labelZone(g, r.value)).map((g) => (
+          <path
+            d={roughLine(PLOT_X + scale(g), r.y - 4, PLOT_X + scale(g), r.y + BAR_H + 4, { seed: g + r.seed, roughness: 0.5 })}
+            class="grid"
+          />
+        ))}
+        <text x="0" y={r.y + BAR_H - 3} class={r.accent ? 'd-row d-accent' : 'd-row'}>{r.label}</text>
+        <path
+          d={roughRect(PLOT_X, r.y, scale(r.value), BAR_H, { seed: r.seed, roughness: 0.7 })}
+          class={`bar${r.accent ? ' bar-accent' : ''}${r.ns ? ' bar-ns' : ''}`}
+        />
+        <text x={PLOT_X + scale(r.value) + 8} y={r.y + BAR_H - 3} class={r.accent ? 'd-val d-accent' : 'd-val'}>
+          {fmt(r.value)}
+        </text>
+      </g>
+    ))}
+
+    <path
+      d={roughLine(gapX, prRow.y + BAR_H + 2, gapX, gapMidY, { seed: 211, roughness: 0.6 })}
+      class="gap"
+    />
+    <path
+      d={roughLine(PLOT_X + scale(issuesRow.value) + 52, gapMidY, gapX, gapMidY, { seed: 223, roughness: 0.6 })}
+      class="gap"
+    />
+    <text x={gapX + 8} y={G2_HEAD - 14} class="d-fine d-start d-accent">gap opens in review</text>
+    <text x={gapX + 8} y={G2_HEAD} class="d-fine d-start d-accent">and other downstream steps</text>
+
+    <path d={roughLine(PLOT_X, axisY, PLOT_X + PLOT_W, axisY, { seed: 97, roughness: 0.5 })} class="axis" />
+    {gridlines.map((g) => (
+      <text x={PLOT_X + scale(g)} y={axisY + 16} class="d-fine">+{g}%</text>
+    ))}
+    <text x={PLOT_X} y={axisY + 16} class="d-fine">0</text>
+
+    <text x="0" y={axisY + 46} class="d-row d-accent">Pass-through, my calculation: roughly 0.{passThroughTenths}</text>
+    <text x="0" y={axisY + 63} class="d-fine d-start">of every 10 points of extra pull requests, about {passThroughTenths} show up as extra resolved issues (13.7 ÷ 35.7)</text>
+    <text x="0" y={axisY + 78} class="d-fine d-start">point estimates, not a figure from the paper · wide uncertainty: zero gain in issues cannot be ruled out</text>
+
+    <text x="0" y={axisY + 102} class="d-row">Meanwhile, review slows down:</text>
+    <text x="0" y={axisY + 119} class="d-fine d-start">time from pull request submission to merge +1.99 days (+56.1%) on a 3.56-day baseline</text>
+    <text x="0" y={axisY + 140} class="d-fine d-start">Source: Chen &amp; Stratton, Harvard, version of 19 Nov 2026 · 12-month estimates</text>
+  </svg>
+</div>
+
+<style>
+  /* Same rule as the other bar figures: below ~560px the row labels and the
+     gap annotation would collide, so the figure scrolls rather than scales. */
+  .diagram-scroll { overflow-x: auto; margin: 2rem 0 0.75rem; }
+  .diagram { display: block; width: 100%; min-width: 560px; height: auto; }
+
+  .bar { fill: none; stroke: var(--muted); stroke-width: 1.4; stroke-linecap: round; }
+  .bar-accent { fill: var(--accent-soft); stroke: var(--accent); }
+  .bar-ns { stroke-dasharray: 5 4; }
+
+  .grid { fill: none; stroke: var(--muted); stroke-width: 0.8; opacity: 0.3; stroke-dasharray: 3 5; }
+  .axis { fill: none; stroke: var(--muted); stroke-width: 1; opacity: 0.6; stroke-linecap: round; }
+  .gap { fill: none; stroke: var(--accent); stroke-width: 1.1; stroke-dasharray: 2 4; stroke-linecap: round; }
+
+  text { text-anchor: middle; }
+  .d-row { font-family: var(--font-sans); font-size: 12.5px; font-weight: 500; fill: var(--fg); text-anchor: start; }
+  .d-val { font-family: var(--font-mono); font-size: 11px; fill: var(--muted); text-anchor: start; }
+  .d-fine { font-family: var(--font-sans); font-size: 11px; fill: var(--muted); }
+  .d-start { text-anchor: start; }
+  .d-accent { fill: var(--accent); }
+  .d-zone {
+    font-family: var(--font-mono); font-size: 11px; font-weight: 500; fill: var(--muted);
+    letter-spacing: 0.14em; text-transform: uppercase; text-anchor: start;
+  }
+</style>

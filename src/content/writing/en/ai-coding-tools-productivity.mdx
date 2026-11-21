@@ -1,0 +1,122 @@
+---
+title: 'AI Coding Tools and Productivity: 36% More Code, Not Output'
+date: 2026-11-21
+description: In 655 firms, adding AI coding agents raised pull requests by 35.7% but resolved issues by only about 14%, an estimate not statistically significant.
+tags: [Generative AI, Software Engineering, Productivity, Business Case]
+type: post
+---
+
+import CodeToShippedBars from '../../../components/CodeToShippedBars.astro';
+
+<aside class="tldr">
+<p class="tldr-label">TL;DR</p>
+<ul>
+<li>In a Harvard study of 720,542 workers at 655 firms, adding AI coding agents to firms that already used AI assistants raised commits by 36.0% and pull requests by 35.7%, but finished work by only <strong>about 14%</strong>, and zero cannot be ruled out.</li>
+<li>The work mostly piles up in code review: after agents, a change waits <strong>56.1% longer</strong> (about two days) before it is accepted. Only 62.7% of the extra pull requests get merged.</li>
+<li>Earlier AI assistants raised commits and pull requests by 17% to 21% and finished work by about zero.</li>
+<li>Code volume is the wrong KPI for a coding-agent business case. Measure tickets deployed to production, end to end.</li>
+</ul>
+</aside>
+
+2027 tooling budgets are being set, and the coding-agent line usually arrives with a chart of code written.
+
+New firm-level evidence says that chart overstates the return. **Adding AI coding agents raised code volume by about 36%, but finished work by only about 14%, mainly because review became the bottleneck.** The 14% is a point estimate that is not statistically significant.
+
+The question for a CFO is how much more work reaches customers, not how much more code gets written.
+
+## Do AI coding tools increase productivity?
+
+Most published answers time one task. GitHub's 2022 lab experiment had developers finish one 55.8% faster with Copilot; Google's internal trial with 96 engineers found about 21% less time, with a large confidence interval (the range of values the data cannot rule out). METR found experienced open-source developers 19% slower in early 2025; its February 2026 update estimates speedups, but both new intervals include zero. None of these follows work through to delivery.
+
+Fiona Chen and James Stratton's Harvard paper, *Artificial Intelligence in the Firm: Bottlenecks in Software Production* (current version of 19 November 2026), does. It uses 445 million work events from Jellyfish, an engineering-analytics platform: GitHub activity, Jira tickets and calendar entries for 720,542 workers at 655 firms, January 2021 to August 2026.
+
+A few terms. A **commit** is a saved batch of code changes. A **pull request** is a proposed change to the code, submitted for colleagues to check. **Code review** is that check: another engineer reads the change and accepts ("merges") it or asks for fixes. An **issue** is a Jira ticket for one piece of work; the paper counts it as resolved when its code is deployed to production. An **epic** is a larger bundle of issues.
+
+The agent estimates are the effect of **adding agents to firms that already had AI assistants**, measured twelve months after adoption. They are firm averages, not per seat. Take-up inside adopting firms is partial: 35.30% of engineers who coded before used agents after twelve months. The authors call that a lower bound.
+
+The firms are opted-in Jellyfish customers, mostly medium-to-large and established, averaging 248.9 engineers. The paper names no countries and benchmarks against US data. **There is no evidence here on German firms specifically.**
+
+## More code, not much more shipped
+
+<figure>
+<CodeToShippedBars />
+<figcaption>Firm-level averages at Jellyfish customers, twelve months after agent adoption, on top of existing AI assistants. The lines-of-code, issues and epics effects are not statistically significant; the paper rules out issue gains above 30.7%.</figcaption>
+</figure>
+
+After agents, commits rose 36.0% and pull requests 35.7%, both significant. Lines of code rose 44.0%, but that estimate is not significant and moves between 38.3% and 77.6% across robustness checks (re-runs of the analysis with different assumptions).
+
+Finished work moved less. Resolved issues rose 13.7% and epics 18.0% as point estimates (the single best guess), both "marginally insignificant" in the paper's own words (its introduction says "borderline significant"). Bug reports, the only quality measure, did not change significantly.
+
+My calculation: 13.7 divided by 35.7 gives a pass-through from pull requests to resolved issues of **roughly 0.4, with wide uncertainty**. Put plainly, of every 10 points of extra pull requests, about 4 show up as extra finished tickets. On an approximate 95% interval I compute from the paper's standard error, about -3% to +31%, the ratio runs from below zero to about 0.86.
+
+Earlier AI assistants are starker: commits up 16.8%, pull requests up 20.9%, resolved issues about zero (-1.5%, not statistically significant).
+
+The authors draw the conclusion themselves: "intermediate metrics, such as lines of code or commits, overstate the gains from AI adoption."
+
+## Where the extra code gets stuck
+
+Only about 62.7% of the extra pull requests opened after agent adoption are merged, against 86.1% at baseline. Merged pull requests rose 26.0%, not 35.7%.
+
+The rest waits. **Time from submitting a pull request to merging it rose by 1.99 days, or 56.1%, on a baseline of 3.56 days.** Waiting in the queue and active review both lengthened by close to 60%. Comments per pull request rose 38.6%. Pull-request size did not change significantly.
+
+AI review tools have not closed the gap: 79.1% of firms had used one by July 2026, yet only 10.8% of pull requests received an AI comment.
+
+Engineers spend only 30% to 40% of their time writing code (40.8% on Jellyfish's estimate, 30.8% in a survey of 100 engineers). Speeding up a third of the job does not speed up the whole.
+
+## Why more reviewers alone will not fix it
+
+The obvious response, hiring reviewers, is not supported. Reviewers are not interchangeable: 82.8% of reviews fall in a code base the reviewer already worked in, against 17.2% if assigned at random. Review capacity follows familiarity with the code, so a new hire does not add it quickly.
+
+Firms have also already moved. The authors' model infers a 43.4% shift of labour towards review, and the split between coding and review is already near the point where moving more people adds almost nothing. Full rebalancing would lift output from 13.7% to 14.1%. Of the gap between modelled coding gains and output, 62.4% is the review bottleneck; 37.6% is a residual, the part the model cannot attribute to review, which may reflect behaviour change or other bottlenecks such as management or testing.
+
+I read that as a case for fixing the whole downstream process, not for a reviewer headcount line. As with [self-reported time saved](/writing/how-much-time-does-ai-save), the headline number shrinks once you measure the whole.
+
+## What the tool line costs
+
+An illustrative sum for 100 developers, from list prices as of 21 November 2026, in US dollars excluding VAT, converted at the ECB rate of 1.0990 on 20 November 2026:
+
+| Item, 100 seats, 12 months | USD | About EUR |
+|---|---|---|
+| GitHub Copilot Business, $19 per seat | 22,800 | 20,700 |
+| GitHub Copilot Enterprise, $39 per seat | 46,800 | 42,600 |
+| Claude Team standard, $20 per seat (annual) | 24,000 | 21,800 |
+| Claude Team premium, $100 per seat (annual) | 120,000 | 109,200 |
+| Usage at the paper's median spend, $178 a month | 213,600 | 194,400 |
+| Usage at the paper's mean spend, $808 a month | 969,600 | 882,300 |
+
+The spend figures come from July 2026 Cursor and Claude Code billing data, mostly US, for a minority of sample firms. Overage is excluded. **Usage, not seats, dominates the cost.**
+
+## Where my own argument is weak
+
+The 14% may be zero, or it may be 30%. The paper rules out only gains above 30.7%.
+
+The point estimate is positive, and other evidence points the same way. An NBER study of public GitHub data finds autonomous agents raising commits 240% cumulatively and releases 30%, though open-source magnitudes are not comparable with these firms. DORA's 2025 survey reports that AI now improves delivery throughput, though it still increases instability. "Agents do nothing for delivery" would be wrong.
+
+The estimates cover only 12 to 16 months after adoption, and the authors say remaining confounders would likely bias them upward. Their long-run simulations cut both ways: with flexible labour, output rises 16.1% and engineering employment falls 13.2%, although the measured short-run employment effect is not significant. The payoff depends on whether review speeds up too.
+
+## What I would measure in a rollout
+
+1. **Issues deployed to production per engineer per month** as the primary KPI, with commits and lines only as diagnostics.
+2. **Time from pull request to merge**, and the share of pull requests merged. If those deteriorate, the bottleneck has moved.
+3. **Usage spend per engineer**, monthly. The seat price is the small number.
+4. **A twelve-month review**, with the comparison agreed before the pilot starts.
+
+## Bottom line
+
+AI coding agents produce more code. In 655 firms, roughly a third more code turned into about a seventh more finished work, and even that is uncertain.
+
+Fund agents against tickets shipped. Count lines, and you will pay for code that sits in review.
+
+---
+
+## Sources
+
+- Chen and Stratton, [*Artificial Intelligence in the Firm: Bottlenecks in Software Production*](https://fion.ac/jellyfish.pdf), Harvard job market paper, current version of 19 November 2026 (first version 7 January 2026): Sections 2.4, 4.3 to 4.6, 5, 6 and 7.
+- GitHub, [Copilot plans](https://docs.github.com/en/copilot/get-started/plans), as of 21 November 2026.
+- Anthropic, [Claude pricing](https://claude.com/pricing), as of 21 November 2026.
+- ECB, [euro reference rates](https://www.ecb.europa.eu/stats/eurofxref/eurofxref-daily.xml), 20 November 2026.
+- Demirer, Musolff and Yang, [NBER Working Paper 35275](https://www.nber.org/papers/w35275), May 2026, revised September 2026.
+- DORA, [2025 State of AI-assisted Software Development](https://services.google.com/fh/files/misc/2025_state_of_ai_assisted_software_development.pdf).
+- Task-speed trials: GitHub Copilot experiment, [arXiv 2302.06590](https://arxiv.org/abs/2302.06590); Google internal trial, [arXiv 2410.12944](https://arxiv.org/abs/2410.12944); METR, [February 2026 update](https://metr.org/blog/2026-02-24-uplift-update/).
+
+<p class="text-[13px] text-muted">Verified on 21 November 2026 against the 19 November 2026 version of Chen and Stratton, the GitHub and Anthropic price pages and the ECB reference rate of 20 November 2026. Ratios and the cost table are my arithmetic.</p>
